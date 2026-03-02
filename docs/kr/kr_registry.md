@@ -711,7 +711,8 @@
 **Kaynaklar:** SSOT, KANONIK
 
 **Normatif kurallar (Hard):**
-1) Worker **inbound kapalıdır** (deny-by-default). “ingest/upload” HTTP endpoint’i **yoktur**.  
+1) **AI Worker inbound kapalıdır** (deny-by-default). AI Worker (YZ analiz servisi) hiçbir koşulda inbound HTTP kabul etmez.
+   **Ingest Gateway ayrımı:** Sunucu 2’deki Ingest Gateway ayrı bir bileşendir (ayrı konteyner/pod, ayrı network policy). Yalnızca M2 allowlist IP + mTLS ile sınırlı inbound kabul eder. Ingest Gateway ile AI Worker arasında konteyner düzeyinde izolasyon zorunludur.
 2) Worker job’ı **pull/poll** ile alır (queue/dispatch). Platform→Worker push **yok**.  
 3) Worker egress **allowlist** ile sınırlıdır:  
    - Object Storage (S3-uyumlu) → **read-only**  
@@ -728,6 +729,8 @@
 - Web/PWA → Worker: **DENY**
 - Worker → Storage/Queue/Results/Observability: **ALLOW (outbound only, mTLS)**
 - Worker → Internet: **DENY**
+- M2 (EdgeKiosk) → Ingest Gateway: **ALLOW (inbound, allowlist IP + mTLS)**
+- Ingest Gateway → AI Worker: **DENY (pod-to-pod)**
 
 **Audit/WORM olayları (minimum):**
 - `SECURITY.DENY`, `JOB.REJECT`, `DATASET.REJECTED_QUARANTINE`
@@ -879,7 +882,7 @@ Hata/şüphe: `REJECTED_QUARANTINE`
 
 **Platform Tarama Politikası (`scan_policy`) — İki Modlu AV2 Tarama:**
 EdgeKiosk’taki AV1 taraması ön filtredir; platform tarafındaki AV2 karar veren taramadır.
-Admin `scan_policy` parametresi ile aşağıdaki modlar arasında geçiş yapabilir:
+CENTRAL_ADMIN `scan_policy` parametresi ile aşağıdaki modlar arasında geçiş yapabilir:
 
 **MOD 1 — SMART (varsayılan):**
 Normal operasyonda aktif olan moddur. Dosyalar quarantine-bucket’a ulaştığında
@@ -896,19 +899,23 @@ geçer (AV taraması atlanır). Düzenli çalışan bilinen drone’lardan gelen
 görüntü dosyalarının büyük çoğunluğu hafif yoldan geçer. Bu mod operasyonel
 maliyeti dramatik şekilde düşürür.
 
-**MOD 2 — BYPASS (admin + zorunlu audit log):**
+**MOD 2 — BYPASS (istisna — KR-073’ü geçersiz kılmaz):**
 AV taraması tamamen devre dışıdır. Sadece SHA-256 hash doğrulama ve dosya tipi
-kontrolü yapılır. Bu mod yalnızca acil operasyonel baskı altında (yoğun hasat
-dönemi, sistem kaynak yetersizliği vb.) geçici olarak kullanılır.
+kontrolü yapılır. BYPASS bir istisnadır ve KR-073’ün temel güvenlik garantilerini
+geçersiz kılmaz.
 
 BYPASS kuralları:
-  - Etkinleştirildiğinde audit log’a zorunlu kayıt: kim, ne zaman, neden
+  - Yalnızca **CENTRAL_ADMIN** tarafından etkinleştirilebilir
+  - **Coğrafi sınırlama zorunlu:** il bazında (`province_code`) belirtilmeli; kapsam dışı iller SMART modda çalışmaya devam eder
+  - **Zamansal sınırlama zorunlu:** tarih/saat aralığı belirtilmeli
   - Maksimum süre sınırı: 72 saat — süre dolduğunda sistem otomatik olarak SMART moduna döner
+  - Etkinleştirildiğinde audit log’a zorunlu kayıt: kim, ne zaman, neden, hangi iller, süre
   - BYPASS aktifken admin dashboard’da kırmızı uyarı banner’ı görünür
-  - BYPASS süresi admin tarafından uzatılabilir ama her uzatma ayrı audit kaydı oluşturur
+  - BYPASS süresi CENTRAL_ADMIN tarafından uzatılabilir ama her uzatma ayrı audit kaydı oluşturur
+  - Başlangıç kapsamı: Diyarbakır + CENTRAL_ADMIN’in belirlediği iller
 
-**İl Bazlı Zorunlu AV Tarama (Admin Override):**
-Admin, belirli bir ilin (`province_code`) verileri için `scan_policy` değerini
+**İl Bazlı Zorunlu AV Tarama (CENTRAL_ADMIN Override):**
+CENTRAL_ADMIN, belirli bir ilin (`province_code`) verileri için `scan_policy` değerini
 **MANDATORY** olarak ayarlayabilir. Bu durumda ilgili ilden gelen tüm datasetlere
 mevcut global mod ne olursa olsun (SMART veya BYPASS) tam AV2 taraması uygulanır.
   - İl bazlı MANDATORY ayarı global modu **override** eder
