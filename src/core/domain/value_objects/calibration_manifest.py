@@ -24,10 +24,10 @@ class CalibrationManifest:
     - Worker, raw DN (Digital Number) veya belirsiz kalibrasyon verisi reddeder.
     - Platform: requires_calibrated=true olmadan job açılamaz.
 
-    İstasyon akışı:
-    1. Offline Security PC: AV tarama + manifest/hash doğrulama
-    2. Online Producer: DJI Terra / Pix4Dfields ile tam radyometrik kalibrasyon
-    3. Dispatch: Calibrated Dataset + raporlar + manifest/hash -> Worker
+    İstasyon akışı (KR-016/KR-017, M1+M2 mimarisi):
+    1. M1 (İşleme İstasyonu, offline): AV tarama + manifest/hash doğrulama
+    2. M1: Pix4Dfields ile tam radyometrik kalibrasyon (drone-agnostik)
+    3. M2 (Gönderim İstasyonu): Calibrated Dataset + raporlar + manifest/hash -> Platform/Ingress
 
     Invariants:
     - manifest_hash boş olamaz (SHA-256 bütünlük kanıtı).
