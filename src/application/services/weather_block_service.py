@@ -1,8 +1,9 @@
 # BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
-# KR-015: Weather-block verification and replan events are orchestrated here.
+# KR-015: Weather-block report and replan events are orchestrated here.
+# KR-015-3A: Pilot sahada tek yetkili; admin doğrulama akışı kaldırılmıştır.
 # BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
 """
-Amaç: Weather Block raporu alma/doğrulama ve yeniden planlama.
+Amaç: Weather Block raporu alma ve yeniden planlama.
 Sorumluluk: Use-case orkestrasyonu; domain service + ports birleşimi; policy enforcement.
 Girdi/Çıktı (Contract/DTO/Event): Girdi: API/Job/Worker tetiklemesi. Çıktı: DTO, event, state transition.
 Güvenlik (RBAC/PII/Audit): RBAC burada; PII redaction; audit log; rate limit (gereken yerde).
@@ -32,8 +33,6 @@ class WeatherBlockReport:
 class WeatherBlockRepository(Protocol):
     def create(self, report: WeatherBlockReport) -> None: ...
 
-    def mark_verified(self, report_id: str, *, verified_by: str) -> None: ...
-
 
 class EventBus(Protocol):
     def publish(self, event_name: str, payload: dict[str, Any], *, correlation_id: str) -> None: ...
@@ -52,10 +51,3 @@ class WeatherBlockService:
             correlation_id=correlation_id,
         )
 
-    def verify(self, *, report_id: str, verified_by: str, correlation_id: str) -> None:
-        self._repo.mark_verified(report_id, verified_by=verified_by)
-        self._bus.publish(
-            "weather_block.verified",
-            {"report_id": report_id, "verified_by": verified_by},
-            correlation_id=correlation_id,
-        )

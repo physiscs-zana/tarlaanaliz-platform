@@ -73,14 +73,6 @@ from src.application.commands.update_pilot_capacity import (
 from src.application.commands.update_pilot_capacity import (
     handle as handle_update_pilot_capacity,
 )
-from src.application.commands.verify_weather_block import (
-    VerifyWeatherBlockCommand,
-    VerifyWeatherBlockResult,
-)
-from src.application.commands.verify_weather_block import (
-    handle as handle_verify_weather_block,
-)
-
 __all__ = [
     "ApprovePaymentCommand",
     "ApprovePaymentResult",
@@ -104,8 +96,6 @@ __all__ = [
     "SubmitTrainingFeedbackResult",
     "UpdatePilotCapacityCommand",
     "UpdatePilotCapacityResult",
-    "VerifyWeatherBlockCommand",
-    "VerifyWeatherBlockResult",
     "handle_approve_payment",
     "handle_assign_mission",
     "handle_calculate_payroll",
@@ -117,5 +107,4 @@ __all__ = [
     "handle_submit_expert_review",
     "handle_submit_training_feedback",
     "handle_update_pilot_capacity",
-    "handle_verify_weather_block",
 ]

@@ -1,16 +1,21 @@
 # =============================================================================
 # deploy/k8s/network-policy.yaml
-# Amac: KR-070 Worker izolasyonu ve agag politikasi.
-# Sorumluluk: Worker altyapisinin web/platform tarafindan dogrudan
-#             erisilebilir olmamasi; deny-by-default egress politikasi.
+# Amac: KR-070 Worker izolasyonu, Ingest Gateway pod ayirimi ve ag politikasi.
+# Sorumluluk: Worker ve Ingest Gateway altyapisinin izole calismasini saglamak;
+#             deny-by-default egress politikasi.
 #
 # Kanonik Ag Politikasi Matrisi (KR-070):
-#   Platform  → Worker:           DENY (TCP/HTTP yok)
-#   Web/PWA   → Worker:           DENY
-#   Worker    → Object Storage:   ALLOW (outbound only, read-only)
-#   Worker    → Queue:            ALLOW (outbound only, consume-only)
-#   Worker    → Platform Results: ALLOW (outbound only, mTLS)
-#   Worker    → Internet:         DENY (default)
+#   Platform  → Worker:                  DENY (TCP/HTTP yok)
+#   Web/PWA   → Worker:                  DENY
+#   Worker    → Object Storage:          ALLOW (outbound only, read-only)
+#   Worker    → Queue:                   ALLOW (outbound only, consume-only)
+#   Worker    → Platform Results:        ALLOW (outbound only, mTLS)
+#   Worker    → Internet:                DENY (default)
+#   M2 (EdgeKiosk) → Ingest Gateway:    ALLOW (allowlist IP + mTLS)
+#   Ingest Gateway → Worker:             DENY (pod-to-pod)
+#   Ingest Gateway → Object Storage:     ALLOW (presigned URL uretimi)
+#   Ingest Gateway → PostgreSQL:         ALLOW (manifest kayit)
+#   Ingest Gateway → Internet:           DENY (default)
 # =============================================================================
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -146,3 +151,128 @@ spec:
       ports:
         - protocol: TCP
           port: 9090
+
+---
+# =============================================================================
+# Ingest Gateway: M2 allowlist IP + mTLS ile sinirli inbound (KR-070)
+# Ingest Gateway, Worker'dan ayri pod'da calisir; pod-to-pod DENY zorunludur.
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingest-gateway-ingress
+  namespace: tarlaanaliz
+  labels:
+    app.kubernetes.io/part-of: tarlaanaliz
+    security.tarlaanaliz.io/kr: "070"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: ingest-gateway
+  policyTypes:
+    - Ingress
+  ingress:
+    # M2 (EdgeKiosk) cihazlarindan mTLS ile sinirli inbound
+    # IP allowlist harici filtreleme (Cloudflare/LB veya K8s ingress) ile saglanir
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8443  # mTLS endpoint
+
+---
+# Ingest Gateway egress: yalnizca izinli hedeflere outbound
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingest-gateway-restricted-egress
+  namespace: tarlaanaliz
+  labels:
+    app.kubernetes.io/part-of: tarlaanaliz
+    security.tarlaanaliz.io/kr: "070"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: ingest-gateway
+  policyTypes:
+    - Egress
+  egress:
+    # 1. Object Storage (S3/MinIO) — presigned URL uretimi
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: object-storage
+      ports:
+        - protocol: TCP
+          port: 9000
+        - protocol: TCP
+          port: 443
+
+    # 2. PostgreSQL — manifest kayit
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: database
+      ports:
+        - protocol: TCP
+          port: 5432
+
+    # 3. Message Queue (RabbitMQ) — pipeline tetikleme
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: message-queue
+      ports:
+        - protocol: TCP
+          port: 5672
+        - protocol: TCP
+          port: 5671  # AMQPS
+
+    # 4. DNS (CoreDNS)
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+    # 5. Observability
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: observability
+      ports:
+        - protocol: TCP
+          port: 4317
+        - protocol: TCP
+          port: 4318
+
+---
+# Ingest Gateway → Worker: pod-to-pod DENY (KR-070)
+# Bu kural Ingest Gateway'in Worker pod'una dogrudan erisimini engeller.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingest-gateway-deny-worker
+  namespace: tarlaanaliz
+  labels:
+    app.kubernetes.io/part-of: tarlaanaliz
+    security.tarlaanaliz.io/kr: "070"
+  annotations:
+    security.tarlaanaliz.io/note: "Ingest Gateway ve AI Worker arasinda konteyner duzeyinde izolasyon zorunludur (KR-070)"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: worker
+  policyTypes:
+    - Ingress
+  ingress:
+    # Worker'a Ingest Gateway'den gelen trafik dahil tum inbound reddedilir
+    # (worker-deny-all-ingress ile zaten DENY, bu kural amaci belgelemek icin eklenmistir)
+    []

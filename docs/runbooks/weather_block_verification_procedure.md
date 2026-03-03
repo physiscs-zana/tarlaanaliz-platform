@@ -1,56 +1,63 @@
 BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
 
 # Title
-Runbook: Weather Block Verification Procedure
+Runbook: Weather Block Rapor Prosedürü
 
 ## Scope
-Uçuş/planlama engeli (weather block) durumunda doğrulama, false positive yönetimi ve audit adımlarını tanımlar.
+Pilot tarafından bildirilen uçuş engeli (weather block) durumunda raporlama, yeniden planlama ve audit adımlarını tanımlar.
+
+KR-015-3A: Pilot sahada tek yetkili kişidir. Admin doğrulama akışı kaldırılmıştır.
 
 ## Owners
 - Flight Ops Lead
 - Scheduler Ops
 
 ## Last updated
-2026-02-18
+2026-03-02
 
 ## SSOT references
-- KR-015
+- KR-015-3A (Pilot Uçuş Yetki Bildirimi — Basitleştirilmiş)
+- KR-015-5 (Weather Block Force Majeure — Reschedule Token Tüketmez)
 
-## Verification procedure
-1. Bloklanan görevleri listele.
-2. Veri kaynağı zaman damgasını doğrula.
-3. Bölgesel tutarlılık kontrolü yap.
-4. Gerekirse manuel ikinci doğrulama uygula.
-5. Sonucu planner’a (hold/release) yansıt.
+## Raporlama prosedürü
+1. Pilot "uçuş yapılamaz" bildirimi yapar (mission_id, reason, date).
+2. Sistem bildirimi kaydeder → görev otomatik ertelenir.
+3. Audit log'a yazılır (reporter, timestamp, reason, etkilenen mission, yeni planlanan tarih).
+4. O günün hakedişi ödenmez.
+5. Çiftçinin reschedule_token hakkı tüketilmez (KR-015-5: force majeure).
+
+## Yeniden planlama
+- Sistem otomatik yeniden planlama yapar (KR-015-5).
+- Yeni tarih çiftçiye bildirilir.
+- Pilot yeni tarihe atanır (veya uygun başka pilot).
 
 ## False positive handling
 - Kısa süreli anomalide bekleme penceresi uygula.
-- Çelişkili veri varsa manuel override + audit zorunlu.
+- Pilot hatalı bildirim yaptıysa: RESOLVED durumuna geçir, audit log'a not ekle.
 
 ## Audit fields
 - mission_id
-- block_source
-- verification_result
-- operator_subject_id
+- reporter_id (pilot)
+- reason
+- date
 - correlation_id
 
 ## Failure modes
-- Stale weather data.
-- Yanlış bölge eşleşmesi.
-- Override kaydının atlanması.
+- Pilot bildirimi sisteme ulaşmadı → retry mekanizması.
+- Yeniden planlama başarısız → ops alarm.
 
 ## Checklists
 ### Preflight
-- Veri kaynağı erişimi sağlıklı.
+- Pilot bildirim endpoint'i erişilebilir.
 - Planner entegrasyonu aktif.
 
 ### Operate
-- Blok/release kararları loglandı.
-- False positive oranı izlendi.
+- Bildirimler loglandı.
+- Yeniden planlama başarı oranı izlendi.
 
 ### Postmortem
-- Hatalı blok kararları analiz edildi.
-- Eşikler ve doğrulama adımı güncellendi.
+- Hatalı bildirimler analiz edildi.
+- Yeniden planlama başarı oranı değerlendirildi.
 
 ## Related docs
 - `docs/architecture/subscription_scheduler_design.md`

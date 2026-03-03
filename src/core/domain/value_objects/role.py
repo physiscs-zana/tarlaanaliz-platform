@@ -35,6 +35,7 @@ class Role:
     - COOP_VIEWER: Kooperatif izleyicisi (salt okunur)
     - PILOT: Drone pilotu
     - STATION_OPERATOR: İstasyon operatörü
+    - BILLING_ADMIN: Ödeme yöneticisi
     - IL_OPERATOR: İl operatörü
     - CENTRAL_ADMIN: Merkez yönetici
     - AI_SERVICE: AI servis hesabı
@@ -55,6 +56,7 @@ class Role:
     COOP_VIEWER: ClassVar[str] = "COOP_VIEWER"
     PILOT: ClassVar[str] = "PILOT"
     STATION_OPERATOR: ClassVar[str] = "STATION_OPERATOR"
+    BILLING_ADMIN: ClassVar[str] = "BILLING_ADMIN"
     IL_OPERATOR: ClassVar[str] = "IL_OPERATOR"
     CENTRAL_ADMIN: ClassVar[str] = "CENTRAL_ADMIN"
     AI_SERVICE: ClassVar[str] = "AI_SERVICE"
@@ -63,7 +65,7 @@ class Role:
     _VALID_CODES: ClassVar[frozenset[str]] = frozenset({
         "FARMER_SINGLE", "FARMER_MEMBER", "COOP_OWNER", "COOP_ADMIN",
         "COOP_AGRONOMIST", "COOP_VIEWER", "PILOT", "STATION_OPERATOR",
-        "IL_OPERATOR", "CENTRAL_ADMIN", "AI_SERVICE", "EXPERT",
+        "BILLING_ADMIN", "IL_OPERATOR", "CENTRAL_ADMIN", "AI_SERVICE", "EXPERT",
     })
 
     # Rol -> Türkçe görünen ad eşlemesi
@@ -76,6 +78,7 @@ class Role:
         "COOP_VIEWER": "Kooperatif İzleyicisi",
         "PILOT": "Drone Pilotu",
         "STATION_OPERATOR": "İstasyon Operatörü",
+        "BILLING_ADMIN": "Ödeme Yöneticisi",
         "IL_OPERATOR": "İl Operatörü",
         "CENTRAL_ADMIN": "Merkez Yönetici",
         "AI_SERVICE": "AI Servis Hesabı",
@@ -96,7 +99,7 @@ class Role:
     })
 
     _ADMIN_ROLES: ClassVar[frozenset[str]] = frozenset({
-        "COOP_ADMIN", "CENTRAL_ADMIN",
+        "COOP_ADMIN", "BILLING_ADMIN", "CENTRAL_ADMIN",
     })
 
     def __post_init__(self) -> None:

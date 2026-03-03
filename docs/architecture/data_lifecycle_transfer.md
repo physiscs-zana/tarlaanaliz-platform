@@ -4,7 +4,7 @@ BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not dupli
 Data Lifecycle & Transfer Architecture
 
 ## Scope
-Veri yaşam döngüsü, EdgeKiosk–Platform–Worker arası transfer stratejisi, nesne depolama mimarisi ve ağ akış kurallarını tanımlar.
+Veri yaşam döngüsü, M2 (EdgeKiosk)–Ingest Gateway–Worker arası transfer stratejisi, nesne depolama mimarisi ve ağ akış kurallarını tanımlar.
 
 ## Owners
 - Staff Backend Architect
@@ -26,14 +26,19 @@ Veri yaşam döngüsü, EdgeKiosk–Platform–Worker arası transfer stratejisi
 
 ## §1 Mimari Karar
 
-Platform artık EdgeKiosk'tan büyük veri aktarımı **ALMAZ**. Bunun yerine:
+Platform artık M2 (EdgeKiosk) cihazından büyük veri aktarımı **ALMAZ**. Bunun yerine:
 
-1. EdgeKiosk **manifest JSON + meta veri** gönderir (`POST /api/v1/edge/ingest`)
-2. Platform manifesti doğrular ve **ön-imzalı (presigned) S3 yükleme URL'leri** döner
-3. EdgeKiosk dosyaları **doğrudan S3 quarantine-bucket'a** yazar (HTTP PUT)
+1. M2 (EdgeKiosk) **manifest JSON + meta veri** gönderir (`POST /edge/ingest`)
+   Hedef: **Sunucu 2 — Ingest Gateway** (ayrı pod, M2 allowlist IP + mTLS)
+2. Ingest Gateway manifesti doğrular ve **ön-imzalı (presigned) S3 yükleme URL'leri** döner
+3. M2 dosyaları **doğrudan S3 quarantine-bucket'a** yazar (HTTP PUT)
 
-Bu mimari ile Platform hiçbir zaman büyük ikili (binary) veri taşımaz; yalnızca
-küçük JSON meta veri ve orkestrasyon mesajları ile çalışır.
+> **Not:** Ingest Gateway, Sunucu 2 (Data Pipeline) üzerinde **ayrı pod** olarak çalışır.
+> AI Worker ile **pod-to-pod ağ trafiği DENY** (KR-070). Bkz. `two_server_architecture.md` §3.
+
+Bu mimari ile Platform Core (Sunucu 1) hiçbir zaman büyük ikili (binary) veri taşımaz
+ve saha cihazı trafiğine maruz kalmaz; yalnızca küçük JSON meta veri ve orkestrasyon
+mesajları ile çalışır.
 
 ---
 
@@ -73,11 +78,11 @@ dataset `REJECTED_QUARANTINE`'a alınır ve yeni ingest gerekir.
 ## §3 Uçtan Uca Veri Akışı
 
 ```
-┌──────────┐  manifest JSON   ┌──────────┐  presigned URLs  ┌──────────┐
-│          │  + meta veri      │          │  (yanıt)         │          │
-│ EdgeKiosk├──────────────────►│ Platform ├─────────────────►│ EdgeKiosk│
-│          │  POST /ingest     │          │  200 OK          │          │
-└────┬─────┘                   └─────┬────┘                  └────┬─────┘
+┌──────────┐  manifest JSON   ┌──────────────┐  presigned URLs  ┌──────────┐
+│          │  + meta veri      │ Sunucu 2      │  (yanıt)         │          │
+│ M2       ├──────────────────►│ Ingest Gateway├─────────────────►│ M2       │
+│(EdgeKiosk│  POST /ingest     │ (ayrı pod)    │  200 OK          │(EdgeKiosk│
+└────┬─────┘  mTLS+allowlist   └──────┬────────┘                  └────┬─────┘
      │                               │                            │
      │  HTTP PUT (presigned URL)     │  job dispatch              │
      │  ham görüntü dosyaları        │  (RabbitMQ)                │
@@ -104,33 +109,34 @@ dataset `REJECTED_QUARANTINE`'a alınır ve yeni ingest gerekir.
 ```
 
 **Akış özeti (KR-071 kanonik sıra):**
-1. **EdgeKiosk → Platform (Ingress):** mTLS + manifest JSON (< 1 KB)
-2. **Platform → EdgeKiosk:** Presigned URL listesi (< 1 KB)
-3. **EdgeKiosk → S3 quarantine-bucket:** Ham dosyalar (HTTP PUT, ~1 TB, 1 kez)
-4. **Platform:** AV2 tarama + SHA-256 hash doğrulama → quarantine → verified
-5. **Platform → RabbitMQ:** Job dispatch bildirimi (< 1 KB)
+1. **M2 (EdgeKiosk) → Sunucu 2 Ingest Gateway:** mTLS + allowlist IP + manifest JSON (< 1 KB)
+2. **Ingest Gateway → M2:** Presigned URL listesi (< 1 KB)
+3. **M2 → S3 quarantine-bucket:** Ham dosyalar (HTTP PUT, ~1 TB, 1 kez)
+4. **Sunucu 2 Pipeline:** AV2 tarama + SHA-256 hash doğrulama → quarantine → verified
+5. **Sunucu 1 Platform → RabbitMQ:** Job dispatch bildirimi (< 1 KB)
 6. **Worker ← Queue:** Pull/poll ile iş alma
 7. **Worker ← S3 verified-bucket:** Dataset okuma (read-only, 1 kez)
-8. **Worker → Platform:** Türev sonuç (AnalysisResult / layer outputs)
-9. **Web/PWA ← Platform:** Sadece sonuç okur; ham veri yok
+8. **Worker → DB:** Sonuç doğrudan `analysis_jobs` tablosuna yazılır (CQRS)
+9. **Web/PWA ← Sunucu 1 Platform:** Sadece sonuç okur; ham veri yok
 
 ---
 
 ## §4 Tek Yönlü Ağ Akışları
 
-### POST /api/v1/edge/ingest — İngest Akışı
+### POST /edge/ingest — İngest Akışı
 
-EdgeKiosk, manifest JSON ve meta veriyi Platform'a gönderir. Platform manifesti
-doğrular (SHA-256 hash kontrolü, drone_id uyumu, sertifika doğrulama) ve
-her dosya için ön-imzalı S3 yükleme URL'si döner. EdgeKiosk bu URL'lerle
-dosyaları **doğrudan S3 quarantine-bucket'a** yazar.
+M2 (EdgeKiosk), manifest JSON ve meta veriyi **Sunucu 2 üzerindeki Ingest Gateway**'e
+gönderir (mTLS + allowlist IP). Ingest Gateway manifesti doğrular (SHA-256 hash kontrolü,
+drone_id uyumu, sertifika doğrulama) ve her dosya için ön-imzalı S3 yükleme URL'si döner.
+M2 bu URL'lerle dosyaları **doğrudan S3 quarantine-bucket'a** yazar.
 
 ```
-EdgeKiosk                      Platform                       S3
+M2 (EdgeKiosk)                 Ingest Gateway (Sunucu 2)      S3
    │                              │                            │
-   │  POST /api/v1/edge/ingest   │                            │
+   │  POST /edge/ingest          │                            │
    │  Content-Type: app/json     │                            │
    │  Body: {manifest, meta}     │                            │
+   │  mTLS + allowlist IP        │                            │
    │─────────────────────────────►│                            │
    │                              │                            │
    │                              │  1. manifest hash doğrula  │
@@ -159,23 +165,23 @@ EdgeKiosk                      Platform                       S3
 ```
 
 **Kritik kurallar:**
-- Platform büyük dosya **almaz** ve **iletmez** — yalnızca presigned URL üretir
-- EdgeKiosk dosyaları Platform'a **göndermez** — doğrudan S3'e yazar
+- Ingest Gateway büyük dosya **almaz** ve **iletmez** — yalnızca presigned URL üretir
+- M2 dosyaları Ingest Gateway'e **göndermez** — doğrudan S3'e yazar
 - Hash uyuşmazlığı → `REJECTED_QUARANTINE` + audit event (KR-072)
 - Kayıtsız drone_id → talep reddedilir (KR-030)
 
 ### Diğer Akışlar
 
-- **Platform → Queue (dispatch):** Job bildirimi; Worker pull ile alır (KR-070)
+- **Sunucu 1 → Queue (dispatch):** Job bildirimi; Worker pull ile alır (KR-070)
 - **Worker → S3 verified-bucket:** Read-only erişim; mTLS + kısa ömürlü token (KR-070)
-- **Worker → Platform (sonuç):** Yalnızca türev sonuç yazar; ham veri geri dönmez
-- **Web/PWA → Platform:** Sadece sonuç okur; ham veriye erişim yok
+- **Worker → DB (sonuç):** Türev sonuç doğrudan `analysis_jobs` tablosuna yazılır; Sunucu 1 CQRS ile okur
+- **Web/PWA → Sunucu 1:** Sadece sonuç okur; ham veriye erişim yok
 
 ---
 
 ## §5 Kanonik API
 
-### POST /api/v1/edge/ingest
+### POST /edge/ingest (Sunucu 2 — Ingest Gateway)
 
 **Request**
 
@@ -261,8 +267,8 @@ Contract şeması: `contracts/schemas/edge/dataset_ingest_response.v1.schema.jso
 
 | Aktör | quarantine-bucket | verified-bucket |
 |-------|-------------------|-----------------|
-| EdgeKiosk | **WRITE** (presigned URL ile) | **DENY** |
-| Platform | **READ** (AV2 + hash doğrulama) | **WRITE** (taşıma) |
+| M2 (EdgeKiosk) | **WRITE** (presigned URL ile) | **DENY** |
+| Sunucu 2 Pipeline | **READ** (AV2 + hash doğrulama) | **WRITE** (taşıma) |
 | Worker | **DENY** | **READ** (mTLS + kısa ömürlü token) |
 | Web/PWA | **DENY** | **DENY** |
 
@@ -293,8 +299,8 @@ boyutlarını ve yönlerini özetler:
 
 | Transfer | Boyut | Kaynak → Hedef | Protokol | Sıklık |
 |----------|-------|----------------|----------|--------|
-| Manifest JSON + meta veri | < 1 KB | EdgeKiosk → Platform | HTTPS (mTLS) | Her ingest |
-| Presigned URL yanıtı | < 1 KB | Platform → EdgeKiosk | HTTPS | Her ingest |
+| Manifest JSON + meta veri | < 1 KB | M2 (EdgeKiosk) → Ingest Gateway (Sunucu 2) | HTTPS (mTLS + allowlist) | Her ingest |
+| Presigned URL yanıtı | < 1 KB | Ingest Gateway → M2 | HTTPS | Her ingest |
 | Ham görüntü dosyaları | ~1 TB | EdgeKiosk → S3 quarantine | HTTPS (presigned PUT) | 1 kez |
 | Doğrulanmış dosya taşıma | ~1 TB | S3 quarantine → S3 verified | S3 internal (COPY) | 1 kez |
 | İş bildirimi (dispatch) | < 1 KB | Platform → RabbitMQ | AMQP | Her job |
@@ -302,9 +308,10 @@ boyutlarını ve yönlerini özetler:
 | Analiz sonucu | < 10 MB | Worker → Platform | HTTPS (mTLS) | Her job |
 | Sonuç görüntüleme | < 1 MB | Platform → Web/PWA | HTTPS | Her istek |
 
-**Kritik gözlem:** Platform API sunucusu üzerinden geçen en büyük payload < 10 MB
-(analiz sonucu). ~1 TB büyüklüğündeki ham görüntü verileri Platform'u **asla**
-transit etmez; EdgeKiosk ve Worker doğrudan S3 ile iletişim kurar.
+**Kritik gözlem:** Platform Core (Sunucu 1) API sunucusu üzerinden büyük veri geçmez.
+Ingest Gateway yalnızca manifest JSON (<1 KB) işler. ~1 TB büyüklüğündeki ham görüntü
+verileri ne Sunucu 1'i ne de Ingest Gateway'i transit etmez; M2 ve Worker doğrudan
+S3 ile iletişim kurar.
 
 ---
 

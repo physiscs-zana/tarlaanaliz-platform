@@ -240,6 +240,31 @@
 - Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
 
 ---
+### KR-015-3A
+
+**Başlık:** Pilot Uçuş Yetki Bildirimi (Basitleştirilmiş)
+**Applies to:** platform, edge-kiosk
+**Kaynaklar:** SSOT, KANONIK
+
+**Normatif özet:**
+Pilot sahada tek yetkili kişidir. Eski Weather Block doğrulama akışı (WEATHER_BLOCKED durumu,
+admin onay süreci, WeatherBlockReport entity) kaldırılmıştır.
+
+**Kurallar:**
+1. Pilot "uçuş yapılamaz" bildirimi yapar: `mission_id`, `reporter_id` (pilot), `reason`, `date`
+2. Sistem bildirimi kaydeder → görev ertelenir → audit log'a yazılır
+3. O günün hakedişi ödenmez
+4. Çiftçinin `reschedule_token` hakkı tüketilmez (bkz. KR-015-5: force majeure)
+
+**Durum makinesi:**
+- `REPORTED` → Pilot bildirdi (eski PENDING/CONFIRMED birleştirildi)
+- `RESOLVED` → Hava engeli kalktı
+- `EXPIRED` → Zamanında işlenmedi
+
+**Gerekçe:** Admin doğrulama aşaması gereksiz karmaşıklık yaratıyordu. Pilot sahada
+tek otorite olarak kabul edilir; ek doğrulama aşaması gereksizdir.
+
+---
 ### KR-016
 
 **Başlık:** Drone - Tarla - Bitki Eşleştirme Politikası (Routing)  
