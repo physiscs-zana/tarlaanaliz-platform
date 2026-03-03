@@ -1,5 +1,9 @@
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/services/weather_validator.py
-# DESC: Pilot hava raporu doğrulama (KR-015-5).
+# DESC: Pilot hava raporu kayıt ve analiz servisi (KR-015-3A, KR-015-5).
+# KR-015-3A: Pilot hava kararında TEK OTORİTE. Sistem weather API override EDEMEZ.
+#            "Rapor gönderildi = kabul" — doğrulama (rejection) fazı YOK.
+#            validate() sadece kayıt/analiz amaçlı; sonuç ASLA uçuşu bloke etmez.
 
 from __future__ import annotations
 
@@ -100,14 +104,19 @@ class WeatherValidator:
         mission_id: uuid.UUID,
         weather_data: WeatherData,
     ) -> WeatherValidationResult:
-        """Hava durumu verilerini doğrular ve uçuş önerisi verir.
+        """Hava durumu verilerini KAYDEDİP analiz eder — ASLA bloke etmez.
+
+        KR-015-3A: Bu metod SADECE kayıt ve bilgilendirme amaçlıdır.
+        Pilot raporu gönderildiği anda otomatik olarak KABUL edilir.
+        Sonuç (recommendation/severity) uçuşu engelleyemez; caller bu değeri
+        yalnızca loglama, dashboard gösterimi ve istatistik amaçlı kullanmalıdır.
 
         Args:
             mission_id: Mission ID.
             weather_data: Hava durumu verisi.
 
         Returns:
-            WeatherValidationResult: Doğrulama sonucu.
+            WeatherValidationResult: Analiz sonucu (bilgilendirme amaçlı).
         """
         conditions_met: list[str] = []
         warnings: list[str] = []

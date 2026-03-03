@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/services/capacity_manager.py
 # DESC: Pilot kapasite hesaplama ve müsaitlik sorgusu (KR-015-1, KR-015-2).
 

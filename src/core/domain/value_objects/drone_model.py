@@ -1,5 +1,7 @@
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/value_objects/drone_model.py
-# DESC: DroneModel VO; drone model + sensor band dogrulama (KR-030).
+# DESC: DroneModel VO; drone model + sensor band dogrulama (KR-030, KR-034).
+# KR-034: DJI Bagimsizlik Plani — 4 onaylı model (v1.1.0)
 
 from __future__ import annotations
 
@@ -44,6 +46,22 @@ class DroneModel:
     radiometry_type: str  # "relative" | "absolute"
     phase: int = 1
 
+    # KR-034: 4 onaylı model ID sabiti (v1.1.0)
+    # Phase 1: DJI_MAVIC_3M (birincil, relative)
+    # Phase 2 Senaryo A: PARROT_SEQUOIA_PLUS + WINGTRAONE_GEN2 (MicaSense)
+    # Phase 2 Senaryo B: WINGTRAONE_GEN2 + AGEAGLE_EBEE_X
+    DJI_MAVIC_3M: ClassVar[str] = "DJI_MAVIC_3M"
+    WINGTRAONE_GEN2: ClassVar[str] = "WINGTRAONE_GEN2"
+    PARROT_SEQUOIA_PLUS: ClassVar[str] = "PARROT_SEQUOIA_PLUS"
+    AGEAGLE_EBEE_X: ClassVar[str] = "AGEAGLE_EBEE_X"
+
+    _APPROVED_MODEL_IDS: ClassVar[frozenset[str]] = frozenset({
+        "DJI_MAVIC_3M",
+        "WINGTRAONE_GEN2",
+        "PARROT_SEQUOIA_PLUS",
+        "AGEAGLE_EBEE_X",
+    })
+
     # Gecerli radyometri tipleri
     _VALID_RADIOMETRY: ClassVar[frozenset[str]] = frozenset({"relative", "absolute"})
 
@@ -82,6 +100,10 @@ class DroneModel:
     def is_absolute_radiometry(self) -> bool:
         """Mutlak radyometrik kalibrasyon destegi."""
         return self.radiometry_type == "absolute"
+
+    def is_approved(self) -> bool:
+        """KR-034: Bu model onaylı drone listesinde mi?"""
+        return self.model_id in self._APPROVED_MODEL_IDS
 
     def to_dict(self) -> dict[str, Any]:
         """Serilestirme icin dict donusumu."""

@@ -1,12 +1,14 @@
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/entities/pilot.py
 # DESC: Pilot; kapasite (work_days, daily_capacity), bolge atamasi, Drone.
-# SSOT: KR-015 (drone pilotlari), KR-015-1 (kapasite), KR-015-2 (seed/pull)
+# SSOT: KR-015 (drone pilotlari), KR-015-1 (kapasite), KR-015-2 (seed/pull), KR-034 (drone bagimsizlik)
 """
 Pilot domain entity.
 
-Pilot yalnizca DJI Mavic 3M kullanir. Drone seri numarasi dogrulama referansidir.
-Gunluk kapasite 2500-3000 donum, varsayilan 2750 (KR-015-1).
-SYSTEM_SEED_QUOTA varsayilan 1500, PULL_QUOTA = capacity - seed (KR-015-2).
+v1.1.0 (KR-034): Pilot artık sadece DJI_MAVIC_3M değil; 4 onaylı modeli destekler:
+  DJI_MAVIC_3M | WINGTRAONE_GEN2 | PARROT_SEQUOIA_PLUS | AGEAGLE_EBEE_X
+Günlük kapasite 2500-3000 dönüm, varsayılan 2750 (KR-015-1).
+SYSTEM_SEED_QUOTA varsayılan 1500, PULL_QUOTA = capacity - seed (KR-015-2).
 """
 from __future__ import annotations
 
@@ -15,7 +17,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
 from enum import Enum
-from typing import List, Optional
+from typing import ClassVar, List, Optional
 
 
 class PilotStatus(str, Enum):
@@ -41,7 +43,16 @@ class Pilot:
     * KR-015-1 -- Calisma gunleri ve gunluk kapasite.
     * KR-015-2 -- Seed + Pull is dagitim politikasi.
     * KR-015-3 -- Iptal / yeniden atama.
+    * KR-034   -- DJI bağımsızlık planı; 4 onaylı model desteklenir.
     """
+
+    # KR-034: Onaylı drone model ID'leri (drone_model alanı bunlardan biri olmalı)
+    _APPROVED_DRONE_MODELS: ClassVar[frozenset[str]] = frozenset({
+        "DJI_MAVIC_3M",        # Phase 1, birincil
+        "WINGTRAONE_GEN2",      # Phase 2 Senaryo A/B
+        "PARROT_SEQUOIA_PLUS",  # Phase 2 Senaryo A
+        "AGEAGLE_EBEE_X",       # Phase 2 Senaryo B
+    })
 
     pilot_id: uuid.UUID
     user_id: uuid.UUID
@@ -49,7 +60,7 @@ class Pilot:
     district: str
     full_name: str
     phone_number: str
-    drone_model: str  # KR-015: "DJI Mavic 3M"
+    drone_model: str  # KR-034: DJI_MAVIC_3M | WINGTRAONE_GEN2 | PARROT_SEQUOIA_PLUS | AGEAGLE_EBEE_X
     drone_serial_number: str
     created_at: datetime
     updated_at: datetime
@@ -80,6 +91,11 @@ class Pilot:
             raise ValueError("phone_number is required")
         if not self.drone_serial_number or not self.drone_serial_number.strip():
             raise ValueError("drone_serial_number is required (KR-015)")
+        if self.drone_model not in self._APPROVED_DRONE_MODELS:
+            raise ValueError(
+                f"drone_model '{self.drone_model}' onaylı listede yok (KR-034). "
+                f"Geçerliler: {sorted(self._APPROVED_DRONE_MODELS)}"
+            )
         if len(self.work_days) > _MAX_WORK_DAYS:
             raise ValueError(
                 f"work_days cannot exceed {_MAX_WORK_DAYS} days (KR-015-1)"

@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
 """KR-015 — PlanWindowSegmenter.
 
 Amaç: Büyük alanlarda (örn. 10.000 dönüm) aynı pencere içinde çoklu pilotla yürütme için segmentleme.

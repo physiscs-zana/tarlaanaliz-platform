@@ -1,12 +1,12 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
-# KR-015: Mission lifecycle transitions follow explicit policy guards.
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# KR-028: Mission lifecycle transitions — PLANNED→ASSIGNED→ACKED→FLOWN→UPLOADED→ANALYZING→DONE
+# KR-033: PLANNED→ASSIGNED geçişi için payment_intent.status==PAID hard gate (caller sorumluluğu)
 """
 Amaç: Mission yaşam döngüsü yönetimi.
 Sorumluluk: Use-case orkestrasyonu; domain service + ports birleşimi; policy enforcement.
 Girdi/Çıktı (Contract/DTO/Event): Girdi: API/Job/Worker tetiklemesi. Çıktı: DTO, event, state transition.
 Güvenlik (RBAC/PII/Audit): RBAC burada; PII redaction; audit log; rate limit (gereken yerde).
-Hata Modları (idempotency/retry/rate limit): 400/403/409/429/5xx mapping; retry-safe tasarım; idempotency key/hard gate’ler.
+Hata Modları (idempotency/retry/rate limit): 400/403/409/429/5xx mapping; retry-safe tasarım; idempotency key/hard gate'ler.
 Observability (log fields/metrics/traces): correlation_id, latency, error_code; use-case metric sayaçları.
 Testler: Unit + integration; kritik akış için e2e (özellikle ödeme/planlama/kalibrasyon).
 Bağımlılıklar: Domain + ports + infra implementasyonları + event bus.
@@ -48,15 +48,19 @@ class MissionLifecycleManager:
         if mission is None:
             raise ValueError("mission not found")
 
+        # KR-028: SSOT v1.1.0 durum makinesi (uppercase)
+        # KR-033: PLANNED→ASSIGNED geçişi sadece payment_intent.status==PAID ise yapılabilir;
+        #         bu gate caller (mission_service.py) tarafından enforce edilir.
         allowed: dict[str, set[str]] = {
-            "draft": {"scheduled", "cancelled"},
-            "scheduled": {"assigned", "cancelled"},
-            "assigned": {"flown", "cancelled"},
-            "flown": {"uploaded"},
-            "uploaded": {"analyzing"},
-            "analyzing": {"completed"},
-            "completed": set(),
-            "cancelled": set(),
+            "PLANNED":   {"ASSIGNED", "CANCELLED"},
+            "ASSIGNED":  {"ACKED", "CANCELLED"},
+            "ACKED":     {"FLOWN", "CANCELLED"},
+            "FLOWN":     {"UPLOADED"},
+            "UPLOADED":  {"ANALYZING"},
+            "ANALYZING": {"DONE", "FAILED"},
+            "DONE":      set(),
+            "FAILED":    set(),
+            "CANCELLED": set(),
         }
         if to_status not in allowed.get(mission.status, set()):
             raise ValueError(f"invalid transition {mission.status} -> {to_status}")

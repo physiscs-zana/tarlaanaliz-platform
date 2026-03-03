@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/services/coverage_calculator.py
 # DESC: Mission footprint ↔ field boundary kesişim hesabı (KR-016).
 

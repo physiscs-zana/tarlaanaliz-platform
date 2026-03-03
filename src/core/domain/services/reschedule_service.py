@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
 """KR-015 — RescheduleService.
 
 Amaç: Sezonluk abonelikte sınırlı gün değiştirme (reschedule token) akışını yönetmek.

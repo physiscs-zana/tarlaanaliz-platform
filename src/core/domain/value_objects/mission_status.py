@@ -1,5 +1,6 @@
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/value_objects/mission_status.py
-# DESC: MissionStatus VO; durum enum ve geçiş kuralları.
+# DESC: MissionStatus VO; durum enum ve geçiş kuralları (KR-028).
 
 from __future__ import annotations
 
