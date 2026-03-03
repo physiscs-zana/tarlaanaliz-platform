@@ -1,4 +1,5 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# KR-041: CORS politikası; settings-driven allowlist.
 """CORS middleware setup with settings-driven policy."""
 
 from __future__ import annotations

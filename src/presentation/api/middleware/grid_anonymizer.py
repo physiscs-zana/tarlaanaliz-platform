@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
 # KR-083: Il operatoru koordinat anonimizasyonu.
 """Grid anonymizer middleware: konum verisini role-based anonimize etme.
 

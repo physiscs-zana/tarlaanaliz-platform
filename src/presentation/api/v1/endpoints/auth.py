@@ -1,5 +1,6 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
-"""Phone + PIN authentication endpoints."""
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# KR-050: Telefon + 6 haneli PIN (sabit uzunluk, yalnızca rakam).
+# KR-081: contract-first auth; no email/TCKN/OTP.
 
 from __future__ import annotations
 
@@ -7,14 +8,26 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+# KR-050: Sabit 6 haneli sayısal PIN (v1.1.0 — eski: 4-12 chars)
+_PIN_LENGTH = 6
+_MAX_FAILED_LOGIN_ATTEMPTS = 16   # KR-050: 16 hata → 30 dakika kilit
 
 
 class PhonePinLoginRequest(BaseModel):
     phone: str = Field(min_length=10, max_length=20)
-    pin: str = Field(min_length=4, max_length=12)
+    pin: str = Field(min_length=_PIN_LENGTH, max_length=_PIN_LENGTH)
+
+    @field_validator("pin")
+    @classmethod
+    def pin_must_be_digits(cls, v: str) -> str:
+        """KR-050: PIN tam olarak 6 haneli sayı olmalı."""
+        if not v.isdigit():
+            raise ValueError("PIN yalnızca rakamlardan oluşmalıdır (KR-050)")
+        return v
 
 
 class AuthTokenResponse(BaseModel):

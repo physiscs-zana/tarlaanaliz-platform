@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_0_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
 # KR-066: KVKK PII filtreleme; KR-083: il operatoru PII goremez.
 """PII filtering middleware: response body'den PII alanlarini role-based maskeleme.
 
