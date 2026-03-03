@@ -5,7 +5,7 @@
 CalibrationRecord domain entity.
 
 Calibrated Dataset uretilmeden AnalysisJob baslatilamaz (KR-018 hard gate).
-Istasyon akisi: Offline Security PC -> Online Producer Workstation -> Dispatch.
+Istasyon akisi: M1 (Offline, Pix4Dfields kalibrasyon) -> M2 (Dispatch, mTLS upload).
 """
 from __future__ import annotations
 
