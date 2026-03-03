@@ -148,8 +148,7 @@ tarlaanaliz-platform/
 │   │   │   ├── schedule_mission.py
 │   │   │   ├── submit_expert_review.py
 │   │   │   ├── submit_training_feedback.py
-│   │   │   ├── update_pilot_capacity.py
-│   │   │   └── verify_weather_block.py
+│   │   │   └── update_pilot_capacity.py
 │   │   ├── dto/
 │   │   │   ├── __init__.py
 │   │   │   ├── analysis_result_dto.py
@@ -268,6 +267,7 @@ tarlaanaliz-platform/
 │   │   │       ├── confidence_score.py
 │   │   │       ├── crop_ops_profile.py
 │   │   │       ├── crop_type.py
+│   │   │       ├── drone_model.py
 │   │   │       ├── expert_specialization.py
 │   │   │       ├── geometry.py
 │   │   │       ├── mission_status.py
@@ -387,7 +387,6 @@ tarlaanaliz-platform/
 │   │   │   │   └── rate_limiter.py
 │   │   │   ├── repositories/
 │   │   │   │   ├── mission_segment_repository.py
-│   │   │   │   ├── payment_intent_repo.py
 │   │   │   │   └── reschedule_repository.py
 │   │   │   └── sqlalchemy/
 │   │   │       ├── __init__.py
@@ -421,21 +420,15 @@ tarlaanaliz-platform/
 │   │   │           ├── audit_log_repository_impl.py
 │   │   │           ├── calibration_record_repository_impl.py
 │   │   │           ├── crop_ops_profile_repository_impl.py
-│   │   │           ├── expert_repository.py
 │   │   │           ├── expert_repository_impl.py
-│   │   │           ├── expert_review_repository.py
 │   │   │           ├── expert_review_repository_impl.py
-│   │   │           ├── feedback_record_repository.py
 │   │   │           ├── feedback_record_repository_impl.py
-│   │   │           ├── field_repository.py
 │   │   │           ├── field_repository_impl.py
-│   │   │           ├── mission_repository.py
 │   │   │           ├── mission_repository_impl.py
 │   │   │           ├── payment_intent_repository_impl.py
 │   │   │           ├── pilot_repository_impl.py
 │   │   │           ├── price_snapshot_repository_impl.py
 │   │   │           ├── qc_report_repository_impl.py
-│   │   │           ├── subscription_repository.py
 │   │   │           ├── subscription_repository_impl.py
 │   │   │           ├── user_repository_impl.py
 │   │   │           ├── weather_block_report_repository_impl.py
@@ -457,30 +450,32 @@ tarlaanaliz-platform/
 │       │   │   ├── _shared.py
 │       │   │   ├── anomaly_detection_middleware.py
 │       │   │   ├── cors_middleware.py
+│       │   │   ├── grid_anonymizer.py
 │       │   │   ├── jwt_middleware.py
+│       │   │   ├── mtls_verifier.py
+│       │   │   ├── pii_filter.py
 │       │   │   └── rate_limit_middleware.py
 │       │   └── v1/
 │       │       ├── __init__.py
-│       │       ├── admin_payments.py
-│       │       ├── calibration.py
-│       │       ├── dependencies.py
-│       │       ├── payments.py
-│       │       ├── qc.py
-│       │       ├── sla_metrics.py
 │       │       ├── endpoints/
 │       │       │   ├── __init__.py
 │       │       │   ├── admin_audit.py
+│       │       │   ├── admin_payments.py
 │       │       │   ├── admin_pricing.py
 │       │       │   ├── auth.py
+│       │       │   ├── calibration.py
 │       │       │   ├── expert_portal.py
 │       │       │   ├── experts.py
 │       │       │   ├── fields.py
 │       │       │   ├── missions.py
 │       │       │   ├── parcels.py
 │       │       │   ├── payment_webhooks.py
+│       │       │   ├── payments.py
 │       │       │   ├── pilots.py
 │       │       │   ├── pricing.py
+│       │       │   ├── qc.py
 │       │       │   ├── results.py
+│       │       │   ├── sla_metrics.py
 │       │       │   ├── subscriptions.py
 │       │       │   ├── training_feedback.py
 │       │       │   ├── weather_block_reports.py
@@ -544,6 +539,15 @@ tarlaanaliz-platform/
 │   │   │       └── test_rate_limit_middleware.py
 │   │   └── cli/
 │   │       └── test_cli_main.py
+│   ├── security/
+│   │   ├── __init__.py
+│   │   ├── test_brute_force_lockout.py
+│   │   ├── test_grid_anonymization.py
+│   │   ├── test_mtls_verification.py
+│   │   ├── test_pii_filter.py
+│   │   ├── test_rate_limit_enforcement.py
+│   │   ├── test_rbac_pilot_results_403.py
+│   │   └── test_webhook_replay_protection.py
 │   └── unit/
 │       ├── __init__.py
 │       ├── test_analysis_completed_handler.py
@@ -576,10 +580,13 @@ tarlaanaliz-platform/
 │               └── test_security_stabilization.py
 │
 └── web/
+    ├── .env.example
+    ├── .storybook/
+    │   ├── main.ts
+    │   └── preview.ts
     ├── README.md
     ├── eslint.config.mjs
     ├── jest.config.js
-    ├── next.config.js
     ├── next.config.mjs
     ├── package.json
     ├── playwright.config.ts
@@ -587,14 +594,9 @@ tarlaanaliz-platform/
     ├── postcss.config.mjs
     ├── sentry.client.config.ts
     ├── sentry.server.config.ts
-    ├── tailwind.config.js
     ├── tailwind.config.ts
     ├── tsconfig.json
     ├── e2e/
-    │   ├── admin-journey.spec.ts
-    │   ├── expert-journey.spec.ts
-    │   ├── farmer-journey.spec.ts
-    │   ├── pilot-journey.spec.ts
     │   ├── playwright.config.ts
     │   └── tests/
     │       ├── auth.spec.ts
@@ -635,6 +637,7 @@ tarlaanaliz-platform/
         │   │   ├── api-keys/
         │   │   │   └── page.tsx
         │   │   ├── audit/
+        │   │   │   └── page.tsx
         │   │   ├── audit-viewer/
         │   │   │   └── page.tsx
         │   │   ├── calibration/
@@ -717,41 +720,10 @@ tarlaanaliz-platform/
         │   │   │   └── page.tsx
         │   │   └── weather-block/
         │   │       └── page.tsx
-        │   ├── admin/
-        │   │   ├── experts/
-        │   │   │   └── page.tsx
-        │   │   ├── subscriptions/
-        │   │   │   └── page.tsx
-        │   │   └── weather-block/
-        │   │       └── page.tsx
-        │   ├── api/
-        │   │   └── health/
-        │   │       └── route.ts
-        │   ├── expert/
-        │   │   ├── layout.tsx
-        │   │   ├── dashboard/
-        │   │   │   └── page.tsx
-        │   │   ├── history/
-        │   │   │   └── page.tsx
-        │   │   └── reviews/
-        │   │       ├── page.tsx
-        │   │       └── [id]/
-        │   │           └── page.tsx
-        │   ├── farmer/
-        │   │   ├── missions/
-        │   │   │   ├── page.tsx
-        │   │   │   └── [id]/
-        │   │   │       └── page.tsx
-        │   │   ├── results/
-        │   │   │   └── [missionId]/
-        │   │   │       └── page.tsx
-        │   │   └── subscriptions/
-        │   │       └── page.tsx
-        │   └── pilot/
-        │       └── weather-block/
-        │           └── page.tsx
+        │   └── api/
+        │       └── health/
+        │           └── route.ts
         ├── components/
-        │   ├── AccessibilityProvider.tsx
         │   ├── common/
         │   │   ├── AccessibilityProvider.tsx
         │   │   ├── ConfirmDialog.tsx
@@ -873,10 +845,8 @@ tarlaanaliz-platform/
         ├── i18n/
         │   ├── ar.json
         │   ├── ku.json
-        │   ├── tr.json
         │   └── tr.ts
         ├── lib/
-        │   ├── api-client.ts
         │   ├── apiClient.ts
         │   ├── authStorage.ts
         │   ├── constants.ts
