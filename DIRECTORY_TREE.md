@@ -1,23 +1,37 @@
 # TarlaAnaliz Platform — Dizin Yapısı (Tree)
 
+> **Bu dosyanın konumu:** `tarlaanaliz-platform_/DIRECTORY_TREE.md`
+> **Son güncelleme:** 2026-03-03
+
 ```
 tarlaanaliz-platform/
+├── .dockerignore
+├── .env.example
+├── .gitattributes
+├── .gitignore
+├── .gitmodules
+├── .pre-commit-config.yaml
 ├── AGENTS.md
 ├── CHANGELOG.md
 ├── CONTRACTS_SHA256.txt
 ├── CONTRACTS_VERSION.md
+├── DIRECTORY_TREE.md                ← bu dosya
 ├── Dockerfile
 ├── MANIFEST_CANONICAL.md
 ├── PRODUCTION_READINESS_REPORT.md
 ├── README.md
-├── README_PATCH.md
-├── UPDATED_FILES_TODO.md
 ├── alembic.ini
-├── base_limits.yaml
-├── codex.patch
 ├── docker-compose.yml
 ├── pyproject.toml
-├── seasonal_config.yaml
+│
+├── .github/
+│   ├── pull_request_template.md
+│   └── workflows/
+│       ├── ci.yml
+│       ├── contract_validation.yml
+│       ├── deploy-staging.yml
+│       ├── frontend-ci.yml
+│       └── security.yml
 │
 ├── alembic/
 │   ├── env.py
@@ -40,10 +54,13 @@ tarlaanaliz-platform/
 │       ├── 20260201_kr082_calibration_qc_records.py
 │       ├── 20260204_add_weather_block_reports.py
 │       ├── 20260223_kr015c_mission_schedule_fields.py
-│       ├── xxxx_kr015_mission_segments.py
-│       └── xxxx_kr015_seasonal_reschedule_tokens.py
+│       ├── 20260225_014_kr015_mission_segments.py
+│       ├── 20260225_015_kr015_seasonal_reschedule_tokens.py
+│       ├── 20260302_add_billing_admin_role.py
+│       └── 20260302_simplify_weather_block_status.py
 │
 ├── config/
+│   ├── drone_registry.yaml
 │   ├── logging.yaml
 │   └── rate_limits/
 │       ├── base_limits.yaml
@@ -51,22 +68,32 @@ tarlaanaliz-platform/
 │
 ├── contracts/
 │
+├── deploy/
+│   └── k8s/
+│       ├── deployment.yaml
+│       └── network-policy.yaml
+│
 ├── docs/
 │   ├── IS_PLANI_AKIS_DOKUMANI_v1_0_0.docx
 │   ├── KR-033_payment_flow.md
 │   ├── README.md
 │   ├── TARLAANALIZ_SSOT_v1_0_0.txt
+│   ├── is_plani_amendments.md
 │   ├── v3_2_2_tree_audit_report.md
+│   ├── adr/
+│   │   └── ADR-001-nine-state-machine.md
 │   ├── api/
 │   │   ├── authentication.md
 │   │   └── openapi.yaml
 │   ├── architecture/
 │   │   ├── adaptive_rate_limiting.md
 │   │   ├── clean_architecture.md
+│   │   ├── data_lifecycle_transfer.md
 │   │   ├── event_driven_design.md
 │   │   ├── expert_portal_design.md
 │   │   ├── subscription_scheduler_design.md
-│   │   └── training_feedback_architecture.md
+│   │   ├── training_feedback_architecture.md
+│   │   └── two_server_architecture.md
 │   ├── archive/
 │   │   └── 2026-02/
 │   │       ├── GOVERNANCE_PACK_v1_0_0_2026-02-15.md
@@ -223,6 +250,7 @@ tarlaanaliz-platform/
 │   │   │   ├── services/
 │   │   │   │   ├── __init__.py
 │   │   │   │   ├── auto_dispatcher.py
+│   │   │   │   ├── band_compliance_checker.py
 │   │   │   │   ├── calibration_validator.py
 │   │   │   │   ├── capacity_manager.py
 │   │   │   │   ├── confidence_evaluator.py
@@ -307,6 +335,8 @@ tarlaanaliz-platform/
 │   │   │   └── schema_registry.py
 │   │   ├── external/
 │   │   │   ├── __init__.py
+│   │   │   ├── av_scanner_client.py
+│   │   │   ├── drone_registry_loader.py
 │   │   │   ├── payment_gateway_adapter.py
 │   │   │   ├── sms_gateway_adapter.py
 │   │   │   ├── storage_adapter.py
