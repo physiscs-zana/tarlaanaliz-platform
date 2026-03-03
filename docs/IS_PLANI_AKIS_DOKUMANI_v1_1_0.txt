@@ -1,4 +1,4 @@
-tarlaanaliz.com – İş Planı Akış Dokümanı v1.1.0
+tarlaanaliz.com – İş Planı Akış Dokümanı v1.2.0
 
 kurallar: kıdemli SDLC uzmanı, Technical Writer / SSOT Custodian, Domain Expert (AgriTech), Data Engineer / Pipeline Architect , Security Architect, QA Engineer / Test Architect, Kıdemli yazılım mimarı ve yazılım mühendisi olarak sadık kalmalısın.
  
@@ -6,7 +6,7 @@ Tarım + Drone + Yapay Zekâ ile Hastalık / Zararlı / Yabancı Ot Tespiti (Web
 
 0. Proje özeti (KR-001)
 Amaç: Çiftçilerin ürün kaybını erken uyarı ile azaltmak ve dönüm bazlı analiz hizmeti satmak. Başlangıç bölgesi GAP, ardından Türkiye geneline ölçekleme.
-Sabit çerçeve (değişmez): Drone: Desteklenen multispektral drone (DJI Mavic 3M birincil/önerilen; DJI Matrice 350 RTK+Sentera 6X, WingtraOne Gen II+MicaSense RedEdge-P, Parrot Anafi USA+Sequoia+, AgEagle eBee X+Altum-PT desteklenir — drone_registry.yaml'a kayıtlı olması zorunludur). Veri: RGB + multispektral (NDVI/NDRE). Yapay zekâ sadece analiz yapar; ilaçlama/gübreleme kararı vermez. Sonuçlar web + PWA ile harita üzerinde renk + desen/ikon ile gösterilir.
+Sabit çerçeve (değişmez): Drone: Desteklenen multispektral drone (DJI Mavic 3M birincil/önerilen; DJI Matrice 350 RTK+Sentera 6X, WingtraOne Gen II+MicaSense RedEdge-P, Parrot Anafi USA+Sequoia+, AgEagle eBee X+Altum-PT desteklenir — drone_registry.yaml'a kayıtlı olması zorunludur). Veri: RGB + multispektral — Graceful Degradation Modeli: Temel (4 bant: Green/Red/RedEdge/NIR → NDVI, NDRE); Genişletilmiş (5 bant: +Blue → EVI, SAVI, chlorophyll-a); Termal (opsiyonel: LWIR → CWSI, sulama stresi — bkz. KR-084). Bant mevcudiyeti intake_manifest.available_bands[] alanından belirlenir; sensör kapasitesine göre analiz pipeline'ı dinamik olarak seçilir (bkz. KR-018/KR-082). Yapay zekâ sadece analiz yapar; ilaçlama/gübreleme kararı vermez. Sonuçlar web + PWA ile harita üzerinde renk + desen/ikon ile gösterilir.
 Harita katmanı anlamları (renk + desen):
 •	Sağlık (Health): Yeşil
 •	Hastalık (Disease): Turuncu
@@ -15,6 +15,7 @@ Harita katmanı anlamları (renk + desen):
 •	Yabancı Ot (Weed): Sarı/Hardal + noktalı desen
 •	Su Stresi: Mavi + damla noktalı desen
 •	Azot Stresi: Soluk gri + çapraz çizgili desen
+•	Termal Stres (KR-084): Koyu Kırmızı/Turuncu gradient + ısı haritası (yalnızca termal bant mevcutsa)
 Öncelikli ürünler (ilk 2 yıl): Pamuk, Antep fıstığı, mısır, buğday, ayçiçeği, üzüm, zeytin, kırmızı mercimek.
 1. Web sitesi + PWA (KR-013)
 1.1 Kullanıcı rolleri ve temel yaklaşım (KR-011)
@@ -78,7 +79,7 @@ Drone - Tarla - Bitki Eşleştirme Politikası (routing - yönlendirme):
 •	Yükleme anı eşleştirme: Yerel istasyon, batch metadata’dan Drone Seri No + görev-ID (varsa) + kapsama alanını alır. Öncelik görev-ID eşleştirmesidir; yoksa kapsama alanı ile field boundary kesişimi kullanılır.
 •	Bitki türü seçimi: TarlaID için tanımlı sezon bitkisi kaydı esas alınır (1 Ekim-31 Aralık aralığında güncellenebilir).
 1.2.4 yz modeli ile analiz (KR-017)
-•	Hard gate (KR-018): Calibrated Dataset (kalibre veri seti) üretilmeden AnalysisJob (analiz işi) başlatılamaz; Worker ham DN veriyi kabul etmez.
+•	Hard gate (KR-018/KR-082): Calibrated Dataset (kalibre veri seti) üretilmeden AnalysisJob (analiz işi) başlatılamaz; Worker ham DN veriyi kabul etmez. v1.2.0: Worker ayrıca intake_manifest.available_bands[] doğrulaması yapar ve bant kapasitesine göre analiz pipeline'ını dinamik olarak belirler (graceful degradation: 4 bant → temel; 5 bant → genişletilmiş; termal → KR-084).
 •	İstasyon akışı (KR-018): M1 İşleme İstasyonu (internetsiz — AV tarama + eşleştirme + Pix4Dfields ile radyometrik kalibrasyon + QC) → CalibratedDatasetManifest + QC raporu → M2 Gönderim İstasyonu (paketleme + mTLS ile merkez analiz kuyruğuna gönderim). Fiziksel medya ile M1→M2 geçişi STATION_OPERATOR tarafından yapılır.
 •	Eşleştirme zorunluluğu: Her dataset TarlaID (FieldID) + o tarihte geçerli bitki türü (CropType) ile eşleşmeden işlenmez.
 •	Model seçimi: Bitki türü + görev tipi (tek seferlik / sezonluk paket) + tarih bağlamına göre otomatik yapılır; pilot sonuç görmez, model detayları paylaşılmaz.
@@ -130,7 +131,8 @@ Kırmızı mercimek	10-15
 
 2.4 Analiz içeriği (hizmet kapsamı) (KR-025)
 Temel ilke: Sistem kesinlikle ilaçlama kararı vermez; yalnızca tespit, risk skoru ve erken uyarı sağlar.
-Rapor çıktıları (tarla ve bitki türü bazında):
+Rapor çıktıları (tarla ve bitki türü bazında — bant kapasitesine göre katmanlı):
+Temel Rapor (4+ bant — tüm sensörler):
 •	Genel bitki sağlığı (Health Score) ve stres göstergeleri
 •	Su durumu / su stresi göstergesi (indeks tabanlı)
 •	Azot durumu / azot stresi göstergesi (NDRE vb. indeks tabanlı)
@@ -138,6 +140,15 @@ Rapor çıktıları (tarla ve bitki türü bazında):
 •	Mantar bulguları (erken belirti + yayılım haritası)
 •	Zararlı böcek riski (bulgu + risk/uyarı seviyesi)
 •	Yabancı ot yoğunluğu (var/yok + yoğunluk haritası)
+Genişletilmiş Rapor (5 bant — Blue bant mevcutsa, ek olarak):
+•	EVI (Enhanced Vegetation Index) — biyokütle ve yaprak alanı detayı
+•	Chlorophyll-a yoğunluk haritası — beslenme durumu detayı
+•	Sentinel-2 uyumlu indeks seti — uydu verisi ile çapraz doğrulama
+Kapsamlı Rapor (5 bant + termal — termal bant mevcutsa, ek olarak, bkz. KR-084):
+•	Termal stres haritası (canopy-soil sıcaklık deltası)
+•	Sulama etkinliği göstergesi (CWSI tabanlı)
+•	Erken dönem su stresi uyarısı (görünür bantlardan önce tespit)
+Not: Çiftçi PWA'da hangi rapor seviyesini aldığını görür; eksik bantlar nedeniyle üretilemeyen katmanlar için bilgi notu gösterilir.
 2.5 Sunum biçimi (KR-026)
 •	Harita katmanları (ısı haritası / grid / zonlama)
 •	Zaman serisi (sezonluk pakette önceki taramalarla karşılaştırma)
@@ -154,6 +165,7 @@ Rapor çıktıları (tarla ve bitki türü bazında):
 •	İl Operatör kar payı: Sistem aylık otomatik hesaplar; Ödeme Yöneticisi raporlar; Merkez Yönetim nihai onayından sonra ayın ilk 7 günü içinde ödenir.
 3. Notlar, sınırlar ve uyum (KR-030)
 •	Drone standardı: DJI Mavic 3M birincil/önerilen drone modelidir (not: M3M için Pix4Dfields relatif kalibrasyon verir — mutlak reflectance değil; bkz. KR-034); DJI Matrice 350 RTK+Sentera 6X, WingtraOne Gen II+MicaSense RedEdge-P, Parrot Anafi USA+Sequoia+, AgEagle eBee X+Altum-PT desteklenir. Tüm modeller drone_registry.yaml'a kayıtlı olmalıdır. Kalibrasyon Pix4Dfields (drone-agnostik) ile yapılır.
+•	Spektral bant politikası (v1.2.0): Minimum 4 multispektral bant (Green+Red+RedEdge+NIR) zorunludur. 5. bant (Blue) ve termal bant (LWIR) opsiyonel zenginleştirmedir — mevcutsa kullanılır, yoksa temel analiz pipeline'ı çalışır. Bant mevcudiyeti intake_manifest.available_bands[] ile belirlenir; drone_capability_matrix.yaml ile çapraz doğrulanır. Bkz. KR-018/KR-082 ve KR-084.
 •	Görüntüler 2-makine yerel istasyon üzerinden sisteme alınır: M1 İşleme İstasyonu (AV+eşleştirme+Pix4Dfields kalibrasyon) → M2 Gönderim İstasyonu (paketleme+upload); log kayıtları denetim izi oluşturur.
 •	KVKK gereği PII ile operasyon/raporlama verileri ayrıştırılır; il operatörü PII görmez.
 •	Model çıktıları karar değildir; çiftçi ve/veya ziraat mühendisi nihai aksiyondan sorumludur.
@@ -169,9 +181,11 @@ EK: Pilot Hakediş ve Ödeme Politikası (KR-031)
 •	Öneri: ay sonu 23:59 cut-off + 3 iş günü itiraz penceresi + ilk 7 gün içinde ödeme.
 •	Observed footprint olmadan ödeme yok; MissionID eşleşmeden ödeme yok.
 
-EK: Drone Tedarik Bağımsızlığı — DJI Risk Planı (KR-034)
+EK: Drone Tedarik Bağımsızlığı — DJI Aktif Operasyon Planı (KR-034)
 
 ARKA PLAN: DJI ürünlerine erişimin yasaklanması veya kısıtlanması (tedarik zinciri, yasal düzenleme, ithalat kısıtlaması) ihtimal dahilindedir. Mimari drone-agnostik tasarlandığından geçiş planı teknik değil; operasyonel ve tedarik temelli bir karardır. Bu ek, söz konusu senaryoyu tanımlar.
+
+v1.2.0 STATÜ GÜNCELLEMESİ: Bu plan artık salt "risk planı" değil, aktif operasyon planıdır. DJI M3M tedarik sıkıntılarının aşılamaz görünmesi ve 5 bantlı sensörlerin sisteme tam entegre edilmesiyle (graceful degradation modeli, KR-018/KR-082), DJI dışı sensörlere geçiş somut bir operasyonel seçenektir. Geçiş ayrıca Blue bant (EVI, SAVI, chlorophyll-a) ve opsiyonel termal kapasite (KR-084) kazanımı sağlar.
 
 TEMEL TEKNİK NOT — DJI Mavic 3M ve Radyometri:
 Pix4Dfields, DJI Mavic 3M ile çalışır; ancak Pix4D'nin kendi dokümantasyonu şunu belirtmektedir: "M3M için tam radyometrik kalibrasyon değil, üretici tarafından NIR'a göre göreli (relative) kalibrasyon yapılır; mutlak reflectance değil, reflectance'a orantılı relatif değerler üretilir." Mutlak radyometrik tutarlılık hedefleniyorsa (model eğitimi ve zaman serisi güvenilirliği için kritik) MicaSense RedEdge-P / Altum-PT veya Sentera 6X sınıfı sensörler daha sağlam temel sağlar. KR-018 hard-gate, GeoTIFF manifest'indeki kalibrasyon meta verisi üzerinden zorlanır.
