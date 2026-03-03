@@ -1,0 +1,108 @@
+# TARLAANALIZ_SSOT_v1_1_0.txt — KR-034 (DJI Bağımsızlık Planı), KR-030 (Drone spesifikasyonları)
+# drone_registry.yaml: Onaylı drone + sensör kombinasyonları
+#
+# KR-034 senaryoları:
+#   Senaryo A (hızlı pivot): Parrot Sequoia+ veya MicaSense RedEdge-P + RTK multirotor
+#   Senaryo B (uzun vadeli): WingtraOne Gen II veya AgEagle eBee X (fixed-wing)
+#
+# Tüm modeller KR-017, KR-070–073 kurallarına tabidir.
+# Bu dosya değiştiğinde drone_model VO ve pilot kayıt servisi de güncellenir.
+
+version: "1.1.0"
+ssot_ref: "KR-034"
+
+drones:
+  - model_id: "DJI_MAVIC_3M"
+    manufacturer: "DJI"
+    model_name: "Mavic 3 Multispectral"
+    sensor: "Integrated Multispectral + RGB"
+    radiometry_type: "relative"       # Pix4Dfields relative calibration
+    bands:
+      - blue
+      - green
+      - red
+      - red_edge
+      - nir
+    min_gsd_cm: 5.0
+    max_coverage_donum_per_flight: 400
+    task_file_format: "WPML"          # DJI Pilot 2 import
+    phase: 1                          # Birincil/önerilen model
+    notes: >
+      Birincil drone modeli. Relative radyometri; Pix4Dfields kalibrasyonu zorunlu (KR-018).
+      DJI tedarik riski nedeniyle KR-034 Senaryo A/B alternatifleri hazır tutulmalıdır.
+
+  - model_id: "WINGTRAONE_GEN2"
+    manufacturer: "Wingtra"
+    model_name: "WingtraOne Gen II"
+    sensor: "MicaSense RedEdge-P"
+    radiometry_type: "absolute"       # MicaSense absolute reflectance
+    bands:
+      - blue
+      - green
+      - red
+      - red_edge
+      - nir
+    min_gsd_cm: 2.0
+    max_coverage_donum_per_flight: 1500
+    task_file_format: "KML"
+    phase: 2                          # KR-034 Senaryo B (uzun vadeli bağımsızlık)
+    notes: >
+      Fixed-wing; geniş alan, uçuş başına yüksek kapsama. Mutlak radyometri temeli.
+      KR-034 Senaryo B kapsamında DJI bağımsızlık planının uzun vadeli çözümü.
+
+  - model_id: "PARROT_SEQUOIA_PLUS"
+    manufacturer: "Parrot"
+    model_name: "ANAFI USA + Sequoia+"
+    sensor: "Parrot Sequoia+"
+    radiometry_type: "absolute"
+    bands:
+      - green
+      - red
+      - red_edge
+      - nir
+    min_gsd_cm: 4.0
+    max_coverage_donum_per_flight: 600
+    task_file_format: "KML"
+    phase: 2                          # KR-034 Senaryo A (hızlı pivot)
+    notes: >
+      KR-034 Senaryo A: DJI tedarik kesintisinde hızlı geçiş alternatifi.
+      Rutin bakım sürdürülebilir; tam radyometrik kalibrasyon destekli.
+
+  - model_id: "AGEAGLE_EBEE_X"
+    manufacturer: "AgEagle"
+    model_name: "eBee X"
+    sensor: "senseFly Altum-PT"
+    radiometry_type: "absolute"
+    bands:
+      - blue
+      - green
+      - red
+      - red_edge
+      - nir
+      - thermal
+    min_gsd_cm: 2.5
+    max_coverage_donum_per_flight: 2000
+    task_file_format: "KML"
+    phase: 2                          # KR-034 Senaryo B (uzun vadeli bağımsızlık)
+    notes: >
+      Fixed-wing; termal band dahil en güçlü radyometrik temel.
+      KR-034 Senaryo B'nin ikincil seçeneği; büyük tarım alanları için ideal.
+
+# Geçerli radiometry tipleri
+radiometry_types:
+  relative:
+    description: "Göreli kalibrasyon (Pix4Dfields ile işlenir, KR-018)"
+    calibration_tool: "Pix4Dfields"
+    hard_gate: true  # KR-018: Analiz başlamadan önce kalibrasyon zorunlu
+  absolute:
+    description: "Mutlak reflektans (MicaSense/Sentera/Altum-PT donanım paneli)"
+    calibration_tool: "Pix4Dfields"
+    hard_gate: true
+
+# SOP referansları (BÖLÜM 2)
+sop:
+  task_file_naming: "TA-{mission_id}-{field_id}-{date}"  # PII içermez
+  min_coverage_ratio_full_pay: 0.95     # KR-031
+  min_coverage_ratio_partial: 0.80      # KR-031
+  m1_machine: "Pix4Dfields + kalibrasyon (air-gap, offline)"
+  m2_machine: "mTLS outbound upload (Platform API'ye)"
