@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { COOKIE_TOKEN_KEY, COOKIE_ROLE_KEY } from "@/lib/constants";
 
 interface PilotLayoutProps {
   readonly children: ReactNode;
@@ -14,13 +15,15 @@ const navItems = [
   { href: "/pilot/missions", label: "Görevler" },
   { href: "/planner", label: "Planlayıcı" },
   { href: "/capacity", label: "Kapasite" },
+  { href: "/weather-block", label: "Hava Engeli" },
   { href: "/pilot/settings", label: "Ayarlar" },
+  { href: "/pilot/profile", label: "Profil" },
 ] as const;
 
 export default function PilotLayout({ children }: PilotLayoutProps) {
   const store = cookies();
-  const token = store.get("ta_token")?.value;
-  const role = store.get("ta_role")?.value;
+  const token = store.get(COOKIE_TOKEN_KEY)?.value;
+  const role = store.get(COOKIE_ROLE_KEY)?.value;
 
   if (!token) redirect("/login");
   if (role !== "pilot") redirect("/forbidden");

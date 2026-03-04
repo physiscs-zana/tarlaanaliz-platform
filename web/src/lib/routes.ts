@@ -36,7 +36,9 @@ export const routes = {
   adminHome: '/analytics',
   analytics: '/analytics',
   audit: '/audit',
+  auditViewer: '/audit-viewer',
   pricing: '/pricing',
+  priceManagement: '/price-management',
   adminSla: '/admin/sla',
   users: '/users',
   adminPayments: '/admin/payments',
@@ -44,7 +46,9 @@ export const routes = {
   qc: '/qc',
   apiKeys: '/api-keys',
   experts: '/experts',
+  expertManagement: '/expert-management',
   pilots: '/pilots',
+  dashboard: '/dashboard',
 } as const;
 
 export type AppRoute = (typeof routes)[keyof typeof routes];

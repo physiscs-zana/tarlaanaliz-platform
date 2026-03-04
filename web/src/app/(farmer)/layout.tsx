@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { COOKIE_TOKEN_KEY, COOKIE_ROLE_KEY } from "@/lib/constants";
 
 interface FarmerLayoutProps {
   readonly children: ReactNode;
@@ -16,12 +17,13 @@ const navItems = [
   { href: "/subscriptions", label: "Abonelikler" },
   { href: "/results", label: "Sonuçlar" },
   { href: "/payments", label: "Ödemeler" },
+  { href: "/profile", label: "Profil" },
 ] as const;
 
 export default function FarmerLayout({ children }: FarmerLayoutProps) {
   const cookieStore = cookies();
-  const token = cookieStore.get("ta_token")?.value;
-  const role = cookieStore.get("ta_role")?.value;
+  const token = cookieStore.get(COOKIE_TOKEN_KEY)?.value;
+  const role = cookieStore.get(COOKIE_ROLE_KEY)?.value;
 
   if (!token) {
     redirect("/login");

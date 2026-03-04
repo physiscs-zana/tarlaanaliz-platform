@@ -4,10 +4,11 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { COOKIE_ROLE_KEY } from "@/lib/constants";
 
 export default function HomePage() {
   const store = cookies();
-  const role = store.get("ta_role")?.value;
+  const role = store.get(COOKIE_ROLE_KEY)?.value;
 
   if (role === "admin") redirect("/analytics");
   if (role === "expert") redirect("/queue");

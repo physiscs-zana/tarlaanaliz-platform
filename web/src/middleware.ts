@@ -2,6 +2,7 @@
 /* KR-071: auth + role yönlendirmesi güvenli varsayılanla uygulanır. */
 
 import { NextRequest, NextResponse } from "next/server";
+import { COOKIE_TOKEN_KEY, COOKIE_ROLE_KEY } from "./lib/constants";
 
 const PUBLIC_PATHS = new Set(["/login", "/register", "/", "/api/health", "/forbidden"]);
 const ROLE_PREFIXES: Record<string, readonly string[]> = {
@@ -22,8 +23,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get("ta_token")?.value;
-  const role = request.cookies.get("ta_role")?.value;
+  const token = request.cookies.get(COOKIE_TOKEN_KEY)?.value;
+  const role = request.cookies.get(COOKIE_ROLE_KEY)?.value;
 
   if (!token || !role) {
     return NextResponse.redirect(new URL("/login", request.url));

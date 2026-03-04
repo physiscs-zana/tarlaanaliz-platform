@@ -5,6 +5,7 @@
 import { useCallback, useState } from 'react';
 
 import { setAuthToken, getAuthToken, clearAuthStorage } from '@/lib/authStorage';
+import { AUTH_TOKEN_TTL_MS, COOKIE_TOKEN_KEY, COOKIE_ROLE_KEY } from '@/lib/constants';
 
 export type AuthRole = 'farmer' | 'expert' | 'pilot' | 'admin';
 
@@ -28,8 +29,6 @@ export interface AuthState {
   token: string | null;
   user: AuthUser | null;
 }
-
-const AUTH_TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24 saat
 
 function setCookie(name: string, value: string, maxAgeSec: number): void {
   if (typeof document !== 'undefined') {
@@ -67,8 +66,8 @@ export function useAuth() {
 
     // Middleware ta_token ve ta_role cookie'lerini okur
     const maxAgeSec = Math.floor(AUTH_TOKEN_TTL_MS / 1000);
-    setCookie('ta_token', data.access_token, maxAgeSec);
-    setCookie('ta_role', data.user.role, maxAgeSec);
+    setCookie(COOKIE_TOKEN_KEY, data.access_token, maxAgeSec);
+    setCookie(COOKIE_ROLE_KEY, data.user.role, maxAgeSec);
 
     setState({ token: data.access_token, user: data.user });
     return data;
@@ -76,8 +75,8 @@ export function useAuth() {
 
   const logout = useCallback(() => {
     clearAuthStorage();
-    clearCookie('ta_token');
-    clearCookie('ta_role');
+    clearCookie(COOKIE_TOKEN_KEY);
+    clearCookie(COOKIE_ROLE_KEY);
     setState({ token: null, user: null });
   }, []);
 

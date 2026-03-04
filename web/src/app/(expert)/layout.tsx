@@ -5,6 +5,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import { COOKIE_TOKEN_KEY, COOKIE_ROLE_KEY } from "@/lib/constants";
 
 interface ExpertLayoutProps {
   readonly children: ReactNode;
@@ -12,8 +13,8 @@ interface ExpertLayoutProps {
 
 export default function ExpertLayout({ children }: ExpertLayoutProps) {
   const cookieStore = cookies();
-  const token = cookieStore.get("ta_token")?.value;
-  const role = cookieStore.get("ta_role")?.value;
+  const token = cookieStore.get(COOKIE_TOKEN_KEY)?.value;
+  const role = cookieStore.get(COOKIE_ROLE_KEY)?.value;
 
   if (!token) {
     redirect("/login");
@@ -35,6 +36,12 @@ export default function ExpertLayout({ children }: ExpertLayoutProps) {
           </Link>
           <Link href="/expert/profile" className="rounded px-2 py-1 text-sm hover:bg-slate-100">
             Profil
+          </Link>
+          <Link href="/expert/settings" className="rounded px-2 py-1 text-sm hover:bg-slate-100">
+            Ayarlar
+          </Link>
+          <Link href="/expert/sla" className="rounded px-2 py-1 text-sm hover:bg-slate-100">
+            SLA
           </Link>
         </nav>
       </header>
