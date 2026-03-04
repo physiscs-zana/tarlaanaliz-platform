@@ -16,7 +16,7 @@ import hashlib
 import json
 import logging
 import math
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -128,7 +128,7 @@ class GridAnonymizerMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         corr_id, _ = ensure_request_context(request)
 
-        response = await call_next(request)
+        response = cast(Response, await call_next(request))
 
         # Yalnizca JSON response'lari filtrele
         content_type = response.headers.get("content-type", "")

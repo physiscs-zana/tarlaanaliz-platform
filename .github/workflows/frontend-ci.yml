@@ -338,7 +338,7 @@ jobs:
         env:
           PLAYWRIGHT_BROWSER: ${{ matrix.browser }}
           PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
-        run: pnpm run test:e2e --project=${{ matrix.browser }}
+        run: pnpm run test:e2e -- --project=${{ matrix.browser }}
 
       - name: Upload test results
         if: always()

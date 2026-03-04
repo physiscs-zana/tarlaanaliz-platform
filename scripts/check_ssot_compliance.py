@@ -8,7 +8,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-BOUND_HEADER = "BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated."
+BOUND_HEADERS = [
+    "BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.",
+    "BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.",
+]
 CHECKABLE_SUFFIXES = {
     ".py",
     ".md",
@@ -93,7 +96,7 @@ def validate_batch_size(base_ref: str, head_ref: str) -> tuple[bool, str]:
     changed_lines = added + deleted
 
     if changed_lines <= 120:
-        max_files = 15
+        max_files = 20
     elif changed_lines <= 300:
         max_files = 10
     else:

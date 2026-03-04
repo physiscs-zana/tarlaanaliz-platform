@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -99,7 +99,7 @@ class PIIFilterMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         corr_id, _ = ensure_request_context(request)
 
-        response = await call_next(request)
+        response = cast(Response, await call_next(request))
 
         # Yalnizca JSON response'lari filtrele
         content_type = response.headers.get("content-type", "")

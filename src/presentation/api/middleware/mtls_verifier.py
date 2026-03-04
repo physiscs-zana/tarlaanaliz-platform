@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -96,7 +96,7 @@ class MTLSVerifierMiddleware(BaseHTTPMiddleware):
 
         # Bypass: health/docs/auth
         if any(path.startswith(bp) for bp in _BYPASS_PATHS):
-            response = await call_next(request)
+            response = cast(Response, await call_next(request))
             response.headers["X-Correlation-Id"] = corr_id
             return response
 
@@ -104,7 +104,7 @@ class MTLSVerifierMiddleware(BaseHTTPMiddleware):
         requires_mtls = any(path.startswith(p) for p in _MTLS_REQUIRED_PATHS)
 
         if not requires_mtls:
-            response = await call_next(request)
+            response = cast(Response, await call_next(request))
             response.headers["X-Correlation-Id"] = corr_id
             return response
 
@@ -141,7 +141,7 @@ class MTLSVerifierMiddleware(BaseHTTPMiddleware):
         request.state.mtls_verified = True
         request.state.client_cert_dn = request.headers.get(_DN_HEADER, "")
 
-        response = await call_next(request)
+        response = cast(Response, await call_next(request))
         response.headers["X-Correlation-Id"] = corr_id
         return response
 
