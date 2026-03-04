@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 
 import { getReviewDetail } from "@/features/expert-portal/services/expertReviewService";
 import type { ExpertReviewDetail } from "@/features/expert-portal/types";
+import { COOKIE_TOKEN_KEY } from "@/lib/constants";
 import { cookies } from "next/headers";
 
 interface ReviewPageParams {
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
 
 export default async function ExpertReviewDetailPage({ params }: ReviewPageProps) {
   const reviewId = params.reviewId;
-  const token = cookies().get("ta_token")?.value ?? "";
+  const token = cookies().get(COOKIE_TOKEN_KEY)?.value ?? "";
 
   let review: ExpertReviewDetail | null = null;
   try {
