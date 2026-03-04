@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # KR-063: RBAC yetki matrisi; KR-017: Pilot sonuc raporunu GORMEZ.
 """RBAC negative boundary tests.
 

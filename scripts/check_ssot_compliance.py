@@ -78,7 +78,7 @@ def should_check(path: Path) -> bool:
 
 def has_bound_header(path: Path) -> bool:
     top_lines = path.read_text(encoding="utf-8").splitlines()[:5]
-    return any(BOUND_HEADER in line for line in top_lines)
+    return any(header in line for line in top_lines for header in BOUND_HEADERS)
 
 
 def has_kr_reference(path: Path) -> bool:
