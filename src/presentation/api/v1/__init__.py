@@ -1,4 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-081: API v1 router exports.
 """API v1 router exports — all routers consolidated under endpoints/."""
 
 from src.presentation.api.v1.endpoints import (

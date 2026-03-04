@@ -1,5 +1,5 @@
-# PATH: src/infrastructure/__init__.py
-# DESC: Infrastructure layer: adapter/implementation package.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-081: Infrastructure layer — adapter/implementation package.
 """Infrastructure layer public API.
 
 Alt paketler:
