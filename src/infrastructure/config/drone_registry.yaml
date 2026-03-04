@@ -2,6 +2,11 @@
 # KR-034 (v1.2.0): Aktif Operasyon Plani, KR-030 (Drone spesifikasyonlari)
 # drone_registry.yaml: Onayli drone + sensor kombinasyonlari
 #
+# NOT: Bu dosya aktif olarak kullanilmiyor. Canonical kaynak config/drone_registry.yaml'dir.
+# DroneRegistryLoader (src/infrastructure/external/drone_registry_loader.py)
+# yalnizca config/drone_registry.yaml dosyasini yukler.
+# Bu kopya referans amacli korunmaktadir.
+#
 # KR-034 v1.2.0 senaryolari (aktif operasyon plani):
 #   Senaryo A (hizli pivot): Parrot Sequoia+ veya MicaSense RedEdge-P + RTK multirotor
 #   Senaryo B (uzun vadeli): WingtraOne Gen II veya AgEagle eBee X (fixed-wing)
