@@ -9,7 +9,6 @@ import sys
 from pathlib import Path
 
 BOUND_HEADERS = [
-    "BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.",
     "BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.",
 ]
 CHECKABLE_SUFFIXES = {
@@ -22,7 +21,7 @@ CHECKABLE_SUFFIXES = {
     ".json",
 }
 KR_CHECK_SUFFIXES = {".py", ".md", ".yml", ".yaml", ".sh", ".txt"}
-ALLOWED_ROOTS = {"src", "tests", "scripts", ".github"}
+ALLOWED_ROOTS = {"src", "tests", "scripts", ".github", "config", "docs"}
 
 
 def git_changed_files(base_ref: str, head_ref: str) -> list[Path]:

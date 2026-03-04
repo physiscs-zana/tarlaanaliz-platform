@@ -424,6 +424,15 @@ components:
           enum: [calibrated, failed]
         qc_evidence_ref:
           type: string
+        available_bands:
+          type: array
+          items:
+            type: string
+          description: "KR-018 v1.2.0: Mevcut bantlar (green, red, red_edge, nir, blue, thermal)"
+        band_class:
+          type: string
+          enum: [BASIC_4BAND, EXTENDED_5BAND]
+          description: "ADR-002: Bant sinifi (available_bands'den turetilir)"
     QCReport:
       type: object
       required: [report_id, mission_id, result, reviewed_at]
@@ -440,6 +449,14 @@ components:
           format: date-time
         reviewer_subject_id:
           type: string
+        band_class:
+          type: string
+          enum: [BASIC_4BAND, EXTENDED_5BAND]
+          description: "v1.2.0: Bant sinifi"
+        report_tier:
+          type: string
+          enum: [TEMEL, GENISLETILMIS, KAPSAMLI]
+          description: "v1.2.0: Rapor derinlik katmani"
     SLASummary:
       type: object
       required: [period_start, period_end, breach_count]
@@ -470,6 +487,69 @@ components:
           enum: [open, mitigated, closed]
         correlation_id:
           type: string
+    DatasetIngestRequest:
+      type: object
+      required: [mission_id, available_bands]
+      description: "v1.2.0: Dataset ingest istegi, available_bands zorunlu (KR-018)"
+      properties:
+        mission_id:
+          type: string
+        available_bands:
+          type: array
+          items:
+            type: string
+          minItems: 4
+          description: "Minimum 4 bant: green, red, red_edge, nir (KR-018 hard gate)"
+        drone_model_id:
+          type: string
+          description: "Onayli drone model ID (drone_registry.yaml'da kayitli)"
+    AnalysisResult:
+      type: object
+      required: [result_id, analysis_job_id, confidence_score, report_tier, band_class]
+      description: "v1.2.0: Analiz sonucu, graceful degradation destekli (ADR-002)"
+      properties:
+        result_id:
+          type: string
+        analysis_job_id:
+          type: string
+        confidence_score:
+          type: number
+          format: double
+        report_tier:
+          type: string
+          enum: [TEMEL, GENISLETILMIS, KAPSAMLI]
+          description: "Rapor derinlik katmani (bant sinifina gore belirlenir)"
+        band_class:
+          type: string
+          enum: [BASIC_4BAND, EXTENDED_5BAND]
+        available_layers:
+          type: array
+          items:
+            type: string
+          description: "Uretilen harita katmanlari (KR-064: THERMAL_STRESS dahil)"
+        thermal_summary:
+          $ref: '#/components/schemas/ThermalSummary'
+    ThermalSummary:
+      type: object
+      nullable: true
+      description: "v1.2.0 KR-084: Termal analiz ozeti (yalnizca thermal bant mevcutsa)"
+      properties:
+        cwsi:
+          type: number
+          format: double
+          description: "Crop Water Stress Index (0.0=stressiz, 1.0=tam stres)"
+        canopy_temp:
+          type: number
+          format: double
+          description: "Kanopi sicakligi (Celsius)"
+        canopy_soil_delta_t:
+          type: number
+          format: double
+          description: "Kanopi-toprak sicaklik farki (Celsius)"
+        irrigation_efficiency:
+          type: number
+          format: double
+          description: "Sulama verimlilik skoru (0.0-1.0)"
     ErrorResponse:
       type: object
       required: [code, message, correlation_id]
