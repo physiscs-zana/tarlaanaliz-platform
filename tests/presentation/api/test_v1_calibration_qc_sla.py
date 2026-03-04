@@ -1,4 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-041: SDLC gate tests for calibration, QC, and SLA endpoints.
 from __future__ import annotations
 
 from datetime import datetime, timezone
