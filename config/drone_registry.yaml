@@ -1,18 +1,20 @@
 # =============================================================================
 # config/drone_registry.yaml
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # Amac: KR-030 Drone standardlari ve sensor band uyumluluk kaydi.
 # Sorumluluk: Desteklenen drone modelleri, sensor bandlari ve kalibrasyon
-#             gereksinimleri. Tüm modeller bu dosyada kayitli olmalidir.
+#             gereksinimleri. Tum modeller bu dosyada kayitli olmalidir.
 # SSOT Referans: KR-001, KR-030, KR-034
+# KR-034 (v1.2.0): Artik "risk plani" degil, "aktif operasyon plani".
 # =============================================================================
 
-version: "1.0.0"
+version: "1.2.0"
 
 # ---------------------------------------------------------------------------
 # Desteklenen Drone/Sensor Kombinasyonlari
-# KR-001: Drone-agnostik mimari; tüm modeller drone_registry.yaml'a kayitli
+# KR-001: Drone-agnostik mimari; tum modeller drone_registry.yaml'a kayitli
 #         olmalidir.
-# KR-034: DJI risk plani; alternatif markalar Senaryo A/B icin hazir.
+# KR-034 v1.2.0: Aktif operasyon plani; 5-band sensorler sisteme entegre.
 # ---------------------------------------------------------------------------
 models:
   # ---- Birincil / Onerilen (Faz 1) ----
@@ -20,11 +22,13 @@ models:
     manufacturer: DJI
     model: "Mavic 3 Multispectral"
     sensor: integrated_multispectral
+    band_class: BASIC_4BAND  # v1.2.0
     bands:
       - green
       - red
       - red_edge
       - nir
+    red_edge_wavelength_nm: 730.0  # v1.2.0: Sentinel-2 Band 6 bolgesi
     min_gsd_cm: 5.0
     radiometry_type: relative
     calibration_notes: >
@@ -35,68 +39,12 @@ models:
     phase: 1
     status: active
 
-  # ---- Faz 2+ Alternatif Modeller (KR-034 Senaryo A/B) ----
+  # ---- Faz 2+ Alternatif Modeller (KR-034 Aktif Operasyon Plani) ----
   - id: dji_m350_rtk_sentera_6x
     manufacturer: DJI
     model: "Matrice 350 RTK"
     sensor: "Sentera 6X"
-    bands:
-      - blue
-      - green
-      - red
-      - red_edge
-      - nir
-      - nir2
-    min_gsd_cm: 3.0
-    radiometry_type: absolute
-    calibration_notes: >
-      Sentera 6X tam radyometrik kalibrasyon destekler.
-      6 bant ile detayli vejetasyon analizi mumkun.
-    pix4d_template: dji_m350_sentera_6x
-    phase: 2
-    status: planned
-
-  - id: wingtraone_gen2_micasense_rededge_p
-    manufacturer: WingtraOne
-    model: "Gen II"
-    sensor: "MicaSense RedEdge-P"
-    bands:
-      - blue
-      - green
-      - red
-      - red_edge
-      - nir
-    min_gsd_cm: 2.9
-    radiometry_type: absolute
-    calibration_notes: >
-      MicaSense raw -> radiance -> reflectance modeli;
-      mutlak radyometrik tutarlilik icin en guclu zemin.
-    pix4d_template: wingtra_micasense_rededge_p
-    phase: 2
-    status: planned
-
-  - id: parrot_anafi_usa_sequoia_plus
-    manufacturer: Parrot
-    model: "Anafi USA"
-    sensor: "Sequoia+"
-    bands:
-      - green
-      - red
-      - red_edge
-      - nir
-    min_gsd_cm: 10.0
-    radiometry_type: absolute
-    calibration_notes: >
-      Sequoia+ tam radyometrik kalibrasyon saglar.
-      Hizli gecis senaryosu icin uygun (KR-034 Senaryo A).
-    pix4d_template: parrot_anafi_sequoia_plus
-    phase: 2
-    status: planned
-
-  - id: ageagle_ebee_x_altum_pt
-    manufacturer: AgEagle
-    model: "eBee X"
-    sensor: "MicaSense Altum-PT"
+    band_class: EXTENDED_5BAND  # v1.2.0
     bands:
       - blue
       - green
@@ -104,6 +52,72 @@ models:
       - red_edge
       - nir
       - thermal
+    red_edge_wavelength_nm: 717.0  # v1.2.0: Sentera, Sentinel-2 Band 5 bolgesi
+    thermal_sensor: "Sentera 6X Thermal"  # v1.2.0
+    min_gsd_cm: 3.0
+    radiometry_type: absolute
+    calibration_notes: >
+      Sentera 6X tam radyometrik kalibrasyon destekler.
+      5 bant + termal ile kapsamli vejetasyon + sulama analizi mumkun.
+    pix4d_template: dji_m350_sentera_6x
+    phase: 2
+    status: active  # v1.2.0: planned -> active (aktif operasyon plani)
+
+  - id: wingtraone_gen2_micasense_rededge_p
+    manufacturer: WingtraOne
+    model: "Gen II"
+    sensor: "MicaSense RedEdge-P"
+    band_class: EXTENDED_5BAND  # v1.2.0
+    bands:
+      - blue
+      - green
+      - red
+      - red_edge
+      - nir
+    red_edge_wavelength_nm: 715.0  # v1.2.0: MicaSense, Sentinel-2 Band 5 bolgesi
+    min_gsd_cm: 2.9
+    radiometry_type: absolute
+    calibration_notes: >
+      MicaSense raw -> radiance -> reflectance modeli;
+      mutlak radyometrik tutarlilik icin en guclu zemin.
+    pix4d_template: wingtra_micasense_rededge_p
+    phase: 2
+    status: active  # v1.2.0: planned -> active
+
+  - id: parrot_anafi_usa_sequoia_plus
+    manufacturer: Parrot
+    model: "Anafi USA"
+    sensor: "Sequoia+"
+    band_class: BASIC_4BAND  # v1.2.0
+    bands:
+      - green
+      - red
+      - red_edge
+      - nir
+    red_edge_wavelength_nm: 735.0  # v1.2.0
+    min_gsd_cm: 10.0
+    radiometry_type: absolute
+    calibration_notes: >
+      Sequoia+ tam radyometrik kalibrasyon saglar.
+      Hizli gecis senaryosu icin uygun (KR-034 Senaryo A).
+    pix4d_template: parrot_anafi_sequoia_plus
+    phase: 2
+    status: active  # v1.2.0: planned -> active
+
+  - id: ageagle_ebee_x_altum_pt
+    manufacturer: AgEagle
+    model: "eBee X"
+    sensor: "MicaSense Altum-PT"
+    band_class: EXTENDED_5BAND  # v1.2.0
+    bands:
+      - blue
+      - green
+      - red
+      - red_edge
+      - nir
+      - thermal
+    red_edge_wavelength_nm: 717.0  # v1.2.0: Altum-PT, Sentinel-2 Band 5 bolgesi
+    thermal_sensor: "MicaSense Altum-PT LWIR"  # v1.2.0
     min_gsd_cm: 2.4
     radiometry_type: absolute
     calibration_notes: >
@@ -111,18 +125,20 @@ models:
       Fixed-wing, 100k+ donum/gun icin ideal (KR-034 Senaryo B).
     pix4d_template: ageagle_ebee_altum_pt
     phase: 2
-    status: planned
+    status: active  # v1.2.0: planned -> active
 
 # ---------------------------------------------------------------------------
 # Band Gereksinimleri (KR-018)
 # ---------------------------------------------------------------------------
 band_requirements:
-  # Analiz icin minimum gerekli bandlar
   minimum_bands:
     - green
     - red
     - red_edge
     - nir
+  # v1.2.0: 5+ band opsiyonel, termal opsiyonel
+  extended_optional_bands:
+    - blue
   thermal_optional: true
 
 # ---------------------------------------------------------------------------
@@ -130,7 +146,7 @@ band_requirements:
 # ---------------------------------------------------------------------------
 calibration_software:
   name: Pix4Dfields
-  supported_models: all  # Tum kayitli markalar desteklenir
+  supported_models: all
   output_format: GeoTIFF
   notes: >
     Pix4Dfields drone-agnostik calisir. Her drone/sensor kombinasyonu icin

@@ -41,6 +41,7 @@ class CalibrationManifest:
     calibrated_at: datetime
     calibration_tool: str
     file_entries: tuple[CalibrationFileEntry, ...]
+    available_bands: tuple[str, ...] = ()  # KR-018 v1.2.0: intake_manifest.available_bands[]
     flags: tuple[str, ...] = ()
     recommended_action: str | None = None
     notes: str | None = None
@@ -108,6 +109,7 @@ class CalibrationManifest:
             "recommended_action": self.recommended_action,
             "notes": self.notes,
             "allows_analysis": self.allows_analysis,
+            "available_bands": list(self.available_bands),
         }
 
     def __repr__(self) -> str:

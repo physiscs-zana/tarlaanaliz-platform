@@ -3,6 +3,16 @@
 """Domain Value Objects public API."""
 
 from src.core.domain.value_objects.money import CurrencyCode, Money
+from src.core.domain.value_objects.spectral_tier import (
+    BandClass,
+    ReportTier,
+    SpectralTier,
+    classify_bands,
+    derive_available_indices,
+    derive_enabled_pipelines,
+    determine_report_tier,
+    has_thermal_capability,
+)
 from src.core.domain.value_objects.parcel_ref import ParcelRef
 from src.core.domain.value_objects.payment_status import (
     PaymentStatus,
@@ -51,6 +61,15 @@ from src.core.domain.value_objects.weather_block_status import (
 )
 
 __all__: list[str] = [
+    # spectral_tier (v1.2.0)
+    "BandClass",
+    "ReportTier",
+    "SpectralTier",
+    "classify_bands",
+    "derive_available_indices",
+    "derive_enabled_pipelines",
+    "determine_report_tier",
+    "has_thermal_capability",
     # money
     "CurrencyCode",
     "Money",

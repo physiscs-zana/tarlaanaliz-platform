@@ -23,6 +23,8 @@ class AnalysisResult:
     * KR-081   -- Contract-first AnalysisResult JSON Schema.
     * KR-025   -- Rapor ciktisi: health score, su/azot stresi, hastalik, zararli, yabanci ot.
     * KR-001   -- YZ sadece analiz yapar; ilaclama/gubreleme karari VERMEZ.
+    * KR-023 v1.2.0 -- Katmanli rapor: TEMEL / GENISLETILMIS / KAPSAMLI.
+    * KR-084 v1.2.0 -- Termal analiz sonuclari (opsiyonel).
 
     summary alani: 'YZ analizidir; ilaclama karari vermez.' uyarisini icerir.
     """
@@ -35,6 +37,12 @@ class AnalysisResult:
     findings: Union[Dict[str, Any], List[Any]]  # JSONB
     summary: str  # YZ analizidir, ilaclama karari vermez
     created_at: datetime
+    # KR-023 v1.2.0: Katmanli rapor + Graceful Degradation
+    report_tier: str = "TEMEL"  # TEMEL | GENISLETILMIS | KAPSAMLI
+    band_class: str = ""  # BASIC_4BAND | EXTENDED_5BAND
+    available_layers: tuple[str, ...] = ()  # uretilen katman kodlari
+    # KR-084 v1.2.0: Termal analiz sonuclari (yalnizca LWIR/THERMAL band varsa)
+    thermal_summary: Union[Dict[str, Any], None] = None  # cwsi, canopy_temp, delta_t, irrigation_efficiency
 
     # ------------------------------------------------------------------
     # Invariants

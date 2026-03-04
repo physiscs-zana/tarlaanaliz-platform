@@ -22,6 +22,7 @@ class AnalysisRequested(DomainEvent):
     field_id: uuid.UUID = field(default_factory=uuid.uuid4)
     crop_type: str = ""
     requires_calibrated: bool = True  # KR-018: hard gate
+    available_bands: tuple[str, ...] = ()  # KR-018 v1.2.0
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
@@ -30,6 +31,7 @@ class AnalysisRequested(DomainEvent):
             "field_id": str(self.field_id),
             "crop_type": self.crop_type,
             "requires_calibrated": self.requires_calibrated,
+            "available_bands": list(self.available_bands),
         })
         return base
 
@@ -40,12 +42,14 @@ class AnalysisStarted(DomainEvent):
 
     analysis_job_id: uuid.UUID = field(default_factory=uuid.uuid4)
     mission_id: uuid.UUID = field(default_factory=uuid.uuid4)
+    band_class: str = ""  # KR-018 v1.2.0: BASIC_4BAND | EXTENDED_5BAND
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
         base.update({
             "analysis_job_id": str(self.analysis_job_id),
             "mission_id": str(self.mission_id),
+            "band_class": self.band_class,
         })
         return base
 
@@ -58,6 +62,8 @@ class AnalysisCompleted(DomainEvent):
     mission_id: uuid.UUID = field(default_factory=uuid.uuid4)
     field_id: uuid.UUID = field(default_factory=uuid.uuid4)
     confidence_score: float = 0.0
+    band_class: str = ""  # KR-018 v1.2.0
+    report_tier: str = ""  # KR-023 v1.2.0: TEMEL | GENISLETILMIS | KAPSAMLI
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
@@ -66,6 +72,8 @@ class AnalysisCompleted(DomainEvent):
             "mission_id": str(self.mission_id),
             "field_id": str(self.field_id),
             "confidence_score": self.confidence_score,
+            "band_class": self.band_class,
+            "report_tier": self.report_tier,
         })
         return base
 

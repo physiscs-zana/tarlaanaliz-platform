@@ -1,79 +1,44 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
-# TARLAANALIZ_SSOT_v1_1_0.txt — KR-034 (DJI Bağımsızlık Planı), KR-030 (Drone spesifikasyonları)
-# drone_registry.yaml: Onaylı drone + sensör kombinasyonları
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-034 (v1.2.0): Aktif Operasyon Plani, KR-030 (Drone spesifikasyonlari)
+# drone_registry.yaml: Onayli drone + sensor kombinasyonlari
 #
-# KR-034 senaryoları:
-#   Senaryo A (hızlı pivot): Parrot Sequoia+ veya MicaSense RedEdge-P + RTK multirotor
+# KR-034 v1.2.0 senaryolari (aktif operasyon plani):
+#   Senaryo A (hizli pivot): Parrot Sequoia+ veya MicaSense RedEdge-P + RTK multirotor
 #   Senaryo B (uzun vadeli): WingtraOne Gen II veya AgEagle eBee X (fixed-wing)
 #
-# Tüm modeller KR-017, KR-070–073 kurallarına tabidir.
-# Bu dosya değiştiğinde drone_model VO ve pilot kayıt servisi de güncellenir.
+# Tum modeller KR-017, KR-070-073 kurallarina tabidir.
+# Bu dosya degistiginde drone_model VO ve pilot kayit servisi de guncellenir.
 
-version: "1.1.0"
-ssot_ref: "KR-034"
+version: "1.2.0"
+ssot_ref: "KR-034, KR-018, KR-082"
 
 drones:
   - model_id: "DJI_MAVIC_3M"
     manufacturer: "DJI"
     model_name: "Mavic 3 Multispectral"
     sensor: "Integrated Multispectral + RGB"
-    radiometry_type: "relative"       # Pix4Dfields relative calibration
+    radiometry_type: "relative"
+    band_class: "BASIC_4BAND"               # v1.2.0
     bands:
-      - blue
       - green
       - red
       - red_edge
       - nir
+    red_edge_wavelength_nm: 730.0           # v1.2.0: Sentinel-2 Band 6
     min_gsd_cm: 5.0
     max_coverage_donum_per_flight: 400
-    task_file_format: "WPML"          # DJI Pilot 2 import
-    phase: 1                          # Birincil/önerilen model
+    task_file_format: "WPML"
+    phase: 1
     notes: >
       Birincil drone modeli. Relative radyometri; Pix4Dfields kalibrasyonu zorunlu (KR-018).
-      DJI tedarik riski nedeniyle KR-034 Senaryo A/B alternatifleri hazır tutulmalıdır.
+      4-band: NDVI, NDRE, GNDVI. Red edge ~730nm.
 
-  - model_id: "WINGTRAONE_GEN2"
-    manufacturer: "Wingtra"
-    model_name: "WingtraOne Gen II"
-    sensor: "MicaSense RedEdge-P"
-    radiometry_type: "absolute"       # MicaSense absolute reflectance
-    bands:
-      - blue
-      - green
-      - red
-      - red_edge
-      - nir
-    min_gsd_cm: 2.0
-    max_coverage_donum_per_flight: 1500
-    task_file_format: "KML"
-    phase: 2                          # KR-034 Senaryo B (uzun vadeli bağımsızlık)
-    notes: >
-      Fixed-wing; geniş alan, uçuş başına yüksek kapsama. Mutlak radyometri temeli.
-      KR-034 Senaryo B kapsamında DJI bağımsızlık planının uzun vadeli çözümü.
-
-  - model_id: "PARROT_SEQUOIA_PLUS"
-    manufacturer: "Parrot"
-    model_name: "ANAFI USA + Sequoia+"
-    sensor: "Parrot Sequoia+"
+  - model_id: "DJI_M350_RTK_SENTERA_6X"
+    manufacturer: "DJI"
+    model_name: "Matrice 350 RTK"
+    sensor: "Sentera 6X"
     radiometry_type: "absolute"
-    bands:
-      - green
-      - red
-      - red_edge
-      - nir
-    min_gsd_cm: 4.0
-    max_coverage_donum_per_flight: 600
-    task_file_format: "KML"
-    phase: 2                          # KR-034 Senaryo A (hızlı pivot)
-    notes: >
-      KR-034 Senaryo A: DJI tedarik kesintisinde hızlı geçiş alternatifi.
-      Rutin bakım sürdürülebilir; tam radyometrik kalibrasyon destekli.
-
-  - model_id: "AGEAGLE_EBEE_X"
-    manufacturer: "AgEagle"
-    model_name: "eBee X"
-    sensor: "senseFly Altum-PT"
-    radiometry_type: "absolute"
+    band_class: "EXTENDED_5BAND"            # v1.2.0
     bands:
       - blue
       - green
@@ -81,29 +46,95 @@ drones:
       - red_edge
       - nir
       - thermal
+    red_edge_wavelength_nm: 717.0           # v1.2.0: Sentinel-2 Band 5
+    thermal_sensor: "Sentera 6X Thermal"    # v1.2.0
+    min_gsd_cm: 3.0
+    max_coverage_donum_per_flight: 800
+    task_file_format: "WPML"
+    phase: 2
+    notes: >
+      5-band + termal. Mutlak radyometri. KR-034 aktif operasyon plani.
+      EVI, SAVI, chlorophyll-a + CWSI, canopy temp (KR-084).
+
+  - model_id: "WINGTRAONE_GEN2"
+    manufacturer: "Wingtra"
+    model_name: "WingtraOne Gen II"
+    sensor: "MicaSense RedEdge-P"
+    radiometry_type: "absolute"
+    band_class: "EXTENDED_5BAND"            # v1.2.0
+    bands:
+      - blue
+      - green
+      - red
+      - red_edge
+      - nir
+    red_edge_wavelength_nm: 715.0           # v1.2.0: Sentinel-2 Band 5
+    min_gsd_cm: 2.0
+    max_coverage_donum_per_flight: 1500
+    task_file_format: "KML"
+    phase: 2
+    notes: >
+      Fixed-wing; genis alan, ucus basina yuksek kapsama. Mutlak radyometri temeli.
+      KR-034 Senaryo B kapsaminda DJI bagimsizlik planinin uzun vadeli cozumu.
+
+  - model_id: "PARROT_SEQUOIA_PLUS"
+    manufacturer: "Parrot"
+    model_name: "ANAFI USA + Sequoia+"
+    sensor: "Parrot Sequoia+"
+    radiometry_type: "absolute"
+    band_class: "BASIC_4BAND"               # v1.2.0
+    bands:
+      - green
+      - red
+      - red_edge
+      - nir
+    red_edge_wavelength_nm: 735.0           # v1.2.0
+    min_gsd_cm: 4.0
+    max_coverage_donum_per_flight: 600
+    task_file_format: "KML"
+    phase: 2
+    notes: >
+      KR-034 Senaryo A: DJI tedarik kesintisinde hizli gecis alternatifi.
+      Rutin bakim surdurulebilir; tam radyometrik kalibrasyon destekli.
+
+  - model_id: "AGEAGLE_EBEE_X"
+    manufacturer: "AgEagle"
+    model_name: "eBee X"
+    sensor: "senseFly Altum-PT"
+    radiometry_type: "absolute"
+    band_class: "EXTENDED_5BAND"            # v1.2.0
+    bands:
+      - blue
+      - green
+      - red
+      - red_edge
+      - nir
+      - thermal
+    red_edge_wavelength_nm: 717.0           # v1.2.0: Sentinel-2 Band 5
+    thermal_sensor: "MicaSense Altum-PT LWIR"  # v1.2.0
     min_gsd_cm: 2.5
     max_coverage_donum_per_flight: 2000
     task_file_format: "KML"
-    phase: 2                          # KR-034 Senaryo B (uzun vadeli bağımsızlık)
+    phase: 2
     notes: >
-      Fixed-wing; termal band dahil en güçlü radyometrik temel.
-      KR-034 Senaryo B'nin ikincil seçeneği; büyük tarım alanları için ideal.
+      Fixed-wing; termal band dahil en guclu radyometrik temel.
+      KR-034 Senaryo B'nin ikincil secenegi; buyuk tarim alanlari icin ideal.
 
-# Geçerli radiometry tipleri
+# Gecerli radiometry tipleri
 radiometry_types:
   relative:
-    description: "Göreli kalibrasyon (Pix4Dfields ile işlenir, KR-018)"
+    description: "Goreli kalibrasyon (Pix4Dfields ile islenir, KR-018)"
     calibration_tool: "Pix4Dfields"
-    hard_gate: true  # KR-018: Analiz başlamadan önce kalibrasyon zorunlu
+    hard_gate: true
   absolute:
-    description: "Mutlak reflektans (MicaSense/Sentera/Altum-PT donanım paneli)"
+    description: "Mutlak reflektans (MicaSense/Sentera/Altum-PT donanim paneli)"
     calibration_tool: "Pix4Dfields"
     hard_gate: true
 
-# SOP referansları (BÖLÜM 2)
+# SOP referanslari (BOLUM 2)
 sop:
-  task_file_naming: "TA-{mission_id}-{field_id}-{date}"  # PII içermez
-  min_coverage_ratio_full_pay: 0.95     # KR-031
-  min_coverage_ratio_partial: 0.80      # KR-031
+  task_file_naming: "TA-{mission_id}-{field_id}-{date}"
+  min_coverage_ratio_full_pay: 0.95
+  min_coverage_ratio_partial: 0.80
   m1_machine: "Pix4Dfields + kalibrasyon (air-gap, offline)"
   m2_machine: "mTLS outbound upload (Platform API'ye)"

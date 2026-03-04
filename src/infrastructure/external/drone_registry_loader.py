@@ -125,4 +125,5 @@ class DroneRegistryLoader:
             min_gsd_cm=float(entry["min_gsd_cm"]),
             radiometry_type=entry.get("radiometry_type", "relative"),
             phase=int(entry.get("phase", 1)),
+            red_edge_wavelength_nm=float(entry.get("red_edge_wavelength_nm", 0.0)),
         )

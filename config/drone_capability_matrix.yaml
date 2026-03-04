@@ -1,0 +1,175 @@
+# =============================================================================
+# config/drone_capability_matrix.yaml
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# Amac: KR-018/KR-082 Spectral Capability Detection — drone bazli band sinifi,
+#       kullanilabilir indeksler, termal sensor bilgisi ve NDRE duzeltme ofsetleri.
+# ADR-002: Graceful Degradation modeli (v1.2.0).
+# =============================================================================
+
+version: "1.2.0"
+ssot_ref: "KR-018, KR-082, KR-084, ADR-002"
+
+# ---------------------------------------------------------------------------
+# Band Sinifi Tanimlari
+# BASIC_4BAND   : green, red, red_edge, nir → NDVI, NDRE, GNDVI
+# EXTENDED_5BAND: + blue → EVI, SAVI, chlorophyll-a (Sentinel-2 uyumlu)
+# THERMAL       : + LWIR → CWSI, canopy temp, irrigation stress (KR-084)
+# ---------------------------------------------------------------------------
+
+capabilities:
+
+  - drone_type: "DJI_MAVIC_3M"
+    band_class: "BASIC_4BAND"
+    available_bands:
+      - green
+      - red
+      - red_edge
+      - nir
+    available_indices:
+      - NDVI
+      - NDRE
+      - GNDVI
+    red_edge_wavelength_nm: 730.0
+    ndre_correction_offset: 0.0  # referans model, ofset yok
+    thermal_sensor: null
+    report_tier: "TEMEL"
+    pipelines:
+      - core_multispectral
+    notes: >
+      Birincil model. Red edge ~730nm (Sentinel-2 Band 6 bolgesi).
+      Goreli radyometri; Pix4Dfields kalibrasyonu zorunlu (KR-018).
+
+  - drone_type: "DJI_M350_RTK_SENTERA_6X"
+    band_class: "EXTENDED_5BAND"
+    available_bands:
+      - blue
+      - green
+      - red
+      - red_edge
+      - nir
+      - thermal
+    available_indices:
+      - NDVI
+      - NDRE
+      - GNDVI
+      - EVI
+      - SAVI
+      - CHLOROPHYLL_A
+      - CWSI
+      - CANOPY_TEMP
+      - CANOPY_SOIL_DELTA_T
+    red_edge_wavelength_nm: 717.0
+    ndre_correction_offset: -0.03  # 730nm referansa gore duzeltme
+    thermal_sensor: "Sentera 6X Thermal"
+    report_tier: "KAPSAMLI"
+    pipelines:
+      - core_multispectral
+      - extended_multispectral
+      - thermal_analysis
+    notes: >
+      5-band + termal. Red edge ~717nm (Sentinel-2 Band 5 bolgesi).
+      Mutlak radyometri. DJI M350 RTK ile entegre.
+
+  - drone_type: "WINGTRAONE_GEN2"
+    band_class: "EXTENDED_5BAND"
+    available_bands:
+      - blue
+      - green
+      - red
+      - red_edge
+      - nir
+    available_indices:
+      - NDVI
+      - NDRE
+      - GNDVI
+      - EVI
+      - SAVI
+      - CHLOROPHYLL_A
+    red_edge_wavelength_nm: 715.0
+    ndre_correction_offset: -0.035  # 730nm referansa gore duzeltme
+    thermal_sensor: null
+    report_tier: "GENISLETILMIS"
+    pipelines:
+      - core_multispectral
+      - extended_multispectral
+    notes: >
+      5-band, termal yok. Red edge ~715nm (MicaSense RedEdge-P).
+      Mutlak radyometri. Fixed-wing, genis alan kapsama.
+
+  - drone_type: "PARROT_SEQUOIA_PLUS"
+    band_class: "BASIC_4BAND"
+    available_bands:
+      - green
+      - red
+      - red_edge
+      - nir
+    available_indices:
+      - NDVI
+      - NDRE
+      - GNDVI
+    red_edge_wavelength_nm: 735.0
+    ndre_correction_offset: 0.01  # 730nm referansa gore duzeltme
+    thermal_sensor: null
+    report_tier: "TEMEL"
+    pipelines:
+      - core_multispectral
+    notes: >
+      4-band, termal yok. Red edge ~735nm.
+      KR-034 Senaryo A: hizli gecis alternatifi.
+
+  - drone_type: "AGEAGLE_EBEE_X"
+    band_class: "EXTENDED_5BAND"
+    available_bands:
+      - blue
+      - green
+      - red
+      - red_edge
+      - nir
+      - thermal
+    available_indices:
+      - NDVI
+      - NDRE
+      - GNDVI
+      - EVI
+      - SAVI
+      - CHLOROPHYLL_A
+      - CWSI
+      - CANOPY_TEMP
+      - CANOPY_SOIL_DELTA_T
+    red_edge_wavelength_nm: 717.0
+    ndre_correction_offset: -0.03
+    thermal_sensor: "MicaSense Altum-PT LWIR"
+    report_tier: "KAPSAMLI"
+    pipelines:
+      - core_multispectral
+      - extended_multispectral
+      - thermal_analysis
+    notes: >
+      5-band + termal. Fixed-wing.
+      KR-034 Senaryo B: uzun vadeli bagimsizlik.
+
+# ---------------------------------------------------------------------------
+# Graceful Degradation Yonlendirme Tablosu
+# Worker, intake_manifest.available_bands[] icerigine gore pipeline secer.
+# ---------------------------------------------------------------------------
+graceful_degradation:
+  rules:
+    - condition: "REQUIRED_BANDS (green, red, red_edge, nir) mevcut"
+      pipeline: "core_multispectral"
+      tier: "TEMEL"
+      indices: ["NDVI", "NDRE", "GNDVI"]
+
+    - condition: "REQUIRED_BANDS + blue mevcut"
+      pipeline: "extended_multispectral"
+      tier: "GENISLETILMIS"
+      indices: ["EVI", "SAVI", "CHLOROPHYLL_A"]
+
+    - condition: "thermal veya lwir mevcut"
+      pipeline: "thermal_analysis"
+      tier: "KAPSAMLI"
+      indices: ["CWSI", "CANOPY_TEMP", "CANOPY_SOIL_DELTA_T"]
+
+  fallback: >
+    5-band verisi yoksa 4-band pipeline calisir.
+    Termal veri yoksa termal pipeline atlanir.
+    Minimum 4 band (KR-018 hard gate) olmadan hicbir pipeline calistirilmaz.

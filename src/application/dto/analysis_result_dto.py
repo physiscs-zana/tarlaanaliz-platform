@@ -29,6 +29,10 @@ class AnalysisResultDTO:
     layers: tuple[AnalysisLayerDTO, ...]
     created_at: datetime
     completed_at: datetime | None
+    # KR-018/KR-023 v1.2.0: Graceful Degradation + katmanli rapor
+    report_tier: str = "TEMEL"  # TEMEL | GENISLETILMIS | KAPSAMLI
+    band_class: str = ""  # BASIC_4BAND | EXTENDED_5BAND
+    available_indices: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         # KR-018: calibration hard-gate.
@@ -54,6 +58,9 @@ class AnalysisResultDTO:
             ],
             "created_at": _to_utc_iso(self.created_at),
             "completed_at": _optional_dt(self.completed_at),
+            "report_tier": self.report_tier,
+            "band_class": self.band_class,
+            "available_indices": list(self.available_indices),
         }
 
     @classmethod
@@ -77,6 +84,9 @@ class AnalysisResultDTO:
             ),
             created_at=_parse_datetime(payload["created_at"]),
             completed_at=_parse_optional_datetime(payload.get("completed_at")),
+            report_tier=str(payload.get("report_tier", "TEMEL")),
+            band_class=str(payload.get("band_class", "")),
+            available_indices=tuple(payload.get("available_indices", ())),
         )
 
 

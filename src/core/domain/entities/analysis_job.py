@@ -31,6 +31,7 @@ class AnalysisJob:
 
     * KR-017 -- YZ modeli ile analiz (izolasyon + tek yonlu akis + job semantigi).
     * KR-018 / KR-082 -- Tam radyometrik kalibrasyon zorunlulugu (hard gate).
+    * KR-018 v1.2.0 -- available_bands zorunlu; band_class Graceful Degradation.
     * KR-081 -- Contract-first: AnalysisJob JSON Schema.
     """
 
@@ -46,6 +47,9 @@ class AnalysisJob:
     updated_at: datetime
     requires_calibrated: bool = True
     calibration_record_id: Optional[uuid.UUID] = None
+    # KR-018/KR-082 v1.2.0: Graceful Degradation
+    available_bands: tuple[str, ...] = ()  # intake_manifest.available_bands[]
+    band_class: str = ""  # BASIC_4BAND | EXTENDED_5BAND
 
     # ------------------------------------------------------------------
     # Invariants
@@ -90,6 +94,12 @@ class AnalysisJob:
                 "Cannot start processing: requires_calibrated=True but "
                 "calibration_record_id is not set (KR-018 hard gate). "
                 "Calibrated dataset uretilmeden AnalysisJob baslatilamaz."
+            )
+        # KR-018 v1.2.0: available_bands zorunlu
+        if not self.available_bands:
+            raise ValueError(
+                "Cannot start processing: available_bands is empty "
+                "(KR-018 v1.2.0: intake_manifest.available_bands[] zorunlu)."
             )
         self.status = AnalysisJobStatus.PROCESSING
         self._touch()

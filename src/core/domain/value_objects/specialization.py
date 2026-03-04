@@ -24,9 +24,10 @@ class Specialization(str, Enum):
     * NUTRIENT_STRESS   -- Besin stresi analizi (azot vb.).
     * GENERAL_HEALTH    -- Genel sağlık değerlendirmesi.
     * FUNGUS_DETECTION  -- Mantar tespiti.
+    * THERMAL_STRESS    -- Termal stres / sulama analizi (KR-084, v1.2.0).
 
     SSOT'taki map layer kodlarıyla (HEALTH, WEED, DISEASE, PEST,
-    FUNGUS, WATER_STRESS, N_STRESS) uyumludur.
+    FUNGUS, WATER_STRESS, N_STRESS, THERMAL_STRESS) uyumludur.
     """
 
     CROP_DISEASE = "CROP_DISEASE"
@@ -36,6 +37,7 @@ class Specialization(str, Enum):
     NUTRIENT_STRESS = "NUTRIENT_STRESS"
     GENERAL_HEALTH = "GENERAL_HEALTH"
     FUNGUS_DETECTION = "FUNGUS_DETECTION"
+    THERMAL_STRESS = "THERMAL_STRESS"  # KR-084 v1.2.0
 
 
 # Uzmanlık alanı -> İlişkili map layer kodları (SSOT)
@@ -47,6 +49,7 @@ SPECIALIZATION_LAYER_MAPPINGS: dict[Specialization, tuple[str, ...]] = {
     Specialization.NUTRIENT_STRESS: ("N_STRESS",),
     Specialization.GENERAL_HEALTH: ("HEALTH",),
     Specialization.FUNGUS_DETECTION: ("FUNGUS",),
+    Specialization.THERMAL_STRESS: ("THERMAL_STRESS",),  # KR-084 v1.2.0
 }
 
 # Uzmanlık alanı -> Türkçe görünen ad eşlemesi
@@ -58,6 +61,7 @@ SPECIALIZATION_DISPLAY_NAMES: dict[Specialization, str] = {
     Specialization.NUTRIENT_STRESS: "Besin Stresi Analizi",
     Specialization.GENERAL_HEALTH: "Genel Sağlık Değerlendirmesi",
     Specialization.FUNGUS_DETECTION: "Mantar Tespiti",
+    Specialization.THERMAL_STRESS: "Termal Stres / Sulama Analizi",  # KR-084 v1.2.0
 }
 
 

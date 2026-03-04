@@ -10,6 +10,9 @@ export interface ExpertQueueItem {
   readonly priority: "low" | "medium" | "high";
   readonly status: QueueItemStatus;
   readonly createdAtIso: string;
+  // KR-018/KR-023 v1.2.0: Graceful Degradation bilgisi
+  readonly bandClass: string; // BASIC_4BAND | EXTENDED_5BAND
+  readonly reportTier: string; // TEMEL | GENISLETILMIS | KAPSAMLI
 }
 
 export interface ExpertQueueStats {

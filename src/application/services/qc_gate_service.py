@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
 # KR-018: QC decisioning blocks invalid datasets from analysis.
 
 from __future__ import annotations
@@ -20,6 +20,9 @@ class QCEvidence:
     missing_band_ratio: float
     overlap_ok: bool
     notes: str | None = None
+    # KR-018 v1.2.0: available_bands + beklenen band sayisi
+    available_bands: tuple[str, ...] = ()
+    expected_band_count: int = 4  # minimum 4 band zorunlu
 
 
 class QcGateService:
@@ -41,6 +44,9 @@ class QcGateService:
         if evidence.missing_band_ratio > self._missing_band_fail:
             return QCDecision.FAIL
         if evidence.blur_ratio > self._blur_fail:
+            return QCDecision.FAIL
+        # KR-018 v1.2.0: available_bands kontrolu
+        if evidence.available_bands and len(evidence.available_bands) < evidence.expected_band_count:
             return QCDecision.FAIL
         if evidence.blur_ratio > self._blur_warn:
             return QCDecision.WARN

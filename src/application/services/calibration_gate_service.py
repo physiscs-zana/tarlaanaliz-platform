@@ -1,22 +1,19 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
 # KR-018: Calibration and QC evidence is a hard gate before analysis start.
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
 """
-Amaç: KR-018 'Tam Radyometrik Kalibrasyon' hard gate'i.
-Sorumluluk: Use-case orkestrasyonu; domain service + ports birleşimi; policy enforcement.
-Girdi/Çıktı (Contract/DTO/Event): Girdi: API/Job/Worker tetiklemesi. Çıktı: DTO, event, state transition.
-Güvenlik (RBAC/PII/Audit): RBAC burada; PII redaction; audit log; rate limit (gereken yerde).
-Hata Modları (idempotency/retry/rate limit): 400/403/409/429/5xx mapping; retry-safe tasarım; idempotency key/hard gate’ler.
-Observability (log fields/metrics/traces): correlation_id, latency, error_code; use-case metric sayaçları.
-Testler: Unit + integration; kritik akış için e2e (özellikle ödeme/planlama/kalibrasyon).
-Bağımlılıklar: Domain + ports + infra implementasyonları + event bus.
-Notlar/SSOT: Contract-first (KR-081) ve kritik kapılar (KR-018/KR-033/KR-015) application katmanında enforce edilir. KR-018 hard gate: calibrated/QC kanıtı olmadan AnalysisJob başlatılmamalıdır.
+Amac: KR-018 'Tam Radyometrik Kalibrasyon' hard gate'i.
+Sorumluluk: Use-case orkestrasyonu; domain service + ports birlesimi; policy enforcement.
+Notlar/SSOT: KR-018 hard gate: calibrated/QC kaniti olmadan AnalysisJob baslatilmamalidir.
+KR-018 v1.2.0: available_bands kontrolu eklendi (minimum 4 band zorunlu).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Protocol
+
+# KR-018 v1.2.0: Minimum band sayisi
+_MIN_REQUIRED_BANDS = 4
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,6 +22,7 @@ class CalibrationEvidence:
     is_calibrated: bool
     qc_status: str
     proof_uri: str | None = None
+    available_bands: tuple[str, ...] = ()  # KR-018 v1.2.0
 
 
 class CalibrationEvidenceStore(Protocol):
@@ -48,4 +46,10 @@ class CalibrationGateService:
             raise CalibrationGateError("KR-018: dataset is not calibrated")
         if evidence.qc_status not in {"pass", "warn"}:
             raise CalibrationGateError(f"KR-018: QC status not acceptable ({evidence.qc_status})")
+        # KR-018 v1.2.0: available_bands minimum 4 band kontrolu
+        if len(evidence.available_bands) < _MIN_REQUIRED_BANDS:
+            raise CalibrationGateError(
+                f"KR-018 v1.2.0: available_bands minimum {_MIN_REQUIRED_BANDS} band "
+                f"icermelidir, mevcut: {len(evidence.available_bands)}"
+            )
         return evidence

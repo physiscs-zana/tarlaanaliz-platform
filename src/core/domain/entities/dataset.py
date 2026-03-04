@@ -1,7 +1,7 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/entities/dataset.py
 # DESC: Dataset entity; KR-072 tam durum makinesi (9+1 durum).
-# SSOT: TARLAANALIZ_SSOT_v1_1_0.txt — KR-072, KR-073, KR-070
+# SSOT: TARLAANALIZ_SSOT_v1_2_0.txt — KR-072, KR-073, KR-070, KR-018 v1.2.0
 """
 Dataset domain entity.
 
@@ -84,6 +84,9 @@ class Dataset:
     # Karantina notu
     quarantine_reason: Optional[str] = None
 
+    # KR-018 v1.2.0: available_bands zorunlu (intake_manifest.available_bands[])
+    available_bands: tuple[str, ...] = ()
+
     def __post_init__(self) -> None:
         if not self.mission_id:
             raise DatasetError("mission_id zorunludur")
@@ -146,6 +149,12 @@ class Dataset:
 
         # Kalibrasyon gate (KR-018)
         if target == DatasetStatus.CALIBRATED:
+            # KR-018 v1.2.0: available_bands minimum 4 band kontrolu
+            if not self.available_bands or len(self.available_bands) < 4:
+                raise DatasetTransitionError(
+                    "CALIBRATED gecisi icin available_bands en az 4 band icermelidir "
+                    "(KR-018 v1.2.0: intake_manifest.available_bands[] zorunlu)"
+                )
             self.is_calibrated = True
 
         # Worker dispatch
@@ -191,6 +200,7 @@ class Dataset:
             and self.sha256_hash is not None
             and self.av1_report_uri is not None
             and self.av2_report_uri is not None
+            and len(self.available_bands) >= 4  # KR-018 v1.2.0
         )
 
     @property
@@ -202,8 +212,13 @@ class Dataset:
         cls,
         mission_id: uuid.UUID,
         field_id: uuid.UUID,
+        available_bands: tuple[str, ...] = (),
     ) -> "Dataset":
-        """Yeni Dataset oluştur; başlangıç durumu RAW_INGESTED."""
+        """Yeni Dataset oluştur; başlangıç durumu RAW_INGESTED.
+
+        Args:
+            available_bands: KR-018 v1.2.0 intake_manifest.available_bands[].
+        """
         now = datetime.now(timezone.utc)
         return cls(
             dataset_id=uuid.uuid4(),
@@ -212,4 +227,5 @@ class Dataset:
             status=DatasetStatus.RAW_INGESTED,
             created_at=now,
             updated_at=now,
+            available_bands=available_bands,
         )

@@ -1,7 +1,7 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/value_objects/drone_model.py
 # DESC: DroneModel VO; drone model + sensor band dogrulama (KR-030, KR-034).
-# KR-034: DJI Bagimsizlik Plani — 4 onaylı model (v1.1.0)
+# KR-034: DJI Bagimsizlik Plani — Aktif Operasyon Plani, 5 onayli model (v1.2.0)
 
 from __future__ import annotations
 
@@ -24,12 +24,16 @@ class DroneModel:
     Immutable (frozen=True); olusturulduktan sonra degistirilemez.
     Domain core'da dis dunya erisimi yoktur (IO, log yok).
 
-    SSOT'a gore desteklenen drone/sensor kombinasyonlari:
-    - DJI Mavic 3M (birincil/onerilen, goreli radyometri)
-    - DJI Matrice 350 RTK + Sentera 6X
-    - WingtraOne Gen II + MicaSense RedEdge-P
-    - Parrot Anafi USA + Sequoia+
-    - AgEagle eBee X + Altum-PT
+    SSOT'a gore desteklenen drone/sensor kombinasyonlari (v1.2.0):
+    - DJI Mavic 3M (birincil/onerilen, goreli radyometri, 4-band)
+    - DJI Matrice 350 RTK + Sentera 6X (5-band + termal)
+    - WingtraOne Gen II + MicaSense RedEdge-P (5-band)
+    - Parrot Anafi USA + Sequoia+ (4-band)
+    - AgEagle eBee X + Altum-PT (5-band + termal)
+
+    KR-034 (v1.2.0): Artik "risk plani" degil, "aktif operasyon plani".
+    DJI M3M tedarik zinciri sorunlari nedeniyle 5-band sensorler
+    sisteme entegre edilmis; graceful degradation (KR-018/082) hazir.
 
     Invariants:
     - model_id bos olamaz.
@@ -45,18 +49,21 @@ class DroneModel:
     min_gsd_cm: float
     radiometry_type: str  # "relative" | "absolute"
     phase: int = 1
+    red_edge_wavelength_nm: float = 0.0  # KR-018 v1.2.0: DJI ~730nm, MicaSense/Sentera ~715-717nm
 
-    # KR-034: 4 onaylı model ID sabiti (v1.1.0)
-    # Phase 1: DJI_MAVIC_3M (birincil, relative)
-    # Phase 2 Senaryo A: PARROT_SEQUOIA_PLUS + WINGTRAONE_GEN2 (MicaSense)
-    # Phase 2 Senaryo B: WINGTRAONE_GEN2 + AGEAGLE_EBEE_X
+    # KR-034: 5 onayli model ID sabiti (v1.2.0 — aktif operasyon plani)
+    # Phase 1: DJI_MAVIC_3M (birincil, relative, 4-band)
+    # Phase 2 Senaryo A: PARROT_SEQUOIA_PLUS, DJI_M350_RTK_SENTERA_6X
+    # Phase 2 Senaryo B: WINGTRAONE_GEN2, AGEAGLE_EBEE_X
     DJI_MAVIC_3M: ClassVar[str] = "DJI_MAVIC_3M"
+    DJI_M350_RTK_SENTERA_6X: ClassVar[str] = "DJI_M350_RTK_SENTERA_6X"
     WINGTRAONE_GEN2: ClassVar[str] = "WINGTRAONE_GEN2"
     PARROT_SEQUOIA_PLUS: ClassVar[str] = "PARROT_SEQUOIA_PLUS"
     AGEAGLE_EBEE_X: ClassVar[str] = "AGEAGLE_EBEE_X"
 
     _APPROVED_MODEL_IDS: ClassVar[frozenset[str]] = frozenset({
         "DJI_MAVIC_3M",
+        "DJI_M350_RTK_SENTERA_6X",
         "WINGTRAONE_GEN2",
         "PARROT_SEQUOIA_PLUS",
         "AGEAGLE_EBEE_X",
@@ -92,9 +99,24 @@ class DroneModel:
         """Eksik zorunlu bandlari dondurur."""
         return REQUIRED_BANDS - self.band_set
 
+    @property
+    def has_blue_band(self) -> bool:
+        """KR-018 v1.2.0: Blue band mevcut mu? (5-band siniflandirma icin)."""
+        return "blue" in self.band_set
+
+    @property
+    def band_class(self) -> str:
+        """KR-018/KR-082 v1.2.0: Band sinifi (Graceful Degradation).
+
+        BASIC_4BAND   : green, red, red_edge, nir
+        EXTENDED_5BAND: + blue
+        """
+        from src.core.domain.value_objects.spectral_tier import classify_bands
+        return classify_bands(self.band_set).value
+
     def supports_thermal(self) -> bool:
         """Termal band destegi var mi?"""
-        return "thermal" in self.band_set
+        return "thermal" in self.band_set or "lwir" in self.band_set
 
     @property
     def is_absolute_radiometry(self) -> bool:
@@ -102,7 +124,7 @@ class DroneModel:
         return self.radiometry_type == "absolute"
 
     def is_approved(self) -> bool:
-        """KR-034: Bu model onaylı drone listesinde mi?"""
+        """KR-034: Bu model onayli drone listesinde mi?"""
         return self.model_id in self._APPROVED_MODEL_IDS
 
     def to_dict(self) -> dict[str, Any]:
@@ -116,6 +138,8 @@ class DroneModel:
             "min_gsd_cm": self.min_gsd_cm,
             "radiometry_type": self.radiometry_type,
             "phase": self.phase,
+            "red_edge_wavelength_nm": self.red_edge_wavelength_nm,
+            "band_class": self.band_class,
         }
 
     def __str__(self) -> str:
