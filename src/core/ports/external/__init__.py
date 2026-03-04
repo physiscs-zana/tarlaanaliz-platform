@@ -1,5 +1,5 @@
-# PATH: src/core/ports/external/__init__.py
-# DESC: External ports module: dış servis entegrasyonları.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-033: External ports module — dış servis entegrasyonları.
 """External service ports public API."""
 
 from src.core.ports.external.ai_worker_feedback import (

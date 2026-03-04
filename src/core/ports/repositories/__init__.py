@@ -1,5 +1,5 @@
-# PATH: src/core/ports/repositories/__init__.py
-# DESC: Repository ports module: veri erişim soyutlamaları.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-015: Repository ports module — veri erişim soyutlamaları.
 """Repository ports public API."""
 
 from src.core.ports.repositories.analysis_result_repository import (

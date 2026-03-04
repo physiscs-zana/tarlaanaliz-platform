@@ -1,5 +1,6 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-015: Domain services module — public API ve namespace düzeni.
 # PATH: src/core/domain/services/__init__.py
-# DESC: Domain services module: public API ve namespace düzeni.
 
 from src.core.domain.services.calibration_validator import (
     CalibrationCheckItem,

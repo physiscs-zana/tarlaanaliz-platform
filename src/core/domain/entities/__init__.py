@@ -1,3 +1,5 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-015: Domain entity exports.
 """
 Amaç: Python paket başlangıcı; modül dışa aktarım (exports) ve namespace düzeni.
 Sorumluluk: Import yüzeyini (public API) düzenler.

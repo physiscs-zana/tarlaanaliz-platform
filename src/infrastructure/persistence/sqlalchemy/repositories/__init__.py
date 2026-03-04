@@ -1,5 +1,5 @@
-# PATH: src/infrastructure/persistence/sqlalchemy/repositories/__init__.py
-# DESC: Infrastructure adapter/implementation: SQLAlchemy repository exports.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-081: SQLAlchemy repository implementations.
 """SQLAlchemy repository implementations.
 
 Implements core port interfaces defined in src/core/ports/repositories/.
