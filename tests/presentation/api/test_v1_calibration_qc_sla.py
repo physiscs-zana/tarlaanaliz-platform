@@ -16,9 +16,9 @@ from src.presentation.api.dependencies import (
     SLABreachResponse,
     SLASummaryResponse,
 )
-from src.presentation.api.v1.calibration import router as calibration_router
-from src.presentation.api.v1.qc import router as qc_router
-from src.presentation.api.v1.sla_metrics import router as sla_router
+from src.presentation.api.v1.endpoints.calibration import router as calibration_router
+from src.presentation.api.v1.endpoints.qc import router as qc_router
+from src.presentation.api.v1.endpoints.sla_metrics import router as sla_router
 
 
 class StubCalibrationService:
