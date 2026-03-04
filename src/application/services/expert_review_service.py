@@ -11,6 +11,12 @@ Observability (log fields/metrics/traces): correlation_id, latency, error_code; 
 Testler: Unit + integration; kritik akış için e2e (özellikle ödeme/planlama/kalibrasyon).
 Bağımlılıklar: Domain + ports + infra implementasyonları + event bus.
 Notlar/SSOT: Contract-first (KR-081) ve kritik kapılar (KR-018/KR-033/KR-015) application katmanında enforce edilir.
+
+NOTE: The Protocol classes and dataclasses defined below are APPLICATION-LAYER ports
+and DTOs, intentionally distinct from core domain types (core.ports.messaging.EventBus,
+etc.). The core EventBus is async/DomainEvent-based while these application-layer ports
+use a simpler sync/string-based contract. An infrastructure adapter bridges between
+these two abstractions at runtime.
 """
 
 from __future__ import annotations
@@ -19,6 +25,7 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 
+# Application-layer DTO — simplified projection for use-case orchestration.
 @dataclass(frozen=True, slots=True)
 class ExpertReview:
     review_id: str
@@ -28,6 +35,7 @@ class ExpertReview:
     notes: str | None = None
 
 
+# Application-layer port — NOT the same as core.ports.persistence.*Repository.
 class ExpertReviewRepository(Protocol):
     def create(self, review: ExpertReview) -> None: ...
 
@@ -38,6 +46,8 @@ class ExpertReviewRepository(Protocol):
     def update(self, review: ExpertReview) -> None: ...
 
 
+# Application-layer port — sync/string-based, distinct from core.ports.messaging.EventBus
+# (which is async/DomainEvent-based). Bridged via an infrastructure adapter.
 class EventBus(Protocol):
     def publish(self, event_name: str, payload: dict[str, Any], *, correlation_id: str) -> None: ...
 

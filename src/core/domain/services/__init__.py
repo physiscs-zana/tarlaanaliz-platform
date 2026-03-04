@@ -87,6 +87,25 @@ from src.core.domain.services.subscription_planner import (
     SubscriptionPlanningError,
     SubscriptionSchedule,
 )
+from src.core.domain.services.auto_dispatcher import (
+    AutoDispatcher,
+    DispatchDecision,
+)
+from src.core.domain.services.band_compliance_checker import (
+    BandComplianceChecker,
+    BandComplianceError,
+    BandComplianceResult,
+)
+from src.core.domain.services.plan_window_segmenter import (
+    MissionSegment,
+    PlanWindowSegmenter,
+)
+from src.core.domain.services.reschedule_service import (
+    RescheduleService,
+)
+from src.core.domain.services.reschedule_service import (
+    RescheduleResult as DomainRescheduleResult,
+)
 from src.core.domain.services.weather_validator import (
     FlightRecommendation,
     WeatherData,
@@ -170,6 +189,19 @@ __all__: list[str] = [
     "ScheduledAnalysis",
     "RescheduleResult",
     "RescheduleType",
+    # Auto Dispatcher (KR-015)
+    "AutoDispatcher",
+    "DispatchDecision",
+    # Band Compliance Checker (KR-030, KR-018, KR-082)
+    "BandComplianceChecker",
+    "BandComplianceResult",
+    "BandComplianceError",
+    # Plan Window Segmenter (KR-015)
+    "PlanWindowSegmenter",
+    "MissionSegment",
+    # Reschedule Service (KR-015)
+    "RescheduleService",
+    "DomainRescheduleResult",
     # Weather Validator (KR-015-5)
     "WeatherValidator",
     "WeatherValidationResult",

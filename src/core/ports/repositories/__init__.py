@@ -9,6 +9,10 @@ from src.core.ports.repositories.audit_log_repository import AuditLogRepository
 from src.core.ports.repositories.calibration_record_repository import (
     CalibrationRecordRepository,
 )
+from src.core.ports.repositories.crop_ops_profile_repository import (
+    CropOpsProfileRepository,
+)
+from src.core.ports.repositories.dataset_repository import DatasetRepository
 from src.core.ports.repositories.expert_repository import ExpertRepository
 from src.core.ports.repositories.expert_review_repository import (
     ExpertReviewRepository,
@@ -41,6 +45,8 @@ __all__ = [
     "AnalysisResultRepository",
     "AuditLogRepository",
     "CalibrationRecordRepository",
+    "CropOpsProfileRepository",
+    "DatasetRepository",
     "ExpertRepository",
     "ExpertReviewRepository",
     "FeedbackRecordRepository",

@@ -37,6 +37,11 @@ from src.core.ports.external.sms_gateway import (
     SmsDeliveryStatus,
     SmsResult,
 )
+from src.core.ports.external.av_scanner_port import (
+    AVScannerPort,
+    AVScanReport,
+    AVScanResult,
+)
 from src.core.ports.external.storage_service import (
     BlobMetadata,
     PresignedUrl,
@@ -74,6 +79,10 @@ __all__: list[str] = [
     "SmsResult",
     "SmsBatchResult",
     "SmsDeliveryStatus",
+    # AV Scanner (KR-073)
+    "AVScannerPort",
+    "AVScanReport",
+    "AVScanResult",
     # Storage Service
     "StorageService",
     "BlobMetadata",

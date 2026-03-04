@@ -17,8 +17,12 @@ from pydantic import BaseModel, ConfigDict, Field
 logger = logging.getLogger(__name__)
 
 
+# NOTE: This is a presentation-layer projection of payment status with HTTP-friendly
+# values. The canonical payment states are defined in core.domain.entities.payment_intent.PaymentStatus
+# (PAYMENT_PENDING, PAID, REJECTED, EXPIRED, CANCELLED, REFUNDED).
+# This HTTP-layer enum maps to a simplified view for API consumers.
 class PaymentStatus(str, Enum):
-    """Payment states for KR-033 flow."""
+    """Payment states for KR-033 flow (HTTP-layer projection)."""
 
     PENDING_RECEIPT = "PENDING_RECEIPT"
     PENDING_ADMIN_REVIEW = "PENDING_ADMIN_REVIEW"
@@ -26,6 +30,8 @@ class PaymentStatus(str, Enum):
     PAID = "PAID"  # KR-033: set only after manual admin approval.
 
 
+# NOTE: Matches core.domain.value_objects.qc_status.QCStatus exactly.
+# Kept local to avoid pulling core dependency into HTTP layer.
 class QCStatus(str, Enum):
     """KR-018 status values."""
 

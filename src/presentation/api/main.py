@@ -35,8 +35,15 @@ from src.presentation.api.v1.endpoints import (
     parcels_router,
     payment_webhooks_router,
     payments_router,
+    pilots_router,
+    pricing_router,
     qc_router,
+    results_router,
     sla_metrics_router,
+    subscriptions_router,
+    training_feedback_router,
+    weather_block_reports_router,
+    weather_blocks_router,
 )
 
 
@@ -126,6 +133,13 @@ def create_app() -> FastAPI:
     app.include_router(payment_webhooks_router, prefix="/api/v1")
     app.include_router(admin_audit_router, prefix="/api/v1")
     app.include_router(admin_pricing_router, prefix="/api/v1")
+    app.include_router(pilots_router, prefix="/api/v1")
+    app.include_router(pricing_router, prefix="/api/v1")
+    app.include_router(results_router, prefix="/api/v1")
+    app.include_router(subscriptions_router, prefix="/api/v1")
+    app.include_router(training_feedback_router, prefix="/api/v1")
+    app.include_router(weather_block_reports_router, prefix="/api/v1")
+    app.include_router(weather_blocks_router, prefix="/api/v1")
 
     _register_exception_handlers(app)
     return app

@@ -14,13 +14,37 @@ Notlar/SSOT: KR-015 (kapasite/planlama), KR-018 (kalibrasyon hard gate), KR-033 
 from .audit_log_service import AuditLogService
 from .calibration_gate_service import CalibrationGateService
 from .contract_validator_service import ContractValidatorService
+from .expert_review_service import ExpertReviewService
+from .field_service import FieldService
+from .mission_lifecycle_manager import MissionLifecycleManager
+from .mission_service import MissionOrchestrationService, MissionService
 from .planning_capacity import PlanningCapacityService
+from .pricebook_service import PricebookService
 from .qc_gate_service import QcGateService
+from .reassignment_handler import ReassignmentHandler
+from .subscription_scheduler import SeasonSlotBuilder, SubscriptionScheduler
+from .training_export_service import TrainingExportService
+from .training_feedback_service import TrainingFeedbackService
+from .weather_block_service import WeatherBlockService
+from .weekly_window_scheduler import WeeklyWindowScheduler
 
 __all__ = [
     "AuditLogService",
     "CalibrationGateService",
     "ContractValidatorService",
+    "ExpertReviewService",
+    "FieldService",
+    "MissionLifecycleManager",
+    "MissionOrchestrationService",
+    "MissionService",
     "PlanningCapacityService",
+    "PricebookService",
     "QcGateService",
+    "ReassignmentHandler",
+    "SeasonSlotBuilder",
+    "SubscriptionScheduler",
+    "TrainingExportService",
+    "TrainingFeedbackService",
+    "WeatherBlockService",
+    "WeeklyWindowScheduler",
 ]

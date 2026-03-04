@@ -9,6 +9,7 @@ from src.core.domain.entities.analysis_job import AnalysisJob
 from src.core.domain.entities.analysis_result import AnalysisResult
 from src.core.domain.entities.audit_log_entry import AuditLogEntry
 from src.core.domain.entities.calibration_record import CalibrationRecord
+from src.core.domain.entities.dataset import Dataset
 from src.core.domain.entities.expert import Expert
 from src.core.domain.entities.expert_review import ExpertReview
 from src.core.domain.entities.feedback_record import FeedbackRecord
@@ -28,6 +29,7 @@ __all__ = [
     "AnalysisResult",
     "AuditLogEntry",
     "CalibrationRecord",
+    "Dataset",
     "Expert",
     "ExpertReview",
     "FeedbackRecord",
