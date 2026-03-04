@@ -406,13 +406,13 @@ jobs:
       - name: Start test server
         working-directory: web
         run: |
-          npx next start --hostname 127.0.0.1 --port 3000 &
+          pnpm exec next start --hostname 127.0.0.1 --port 3000 &
           sleep 10
           curl -f http://127.0.0.1:3000 || exit 1
 
       - name: Run axe accessibility tests
         working-directory: web
-        run: pnpm run test:a11y --if-present
+        run: pnpm run --if-present test:a11y
 
       - name: Upload accessibility report
         if: always()

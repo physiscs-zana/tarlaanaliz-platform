@@ -8,8 +8,8 @@ from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
 from src.presentation.api.dependencies import PaymentIntentCreateRequest, PaymentIntentResponse, PaymentStatus
-from src.presentation.api.v1.admin_payments import router as admin_router
-from src.presentation.api.v1.payments import router as payments_router
+from src.presentation.api.v1.endpoints.admin_payments import router as admin_router
+from src.presentation.api.v1.endpoints.payments import router as payments_router
 
 
 class StubPaymentService:
