@@ -21,7 +21,7 @@ export default defineConfig({
     { name: "firefox", use: { ...devices["Desktop Firefox"] } },
   ],
   webServer: {
-    command: "pnpm start --hostname 127.0.0.1 --port 3000",
+    command: "npx next start --hostname 127.0.0.1 --port 3000",
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

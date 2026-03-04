@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # KR-041: SDLC gate automation for compliance verification.
 
 from __future__ import annotations
@@ -8,7 +8,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-BOUND_HEADER = "BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated."
+BOUND_HEADERS = [
+    "BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.",
+    "BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.",
+]
 CHECKABLE_SUFFIXES = {
     ".py",
     ".md",
@@ -78,7 +81,7 @@ def should_check(path: Path) -> bool:
 
 def has_bound_header(path: Path) -> bool:
     top_lines = path.read_text(encoding="utf-8").splitlines()[:5]
-    return any(BOUND_HEADER in line for line in top_lines)
+    return any(header in line for line in top_lines for header in BOUND_HEADERS)
 
 
 def has_kr_reference(path: Path) -> bool:

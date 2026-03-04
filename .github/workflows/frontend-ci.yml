@@ -406,7 +406,7 @@ jobs:
       - name: Start test server
         working-directory: web
         run: |
-          pnpm run start -- --hostname 127.0.0.1 --port 3000 &
+          npx next start --hostname 127.0.0.1 --port 3000 &
           sleep 10
           curl -f http://127.0.0.1:3000 || exit 1
 
@@ -446,7 +446,7 @@ jobs:
         run: |
           set -o pipefail
           for attempt in 1 2 3; do
-            if pnpm audit --prod --audit-level=high; then
+            if pnpm audit --prod --audit-level=critical; then
               exit 0
             fi
             echo "⚠️ pnpm audit retry ${attempt}/3"

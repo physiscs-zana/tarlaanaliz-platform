@@ -4,7 +4,7 @@
 from pathlib import Path
 
 from scripts.check_ssot_compliance import (
-    BOUND_HEADER,
+    BOUND_HEADERS,
     has_bound_header,
     has_kr_reference,
     should_check,
@@ -33,7 +33,7 @@ def test_has_bound_header_detects_valid_header(tmp_path: Path, monkeypatch) -> N
     monkeypatch.chdir(tmp_path)
     target = Path("scripts/tool.py")
     target.parent.mkdir(parents=True)
-    target.write_text(f"# {BOUND_HEADER}\n# KR-041\nprint('ok')\n", encoding="utf-8")
+    target.write_text(f"# {BOUND_HEADERS[0]}\n# KR-041\nprint('ok')\n", encoding="utf-8")
 
     assert has_bound_header(target)
 
