@@ -70,7 +70,9 @@ export default function LoginPage() {
             name="pin"
             type="password"
             inputMode="numeric"
-            pattern="[0-9]{4,6}"
+            pattern="[0-9]{6}"
+            maxLength={6}
+            minLength={6}
             autoComplete="current-password"
             required
             value={pin}

@@ -18,7 +18,7 @@ export function parseLoginDto(input: unknown): ParseResult<LoginDto> {
   const pin = value.pin;
 
   if (typeof phone !== 'string' || !/^\d{10,15}$/.test(phone)) return { success: false, error: 'Invalid phone' };
-  if (typeof pin !== 'string' || !/^\d{4,6}$/.test(pin)) return { success: false, error: 'Invalid pin' };
+  if (typeof pin !== 'string' || !/^\d{6}$/.test(pin)) return { success: false, error: 'Invalid pin' };
 
   return { success: true, data: { phone, pin } };
 }
