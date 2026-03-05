@@ -21,7 +21,23 @@ const STATUS_LABEL: Record<PaymentStatus, string> = {
   REFUNDED: 'İade Edildi',
 } as const;
 
-export function PaymentStatusBadge({ status }: { readonly status: PaymentStatus }) {
+/** KR-033: Her durum için kullanıcı bilgilendirme mesajı. */
+const STATUS_DESCRIPTION: Record<PaymentStatus, string> = {
+  PAYMENT_PENDING: 'Ödemeniz bekleniyor. Lütfen havale yapıp dekontu yükleyin.',
+  PAID: 'Ödemeniz onaylandı. Analiz işlemi başlatılacaktır.',
+  REJECTED: 'Ödemeniz reddedildi. Lütfen destek ile iletişime geçin.',
+  CANCELLED: 'Ödeme iptal edildi. Yeni bir analiz talebi oluşturabilirsiniz.',
+  REFUNDED: 'Ödemeniz iade edildi. Tutar hesabınıza yansıyacaktır.',
+} as const;
+
+export function PaymentStatusBadge({ status, showDescription = false }: { readonly status: PaymentStatus; readonly showDescription?: boolean }) {
   // KR-033: PAID yalnızca dekont + manuel onay + audit akışı sonunda olur.
-  return <Badge variant={BADGE_VARIANT[status]}>{STATUS_LABEL[status]}</Badge>;
+  return (
+    <div>
+      <Badge variant={BADGE_VARIANT[status]}>{STATUS_LABEL[status]}</Badge>
+      {showDescription && (
+        <p className="mt-1 text-xs text-slate-600">{STATUS_DESCRIPTION[status]}</p>
+      )}
+    </div>
+  );
 }

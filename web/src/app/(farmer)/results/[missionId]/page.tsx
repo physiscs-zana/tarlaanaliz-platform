@@ -38,7 +38,17 @@ export default async function ResultPage({ params }: ResultPageProps) {
 
   return (
     <section className="space-y-6">
-      <h1 className="text-2xl font-semibold">Analiz Sonuçları</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Analiz Sonuçları</h1>
+        {/* KR-026: Özet rapor (PDF) indirme */}
+        <a
+          href={`/api/results/${missionId}/pdf`}
+          download
+          className="rounded bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800"
+        >
+          PDF İndir
+        </a>
+      </div>
 
       {/* KR-018/KR-082: Rapor seviyesi bilgilendirmesi */}
       <div className="rounded-lg border border-slate-200 bg-white p-4">

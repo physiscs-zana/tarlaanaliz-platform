@@ -29,6 +29,7 @@ export default function FarmerLayout({ children }: FarmerLayoutProps) {
     redirect("/login");
   }
 
+  // KR-063: farmer grubu rolleri — FARMER_SINGLE, FARMER_MEMBER, COOP_OWNER, COOP_ADMIN, COOP_AGRONOMIST, COOP_VIEWER
   if (role !== "farmer") {
     redirect("/forbidden");
   }
