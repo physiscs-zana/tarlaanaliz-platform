@@ -1,6 +1,9 @@
 // BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
-// NOT: Bu bileşen genel harita katman kontrolüdür (opacity/visibility).
-// Sonuç katmanları (ResultLayer + ThermalOverlay) için: features/results/components/MapLayerViewer.tsx
+// Bu bileşen genel harita katman kontrolüdür (opacity/visibility).
+// features/results/components/MapLayerViewer.tsx ile FARKLI interface'e sahiptir:
+//   - Bu dosya: genel MapLayer (id/name/visible/opacity) → checkbox + slider
+//   - features/results: ResultLayer (layerName/layerType/uri) → termal overlay
+// İsim karışıklığını önlemek için GenericMapLayerViewer olarak da export edilir.
 'use client';
 
 import { useState } from 'react';
@@ -19,7 +22,7 @@ interface MapLayerViewerProps {
   onLayersChange?: (layers: MapLayer[]) => void;
 }
 
-export function MapLayerViewer({ layers, onLayersChange }: MapLayerViewerProps) {
+export function GenericMapLayerViewer({ layers, onLayersChange }: MapLayerViewerProps) {
   const [localLayers, setLocalLayers] = useState(layers);
 
   const updateLayer = (id: string, patch: Partial<MapLayer>) => {
@@ -52,3 +55,6 @@ export function MapLayerViewer({ layers, onLayersChange }: MapLayerViewerProps) 
     </div>
   );
 }
+
+/** @deprecated GenericMapLayerViewer kullanın — isim çakışmasını önler. */
+export const MapLayerViewer = GenericMapLayerViewer;
