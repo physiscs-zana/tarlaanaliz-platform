@@ -379,22 +379,128 @@ CHECK (ABS(area_m2 - area_donum * 919.3) < area_m2 * 0.01)
 
 ---
 
-## BOLUM 10: TEST ALTYAPISI DEGERLENDIRMESI
+## BOLUM 10: TEST ALTYAPISI ve QA DEGERLENDIRMESI (QA Engineer / Test Architect)
 
-### BULGU-32 — MIGRATION TESTI YOK
+### BULGU-32 — MIGRATION TESTI YOK (CRITICAL)
 
 **Sorun:** Projede alembic migration'larını test eden hiçbir test dosyası bulunamadı.
+**Detay:**
+- `tests/` dizininde migration'a özel test dizini yok
+- `tests/conftest.py` sadece domain fixture'ları yüklüyor
+- `pyproject.toml` (145-161) test marker'ları tanımlıyor (unit, integration, e2e, performance) ancak database/migrations marker'ı yok
+- `tests/unit/test_ssot_compliance_script.py` sadece SSOT uyumluluğunu test ediyor, migration'ları değil
+
 **Önerilen testler:**
 - `test_migration_chain`: Tüm revision'ların lineer bir zincir oluşturduğunu doğrular
-- `test_upgrade_downgrade`: Her migration için upgrade/downgrade döngüsü
+- `test_upgrade_downgrade`: Her migration için upgrade/downgrade döngüsü (testcontainers ile)
 - `test_ssot_enum_compliance`: Enum değerlerinin SSOT'taki kanonik listelerle eşleştiğini doğrular
 - `test_no_duplicate_indexes`: Aynı sütun kombinasyonuna birden fazla indeks olmadığını doğrular
 - `test_column_exists_for_index`: İndeks oluşturmadan önce sütunun varlığını kontrol eder
+- `test_schema_consistency`: Uygulanan şemanın beklenen şemayla eşleştiğini doğrular
 
-### BULGU-33 — CI/CD PIPELINE EKSIK
+### BULGU-33 — CI/CD PIPELINE MIGRATION DOGRULAMASI YETERSIZ (CRITICAL)
 
-**Sorun:** Alembic migration'larını CI'da çalıştıran konfigürasyon bulunamadı.
-**Önerilen:** `alembic upgrade head` + `alembic downgrade base` + `alembic upgrade head` döngüsü CI pipeline'ına eklenmeli.
+**Dosya:** `.github/workflows/ci.yml:224-256`
+**Sorun:** CI'daki `migration-check` job'ı yalnızca migration dosyalarını **listeliyor**. Gerçek doğrulama yapmıyor:
+```python
+# Mevcut doğrulama (satır 244-255):
+files = [f for f in os.listdir(migration_dir) if f.endswith('.py')]
+print(f'Found {len(files)} migration files')
+```
+**Yapılmayanlar:**
+1. Migration'ları test veritabanına uygulamıyor
+2. Migration syntax doğrulaması yok
+3. `down_revision` zinciri kontrolü yok
+4. Gerçek DB operasyonu çalıştırmıyor
+5. Şema tutarlılığı doğrulaması yok
+
+**Not:** `pyproject.toml` (satır 84) `testcontainers[postgres]` dev dependency olarak tanımlıyor ama CI workflow hiçbir zaman migration testi için database container başlatmıyor.
+
+**Önerilen:** `alembic upgrade head` + `alembic downgrade base` + `alembic upgrade head` döngüsü testcontainers ile CI pipeline'ına eklenmeli.
+
+### BULGU-34 — DOWNGRADE GUVENLIGI EKSIK (MAJOR)
+
+**Kritik downgrade sorunları:**
+
+| Migration | Dosya | Downgrade Durumu | Sorun |
+|-----------|-------|-----------------|-------|
+| `kr011_ba` | `20260302_add_billing_admin_role.py:28-31` | `pass` (boş) | PostgreSQL enum'dan değer kaldırılamıyor — `BILLING_ADMIN` downgrade sonrası kalır |
+| `kr015_3a` | `20260302_simplify_weather_block_status.py:58-72` | Veri kaybı | `REPORTED → PENDING` geri dönüşümde `CONFIRMED`/`VERIFIED` ayrımı kaybolur |
+| `013` | `20260105_013_full_text_search.py:122` | pg_trgm extension kalır | Extension DROP yorum satırında — güvenli ama eksik temizlik |
+
+### BULGU-35 — IDEMPOTENCY SORUNLARI (MEDIUM)
+
+**Sorunlu uygulamalar:**
+- **Migration 012:** 25+ indeks oluşturma `IF NOT EXISTS` olmadan — kısmi hata sonrası yeniden çalıştırma crash eder
+- **İyi uygulamalar:** Extension oluşturma (`CREATE EXTENSION IF NOT EXISTS`), enum oluşturma (`checkfirst=True`), downgrade'lerde `DROP TYPE IF EXISTS` kullanımı
+
+### BULGU-36 — ROLLBACK PROSEDURU BELGELENMEMIS (CRITICAL)
+
+**Sorun:** 21 migration için hiçbir rollback prosedürü belgelenmemiş.
+**Detay:**
+- `docs/migration_guides/README.md` sadece şablon içeriyor — gerçek prosedür yok
+- Rollback şablonunda `1. ...` placeholder'ı var
+- `scripts/backup_database.sh` (105 satır) mevcut ama deployment pipeline'ına entegre değil
+- Staging deploy workflow'unda (`deploy-staging.yml`) migration çalıştırma adımı yok
+
+**Önerilen:**
+1. `docs/ROLLBACK.md` oluşturulmalı (enum downgrade, data recovery, şema doğrulama)
+2. Backup scripti deployment pipeline'ına entegre edilmeli
+3. Her migration için rollback uyarıları belgelenmeli
+
+### BULGU-37 — DEPLOYMENT PIPELINE MIGRATION ADIMI EKSIK (MAJOR)
+
+**Dosya:** `.github/workflows/deploy-staging.yml`
+**Sorun:** Deployment workflow'unda `alembic upgrade head` çalıştırma adımı yok. Konteyner doğru şema versiyonu olmadan başlayabilir.
+**Dosya:** `Dockerfile:45-47` — Alembic dosyaları kopyalanıyor ama otomatik migration çalıştırma yok:
+```dockerfile
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
+```
+**Önerilen:** Container başlangıcında şema versiyonu doğrulanmalı veya entrypoint'te `alembic upgrade head` çalıştırılmalı.
+
+---
+
+## BOLUM 11: 21 MIGRATION ENVANTER TABLOSU
+
+| # | Revision | Dosya | Tarih | Up | Down | Notlar |
+|---|----------|-------|-------|-----|------|--------|
+| 1 | `001` | `20260101_001_initial_users_roles.py` | 2026-01-01 | ✓ | ✓ | users, roles, cooperatives; `checkfirst=True` |
+| 2 | `002` | `20260101_002_initial_fields_crops.py` | 2026-01-01 | ✓ | ✓ | PostGIS, fields, field_crops, price_snapshots |
+| 3 | `003` | `20260101_003_initial_missions.py` | 2026-01-01 | ✓ | ✓ | missions, route_files |
+| 4 | `004` | `20260102_004_subscriptions.py` | 2026-01-02 | ✓ | ✓ | subscriptions, FK to missions |
+| 5 | `005` | `20260102_005_pilots.py` | 2026-01-02 | ✓ | ✓ | pilots, assignments, earnings, crop_ops_profiles |
+| 6 | `006` | `20260102_006_experts.py` | 2026-01-02 | ✓ | ✓ | experts, specializations, zone_authorities |
+| 7 | `007` | `20260103_007_analysis_jobs.py` | 2026-01-03 | ✓ | ✓ | analysis_jobs, analysis_results |
+| 8 | `008` | `20260103_008_expert_reviews.py` | 2026-01-03 | ✓ | ✓ | expert_reviews, feedback_records |
+| 9 | `009` | `20260104_009_weather_blocks.py` | 2026-01-04 | ✓ | ✓ | weather_blocks (deprecated enum!) |
+| 10 | `010` | `20260104_010_audit_logs.py` | 2026-01-04 | ✓ | ✓ | WORM audit_logs + immutability trigger |
+| 11 | `011` | `20260104_011_weekly_schedules.py` | 2026-01-04 | ✓ | ✓ | weekly_schedules, schedule_entries, reschedule_logs |
+| 12 | `012` | `20260105_012_indexes_performance.py` | 2026-01-05 | **FAIL** | ✓ | 5 RUNTIME FAIL (hayalet sütunlar); IF NOT EXISTS yok |
+| 13 | `013` | `20260105_013_full_text_search.py` | 2026-01-05 | **FAIL** | ⚠ | crop_type trigram FAIL; pg_trgm extension downgrade atlanıyor |
+| 14 | `kr033` | `20260129_kr033_payment_intents.py` | 2026-01-29 | **FAIL** | ✓ | Çift sütun tanımlama (payment_intent_id) |
+| 15 | `kr082` | `20260201_kr082_calibration_qc_records.py` | 2026-02-01 | ✓ | ✓ | calibration_records, qc_reports |
+| 16 | `wbr001` | `20260204_add_weather_block_reports.py` | 2026-02-04 | ✓ | ✓ | weather_block_reports |
+| 17 | `kr015a` | `20260225_014_kr015_mission_segments.py` | 2026-02-25 | ✓ | ✓ | mission_segments scaffold |
+| 18 | `kr015b` | `20260225_015_kr015_seasonal_reschedule_tokens.py` | 2026-02-25 | ✓ | ✓ | reschedule tokens, requests |
+| 19 | `kr015c` | `20260223_kr015c_mission_schedule_fields.py` | 2026-02-23 | ✓ | ✓ | schedule_window, assignment_source |
+| 20 | `kr015_3a` | `20260302_simplify_weather_block_status.py` | 2026-03-02 | ✓ | ⚠ | **BRANCH FORK!** Data migration + eksik downgrade |
+| 21 | `kr011_ba` | `20260302_add_billing_admin_role.py` | 2026-03-02 | ✓ | ✗ | Enum ADD VALUE; downgrade `pass` |
+
+**Lejant:** ✓ Doğru | ⚠ Kısmen sorunlu | ✗ Eksik/Boş | **FAIL** Runtime hatası verecek
+
+---
+
+## BOLUM 12: TOPLAM BULGU ISTATISTIKLERI
+
+| Severity | Adet | Kategoriler |
+|----------|------|-------------|
+| **CRITICAL** | 7 | Branch fork, eksik datasets tablosu, migration testi yok, CI doğrulaması yetersiz, rollback prosedürü belgelenmemiş |
+| **MAJOR** | 9 | Ödeme state machine, RLS eksik, layer_registry eksik, weather_blocks stale, PostGIS indeks eksik, şifreleme eksik, deployment pipeline eksik, downgrade güvenliği |
+| **RUNTIME FAIL** | 5 | Çift sütun tanımlama (2), hayalet sütun indeksleri (3) |
+| **MEDIUM** | 8 | FK indeksler, JSONB GIN indeksler, partition stratejisi, admin doğrulama, CASCADE riskleri, geometri validasyon, alan tutarlılığı, idempotency |
+| **MINOR** | 8 | Stale yorum, tarih sırası, segment UNIQUE, çift atama, CHECK constraints, bitki sezonu, env.py fallback, audit referans |
+| **TOPLAM** | **37** | |
 
 ---
 
