@@ -1,6 +1,6 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
 # KR-081: Pricebook snapshots use typed contracts at application boundaries.
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """
 Amaç: PriceBook/PriceSnapshot yönetimi (KR-022).
 Sorumluluk: Use-case orkestrasyonu; domain service + ports birleşimi; policy enforcement.

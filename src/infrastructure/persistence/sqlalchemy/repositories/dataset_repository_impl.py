@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/infrastructure/persistence/sqlalchemy/repositories/dataset_repository_impl.py
 # DESC: DatasetRepository portunun SQLAlchemy implementasyonu; KR-072 dataset durum yönetimi.
 """

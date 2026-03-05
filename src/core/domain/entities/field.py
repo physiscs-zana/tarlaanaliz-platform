@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/entities/field.py
 # DESC: Field; geometri (polygon) + parsel referansi + sezon bitkisi.
 # SSOT: KR-013 (ciftci uyeligi / tarla yonetimi), KR-016 (eslestirme), KR-080 (teknik kurallar)

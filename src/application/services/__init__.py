@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """
 Amaç: Python paket başlangıcı; modül dışa aktarım (exports) ve namespace düzeni.
 Sorumluluk: Python paket başlangıcı; import yüzeyini (public API) düzenler.

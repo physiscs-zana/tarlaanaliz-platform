@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/services/weather_validator.py
 # DESC: Pilot hava raporu kayıt ve analiz servisi (KR-015-3A, KR-015-5).
 # KR-015-3A: Pilot hava kararında TEK OTORİTE. Sistem weather API override EDEMEZ.

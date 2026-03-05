@@ -1,7 +1,7 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/value_objects/dataset_status.py
 # DESC: DatasetStatus VO; KR-072 9+1 durum state machine.
-# SSOT: TARLAANALIZ_SSOT_v1_1_0.txt — KR-072 (Dataset durum makinesi)
+# SSOT: TARLAANALIZ_SSOT_v1_2_0.txt — KR-072 (Dataset durum makinesi)
 """
 DatasetStatus value object.
 

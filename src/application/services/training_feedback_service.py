@@ -1,6 +1,6 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
 # KR-071: Feedback flow is one-way into platform persistence and outbound events.
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """
 Amaç: Training feedback orkestrasyon servisi.
 Sorumluluk: Use-case orkestrasyonu; domain service + ports birleşimi; policy enforcement.

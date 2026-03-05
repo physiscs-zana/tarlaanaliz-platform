@@ -1,11 +1,14 @@
 # PATH: src/core/domain/entities/payment_intent.py
 # DESC: PaymentIntent; dekont upload, manuel onay (KR-033), finansal integrity.
-# SSOT: KR-033 (odeme ve manuel onay)
+# SSOT: TARLAANALIZ_SSOT_v1_2_0.txt — KR-033 (odeme ve manuel onay)
 """
 PaymentIntent domain entity.
 
 Ciftci / Kooperatif / Uretici Birligi tarafindan acilan tek seferlik Mission
-veya yillik Subscription taleplerinde tahsilati standartlastirir (KR-033).
+veya Sezonluk Paket Subscription taleplerinde tahsilati standartlastirir (KR-033).
+
+NOT (KR-033 v1.2.0): Sistemde otomatik expire yoktur. PAYMENT_PENDING
+durumundaki intent'ler admin karariyla CANCELLED yapilabilir.
 """
 from __future__ import annotations
 
@@ -27,12 +30,11 @@ class PaymentMethod(str, Enum):
 
 
 class PaymentStatus(str, Enum):
-    """KR-033 kanonik odeme durumlari."""
+    """KR-033 kanonik odeme durumlari (v1.2.0 — 5 durum, EXPIRED yok)."""
 
     PAYMENT_PENDING = "PAYMENT_PENDING"
     PAID = "PAID"
     REJECTED = "REJECTED"
-    EXPIRED = "EXPIRED"
     CANCELLED = "CANCELLED"
     REFUNDED = "REFUNDED"
 
@@ -44,8 +46,9 @@ class PaymentIntent:
     * KR-033 -- Odeme ve manuel onay akisi.
     * Kural-1: PAID olmadan Mission ASSIGNED olamaz.
     * Kural-2: PAID olmadan Subscription ACTIVE olamaz.
-    * Kural-3: PAYMENT_PENDING iken kullanici CANCELLED yapabilir.
+    * Kural-3: PAYMENT_PENDING iken kullanici veya admin CANCELLED yapabilir.
     * Kural-4: REFUNDED yalnizca PAID sonrasi admin aksiyonu ile olur.
+    * Kural-5: Gecersiz gecis denemeleri PaymentTransitionError olarak reddedilir.
     """
 
     payment_intent_id: uuid.UUID
@@ -60,6 +63,8 @@ class PaymentIntent:
     price_snapshot_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+    # KR-033 §4: field_id opsiyonel, IBAN eslestirme icin
+    field_id: Optional[uuid.UUID] = None
     coop_id: Optional[uuid.UUID] = None
     provider: Optional[str] = None
     provider_session_id: Optional[str] = None
@@ -71,12 +76,13 @@ class PaymentIntent:
     paid_at: Optional[datetime] = None
     rejected_at: Optional[datetime] = None
     rejected_reason: Optional[str] = None
+    # KR-033 §4: admin_note zorunlu alan (mark_paid ve reject islemlerinde)
+    admin_note: Optional[str] = None
     cancelled_at: Optional[datetime] = None
     cancelled_reason: Optional[str] = None
     refunded_at: Optional[datetime] = None
     refund_amount_kurus: Optional[int] = None
     refund_reason: Optional[str] = None
-    expires_at: Optional[datetime] = None
 
     # ------------------------------------------------------------------
     # Invariants
@@ -102,10 +108,12 @@ class PaymentIntent:
         self,
         paid_at: Optional[datetime] = None,
         approved_by_admin_user_id: Optional[uuid.UUID] = None,
+        admin_note: Optional[str] = None,
     ) -> None:
         """Odemeyi onayla (KR-033: provider webhook veya manuel admin onayi).
 
         PAYMENT_PENDING -> PAID.
+        KR-033: PAYMENT.MARK_PAID olayinda admin_note zorunlu.
         """
         if self.status != PaymentStatus.PAYMENT_PENDING:
             raise ValueError(
@@ -116,12 +124,15 @@ class PaymentIntent:
         if approved_by_admin_user_id is not None:
             self.approved_by_admin_user_id = approved_by_admin_user_id
             self.approved_at = self.paid_at
+        if admin_note is not None:
+            self.admin_note = admin_note.strip()
         self._touch()
 
     def reject(self, reason: str) -> None:
         """Odemeyi reddet (KR-033: dekont/uyumsuzluk/eksik bilgi).
 
         PAYMENT_PENDING -> REJECTED.
+        KR-033: rejection_reason zorunlu.
         """
         if self.status != PaymentStatus.PAYMENT_PENDING:
             raise ValueError(
@@ -147,18 +158,6 @@ class PaymentIntent:
         self.status = PaymentStatus.CANCELLED
         self.cancelled_at = datetime.now(timezone.utc)
         self.cancelled_reason = reason.strip() if reason else None
-        self._touch()
-
-    def expire(self) -> None:
-        """Sure asimi (KR-033: 7 gun icinde odeme gelmezse).
-
-        PAYMENT_PENDING -> EXPIRED.
-        """
-        if self.status != PaymentStatus.PAYMENT_PENDING:
-            raise ValueError(
-                f"Can only expire from PAYMENT_PENDING, current: {self.status.value}"
-            )
-        self.status = PaymentStatus.EXPIRED
         self._touch()
 
     def refund(self, refund_amount_kurus: int, reason: str) -> None:

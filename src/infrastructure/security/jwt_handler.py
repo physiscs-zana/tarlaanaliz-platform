@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # KR-050: JWT HS256 token üretimi ve doğrulaması (telefon+PIN kimlik).
 
 """Infrastructure JWT primitives."""

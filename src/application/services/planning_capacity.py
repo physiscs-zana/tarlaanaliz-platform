@@ -1,6 +1,6 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
 # KR-015: Capacity policy and estimations are centralized for scheduling inputs.
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """
 Amaç: "dönüm → efor → kapasite" hesaplarını standardize etmek.
 Sorumluluk: Use-case orkestrasyonu; domain service + ports birleşimi; policy enforcement.

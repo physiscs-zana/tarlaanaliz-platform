@@ -1,6 +1,6 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
 # KR-015: Seasonal slot generation uses deterministic scheduling intervals.
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """
 Amaç: Subscription sezonluk takvim üretimi ve mission zamanlama.
 Sorumluluk: Use-case orkestrasyonu; domain service + ports birleşimi; policy enforcement.

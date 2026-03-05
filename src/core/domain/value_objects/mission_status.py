@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/value_objects/mission_status.py
 # DESC: MissionStatus VO; durum enum ve geçiş kuralları (KR-028).
 
@@ -49,12 +49,12 @@ class MissionStatus:
     })
 
     _TRANSITIONS: ClassVar[dict[str, frozenset[str]]] = {
-        "PLANNED": frozenset({"ASSIGNED", "CANCELLED"}),
-        "ASSIGNED": frozenset({"ACKED", "CANCELLED"}),
-        "ACKED": frozenset({"FLOWN", "CANCELLED"}),
-        "FLOWN": frozenset({"UPLOADED"}),
-        "UPLOADED": frozenset({"ANALYZING"}),
-        "ANALYZING": frozenset({"DONE", "FAILED"}),
+        "PLANNED": frozenset({"ASSIGNED", "FAILED", "CANCELLED"}),
+        "ASSIGNED": frozenset({"ACKED", "FAILED", "CANCELLED"}),
+        "ACKED": frozenset({"FLOWN", "FAILED", "CANCELLED"}),
+        "FLOWN": frozenset({"UPLOADED", "FAILED", "CANCELLED"}),
+        "UPLOADED": frozenset({"ANALYZING", "FAILED", "CANCELLED"}),
+        "ANALYZING": frozenset({"DONE", "FAILED", "CANCELLED"}),
         "DONE": frozenset(),
         "FAILED": frozenset(),
         "CANCELLED": frozenset(),

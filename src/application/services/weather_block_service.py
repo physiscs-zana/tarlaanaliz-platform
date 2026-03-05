@@ -1,7 +1,7 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
 # KR-015: Weather-block report and replan events are orchestrated here.
 # KR-015-3A: Pilot sahada tek yetkili; admin doğrulama akışı kaldırılmıştır.
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """
 Amaç: Weather Block raporu alma ve yeniden planlama.
 Sorumluluk: Use-case orkestrasyonu; domain service + ports birleşimi; policy enforcement.

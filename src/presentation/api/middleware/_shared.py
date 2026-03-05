@@ -1,4 +1,4 @@
-# BOUND: TARLAANALIZ_SSOT_v1_1_0.txt – canonical rules are referenced, not duplicated.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # KR-081: Ortak middleware primitifleri; corr_id, IP maskeleme, metrik hook.
 """Shared middleware primitives for context and safe observability."""
 
