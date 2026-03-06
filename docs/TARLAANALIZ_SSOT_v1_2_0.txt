@@ -978,8 +978,11 @@ Tüm olaylar BÖLÜM 3 log standardına uygun JSONL formatında üretilir. `corr
 | `PAYMENT.REJECTED` | Admin red aksiyonu |
 | `PAYMENT.CANCELLED` | Kullanıcı veya admin iptali |
 | `PAYMENT.REFUNDED` | Admin iade aksiyonu |
+| `PAYMENT.SLA_BREACH` | IBAN onay SLA ihlali (T+1 17:00 aşımı) — CENTRAL_ADMIN'e otomatik uyarı |
+| `PAYMENT.ESCALATED` | BILLING_ADMIN şüpheli makbuz eskalasyonu — `escalation_reason` zorunlu |
 
 > `PAYMENT.MARK_PAID` ve `PAYMENT.REJECTED` olaylarında `admin_user_id` ve `admin_note` / `rejection_reason` alanları zorunludur.
+> `PAYMENT.ESCALATED` olayında `billing_admin_id`, `escalation_reason` ve `payment_intent_id` alanları zorunludur.
 
 ---
 
@@ -1118,6 +1121,7 @@ Bu bölüm, **[KR-001] Proje Özeti** içindeki "Sabit Çerçeve" maddelerinin *
 | IL_OPERATOR | İl Operatörü | PII görmeden KPI/özet gelir ve operasyon metrikleri |
 | CENTRAL_ADMIN | Merkez yönetici | Fiyat/PriceBook, kurum onayı, rol atama, audit |
 | AI_SERVICE | YZ analiz servisi | Job tüket, rapor üret, sonuç yaz |
+| BILLING_ADMIN | Ödeme Yöneticisi | IBAN dekont onayı, geri ödeme (limit altı), kar payı raporlama. PII: telefonu yalnızca maskeli görür. Limit üstünde CENTRAL_ADMIN eskalasyonu zorunlu. Detay: **[KR-033]**, **[KR-083]** |
 | EXPERT | Uzman | İnceleme görüntüle, verdict ver, PII görmez |
 
 ---
@@ -1629,6 +1633,15 @@ WORM/immutable audit olayları:
 - `JOB.CANCEL`
 - `SECURITY.DENY` (mTLS fail, allowlist fail, signature fail)
 - `RESULT.SIGNATURE_FAIL`
+- `PAYMENT.SLA_BREACH` — IBAN onay SLA ihlali (T+1 aşımı); bkz. **[KR-033]** §10
+- `PAYMENT.ESCALATED` — BILLING_ADMIN şüpheli makbuz eskalasyonu; bkz. **[KR-033]** §10
+- `THERMAL.PIPELINE_ACTIVATED` — termal bant algılandı, pipeline başlatıldı; bkz. **[KR-084]**
+- `THERMAL.CALIBRATION_VERIFIED` — termal kalibrasyon kanıtı doğrulandı
+- `THERMAL.QC_PASS/WARN/FAIL` — termal QC sonucu
+- `THERMAL.RESULT_PUBLISHED` — termal katmanlar rapora eklendi
+- `SCAN_POLICY.BYPASS_ACTIVATED` — AV tarama BYPASS modu etkinleştirildi; bkz. **[KR-073]**
+- `SCAN_POLICY.BYPASS_EXTENDED` — BYPASS süresi uzatıldı
+- `PROVINCE_OPERATOR.RATE_CHANGED` — İl Operatör kar payı oranı değişikliği; bkz. **[KR-083]**
 
 ---
 
@@ -1675,6 +1688,11 @@ Bu bölüm, güvenlik kurallarını **tekrar etmek** için değil; SSOT içinde 
 - **Audit/WORM olay şeması + correlation_id:** BÖLÜM 3
 - **Threat model:** BÖLÜM 4
 - **Saha güvenlik checklist:** EK-SOP-SEC
+- **Ödeme akışı + manuel onay + BILLING_ADMIN operasyonları:** [KR-033]
+- **İl Operatörü kar payı mekanizması:** [KR-083]
+- **Pilot hakediş doğrulama (expected vs observed):** [KR-065]
+- **Mimari Karar Kayıtları:** ADR-001 (9 durumlu state machine), ADR-002 (graceful degradation modeli)
+- **Platform derin denetim raporu:** `docs/migration_guides/PLATFORM_DEEP_AUDIT_v1_2_0.md`
 
 
 # BÖLÜM 6: TEST SENARYOLARI
