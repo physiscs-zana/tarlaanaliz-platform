@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """Weather blocks schema.
 
 KR-015-5 (Force Majeure) geregi pilotlarin hava engeli bildirimlerini

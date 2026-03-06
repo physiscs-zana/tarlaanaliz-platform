@@ -22,7 +22,7 @@ def test_should_check_targets_repo_critical_paths(tmp_path: Path, monkeypatch) -
 
 def test_should_check_skips_non_target_paths(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
-    target = Path("alembic/versions/migration.py")
+    target = Path("vendor/external/migration.py")
     target.parent.mkdir(parents=True)
     target.write_text("# sample", encoding="utf-8")
 

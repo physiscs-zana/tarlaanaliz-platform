@@ -24,6 +24,7 @@ class ExpertReviewStatus(str, Enum):
 
 
 _VALID_VERDICTS = frozenset({"confirmed", "corrected", "rejected", "needs_more_expert"})
+_VALID_TRAINING_GRADES = frozenset({"A", "B", "C", "D", "REJECT"})
 
 
 @dataclass
@@ -44,6 +45,9 @@ class ExpertReview:
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     verdict: Optional[str] = None  # confirmed|corrected|rejected|needs_more_expert
+    # KR-019: training_grade (A|B|C|D|REJECT) ve grade_reason (max 200 karakter)
+    training_grade: Optional[str] = None
+    grade_reason: Optional[str] = None
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -64,10 +68,16 @@ class ExpertReview:
         self.status = ExpertReviewStatus.IN_PROGRESS
         self.started_at = datetime.now(timezone.utc)
 
-    def submit_verdict(self, verdict: str) -> None:
+    def submit_verdict(
+        self,
+        verdict: str,
+        training_grade: Optional[str] = None,
+        grade_reason: Optional[str] = None,
+    ) -> None:
         """Uzman karari gonder (IN_PROGRESS -> COMPLETED|REJECTED).
 
         Gecerli verdict degerleri: confirmed, corrected, rejected, needs_more_expert.
+        KR-019: training_grade (A|B|C|D|REJECT) ve grade_reason (max 200 karakter).
         """
         if self.status != ExpertReviewStatus.IN_PROGRESS:
             raise ValueError(
@@ -77,7 +87,16 @@ class ExpertReview:
             raise ValueError(
                 f"Invalid verdict: '{verdict}'. Must be one of: {sorted(_VALID_VERDICTS)}"
             )
+        if training_grade is not None and training_grade not in _VALID_TRAINING_GRADES:
+            raise ValueError(
+                f"Invalid training_grade: '{training_grade}'. "
+                f"Must be one of: {sorted(_VALID_TRAINING_GRADES)}"
+            )
+        if grade_reason is not None and len(grade_reason) > 200:
+            raise ValueError("grade_reason must be at most 200 characters")
         self.verdict = verdict
+        self.training_grade = training_grade
+        self.grade_reason = grade_reason
         self.completed_at = datetime.now(timezone.utc)
         if verdict == "rejected":
             self.status = ExpertReviewStatus.REJECTED

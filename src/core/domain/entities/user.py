@@ -1,13 +1,12 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/entities/user.py
 # DESC: User; telefon + PIN kimlik dogrulama (email/TCKN/OTP yok).
-# SSOT: TARLAANALIZ_SSOT_v1_1_0.txt — KR-050 (kimlik), KR-063 (11 rol, v1.1.0)
-# DEĞİŞİKLİK v1.1.0: UserRole FARMER_MEMBER + BILLING_ADMIN kaldırıldı → 11 rol
+# SSOT: TARLAANALIZ_SSOT_v1_2_0.txt — KR-050 (kimlik), KR-063 (13 rol, v1.2.0)
 """
 User domain entity.
 
 Kimlik modeli: telefon numarasi + 6 haneli PIN (KR-050).
-Roller: KR-063 kanonik RBAC matrisi.
+Roller: KR-063 kanonik RBAC matrisi (v1.2.0: 13 rol).
 """
 from __future__ import annotations
 
@@ -19,12 +18,10 @@ from typing import Optional
 
 
 class UserRole(str, Enum):
-    """KR-063 kanonik rol kodlari (v1.1.0 — 11 rol).
-
-    v1.0.0 → v1.1.0 kaldırılanlar: FARMER_MEMBER, BILLING_ADMIN
-    """
+    """KR-063 kanonik rol kodlari (v1.2.0 — 13 rol)."""
 
     FARMER_SINGLE = "FARMER_SINGLE"
+    FARMER_MEMBER = "FARMER_MEMBER"
     COOP_OWNER = "COOP_OWNER"
     COOP_ADMIN = "COOP_ADMIN"
     COOP_AGRONOMIST = "COOP_AGRONOMIST"
@@ -32,6 +29,7 @@ class UserRole(str, Enum):
     PILOT = "PILOT"
     STATION_OPERATOR = "STATION_OPERATOR"
     IL_OPERATOR = "IL_OPERATOR"
+    BILLING_ADMIN = "BILLING_ADMIN"
     CENTRAL_ADMIN = "CENTRAL_ADMIN"
     AI_SERVICE = "AI_SERVICE"
     EXPERT = "EXPERT"

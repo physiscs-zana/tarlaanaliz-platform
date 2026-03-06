@@ -49,12 +49,12 @@ class MissionStatus:
     })
 
     _TRANSITIONS: ClassVar[dict[str, frozenset[str]]] = {
-        "PLANNED": frozenset({"ASSIGNED", "CANCELLED"}),
-        "ASSIGNED": frozenset({"ACKED", "CANCELLED"}),
-        "ACKED": frozenset({"FLOWN", "CANCELLED"}),
-        "FLOWN": frozenset({"UPLOADED"}),
-        "UPLOADED": frozenset({"ANALYZING"}),
-        "ANALYZING": frozenset({"DONE", "FAILED"}),
+        "PLANNED": frozenset({"ASSIGNED", "FAILED", "CANCELLED"}),
+        "ASSIGNED": frozenset({"ACKED", "FAILED", "CANCELLED"}),
+        "ACKED": frozenset({"FLOWN", "FAILED", "CANCELLED"}),
+        "FLOWN": frozenset({"UPLOADED", "FAILED", "CANCELLED"}),
+        "UPLOADED": frozenset({"ANALYZING", "FAILED", "CANCELLED"}),
+        "ANALYZING": frozenset({"DONE", "FAILED", "CANCELLED"}),
         "DONE": frozenset(),
         "FAILED": frozenset(),
         "CANCELLED": frozenset(),

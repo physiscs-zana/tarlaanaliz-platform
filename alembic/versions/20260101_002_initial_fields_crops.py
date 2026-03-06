@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """Initial fields and crops schema.
 
 KR-013 (Ciftci ve Tarla Yonetimi) geregi fields ve crops tablolarini

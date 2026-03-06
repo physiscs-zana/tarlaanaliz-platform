@@ -1,7 +1,7 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/ports/repositories/dataset_repository.py
 # DESC: DatasetRepository port; KR-072 dataset durum yönetimi.
-# SSOT: TARLAANALIZ_SSOT_v1_1_0.txt — KR-072 (Dataset durum makinesi)
+# SSOT: TARLAANALIZ_SSOT_v1_2_0.txt — KR-072 (Dataset durum makinesi)
 """
 DatasetRepository port (Protocol).
 

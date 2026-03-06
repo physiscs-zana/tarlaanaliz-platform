@@ -1,6 +1,6 @@
 # PATH: src/core/domain/value_objects/training_grade.py
 # DESC: TrainingGrade VO; training veri kalite derecesi.
-# SSOT: KR-019 (expert review), KR-081 (contract-first)
+# SSOT: TARLAANALIZ_SSOT_v1_2_0.txt — KR-019 (expert review), KR-081 (contract-first)
 """
 TrainingGrade value object.
 
@@ -26,12 +26,12 @@ class TrainingGrade:
     Immutable (frozen=True); oluşturulduktan sonra değiştirilemez.
     Domain core'da dış dünya erişimi yoktur (IO, log yok).
 
-    Kalite dereceleri:
-    - GOLD: En yüksek kalite; doğrulanmış ve güvenilir training verisi.
-    - SILVER: İyi kalite; küçük düzeltmelerle kullanılabilir.
-    - BRONZE: Kabul edilebilir kalite; dikkatle kullanılmalı.
-    - REJECTED: Reddedildi; training veri setine dahil edilemez.
-    - PENDING: Henüz derecelendirilmemiş (varsayılan başlangıç).
+    Kalite dereceleri (KR-019 v1.2.0):
+    - A: En yüksek kalite; doğrulanmış ve güvenilir training verisi.
+    - B: İyi kalite; küçük düzeltmelerle kullanılabilir.
+    - C: Kabul edilebilir kalite; dikkatle kullanılmalı.
+    - D: Düşük kalite; sınırlı kullanım.
+    - REJECT: Reddedildi; training veri setine dahil edilemez.
 
     Invariants:
     - value, tanımlı geçerli derecelerden biri olmalıdır.
@@ -39,33 +39,33 @@ class TrainingGrade:
 
     value: str
 
-    # Sabit derece kodları
-    GOLD: ClassVar[str] = "GOLD"
-    SILVER: ClassVar[str] = "SILVER"
-    BRONZE: ClassVar[str] = "BRONZE"
-    REJECTED: ClassVar[str] = "REJECTED"
-    PENDING: ClassVar[str] = "PENDING"
+    # Sabit derece kodları (KR-019 v1.2.0)
+    A: ClassVar[str] = "A"
+    B: ClassVar[str] = "B"
+    C: ClassVar[str] = "C"
+    D: ClassVar[str] = "D"
+    REJECT: ClassVar[str] = "REJECT"
 
     _VALID_VALUES: ClassVar[frozenset[str]] = frozenset({
-        "GOLD", "SILVER", "BRONZE", "REJECTED", "PENDING",
+        "A", "B", "C", "D", "REJECT",
     })
 
     # Derece -> Türkçe görünen ad eşlemesi
     _DISPLAY_NAMES: ClassVar[dict[str, str]] = {
-        "GOLD": "Altın",
-        "SILVER": "Gümüş",
-        "BRONZE": "Bronz",
-        "REJECTED": "Reddedildi",
-        "PENDING": "Beklemede",
+        "A": "A (En Yüksek)",
+        "B": "B (İyi)",
+        "C": "C (Kabul Edilebilir)",
+        "D": "D (Düşük)",
+        "REJECT": "Reddedildi",
     }
 
     # Kalite sıralaması (yüksek sayı = yüksek kalite)
     _QUALITY_ORDER: ClassVar[dict[str, int]] = {
-        "REJECTED": 0,
-        "PENDING": 1,
-        "BRONZE": 2,
-        "SILVER": 3,
-        "GOLD": 4,
+        "REJECT": 0,
+        "D": 1,
+        "C": 2,
+        "B": 3,
+        "A": 4,
     }
 
     def __post_init__(self) -> None:
@@ -98,22 +98,17 @@ class TrainingGrade:
     @property
     def is_usable(self) -> bool:
         """Training veri setine dahil edilebilir mi?"""
-        return self.value in {self.GOLD, self.SILVER, self.BRONZE}
+        return self.value in {self.A, self.B, self.C, self.D}
 
     @property
     def is_high_quality(self) -> bool:
-        """Yüksek kaliteli mi? (GOLD veya SILVER)."""
-        return self.value in {self.GOLD, self.SILVER}
+        """Yüksek kaliteli mi? (A veya B)."""
+        return self.value in {self.A, self.B}
 
     @property
     def is_rejected(self) -> bool:
         """Reddedilmiş mi?"""
-        return self.value == self.REJECTED
-
-    @property
-    def is_pending(self) -> bool:
-        """Henüz derecelendirilmemiş mi?"""
-        return self.value == self.PENDING
+        return self.value == self.REJECT
 
     def is_better_than(self, other: TrainingGrade) -> bool:
         """Bu derece diğerinden daha iyi mi?"""

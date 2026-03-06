@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-# KR-050: Sabit 6 haneli sayısal PIN (v1.1.0 — eski: 4-12 chars)
+# KR-050: Sabit 6 haneli sayısal PIN (v1.2.0 — eski: 4-12 chars)
 _PIN_LENGTH = 6
 _MAX_FAILED_LOGIN_ATTEMPTS = 16   # KR-050: 16 hata → 30 dakika kilit
 
@@ -53,7 +53,7 @@ class PhonePinAuthService(Protocol):
 class _InMemoryPhonePinAuthService:
     def login(self, phone: str, pin: str) -> AuthTokenResponse:
         # KR-081: explicit auth contract; no email/TCKN/OTP fields accepted.
-        if phone != "+905555555555" or pin != "1234":
+        if phone != "+905555555555" or pin != "123456":
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
         return AuthTokenResponse(access_token="demo-access-token", subject="user-1")
 

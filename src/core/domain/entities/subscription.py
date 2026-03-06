@@ -4,7 +4,7 @@
 """
 Subscription domain entity.
 
-Yillik abonelik secen kullanicilar icin otomatik, periyodik Mission uretimi.
+Sezonluk Paket secen kullanicilar icin otomatik, periyodik Mission uretimi.
 PAID olmadan Subscription ACTIVE olamaz (KR-033 Kural-2).
 Sezonda sinirli gun degistirme hakki: varsayilan 2 token (KR-015-5).
 """

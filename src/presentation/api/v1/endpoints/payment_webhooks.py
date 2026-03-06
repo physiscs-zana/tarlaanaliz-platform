@@ -3,11 +3,17 @@
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import logging
+import os
 from dataclasses import dataclass, field
 from typing import Protocol
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from pydantic import BaseModel, Field
+
+LOGGER = logging.getLogger("api.payment_webhooks")
 
 router = APIRouter(prefix="/payments/webhooks", tags=["payment-webhooks"])
 
@@ -34,9 +40,21 @@ class PaymentWebhookService(Protocol):
 class _InMemoryPaymentWebhookService:
     processed_events: set[str] = field(default_factory=set)
 
-    def process(self, payload: PaymentWebhookPayload, signature: str | None) -> PaymentWebhookResponse:
+    def process(self, payload: PaymentWebhookPayload, signature: str | None, raw_body: bytes | None = None) -> PaymentWebhookResponse:
         if not signature:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+        # HMAC signature verification (KR-033: webhook integrity)
+        webhook_secret = os.getenv("PAYMENT_WEBHOOK_SECRET", "")
+        if webhook_secret and raw_body:
+            expected = hmac.new(
+                webhook_secret.encode("utf-8"),
+                raw_body,
+                hashlib.sha256,
+            ).hexdigest()
+            if not hmac.compare_digest(expected, signature):
+                LOGGER.warning("Webhook signature mismatch", extra={"event": "webhook_sig_fail"})
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid signature")
 
         if payload.provider_event_id in self.processed_events:
             return PaymentWebhookResponse(accepted=True, provider_event_id=payload.provider_event_id)
@@ -54,11 +72,11 @@ def get_payment_webhook_service() -> PaymentWebhookService:
 
 
 @router.post("/provider", response_model=PaymentWebhookResponse)
-def receive_provider_webhook(
+async def receive_provider_webhook(
     request: Request,
     payload: PaymentWebhookPayload,
     x_provider_signature: str | None = Header(default=None, alias="X-Provider-Signature"),
     service: PaymentWebhookService = Depends(get_payment_webhook_service),
 ) -> PaymentWebhookResponse:
-    _ = request
-    return service.process(payload=payload, signature=x_provider_signature)
+    raw_body = await request.body()
+    return service.process(payload=payload, signature=x_provider_signature, raw_body=raw_body)

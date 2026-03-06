@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """KR-033 Ödeme ve Manuel Onay Akışı tabloları.
 
 Amaç: payment_intents tablosunu oluşturmak; missions ve subscriptions tablolarına

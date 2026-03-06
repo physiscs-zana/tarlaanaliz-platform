@@ -1,7 +1,7 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/value_objects/av_scan_mode.py
 # DESC: AVScanMode VO; KR-073 malware tarama modu.
-# SSOT: TARLAANALIZ_SSOT_v1_1_0.txt — KR-073 (İki aşamalı malware tarama)
+# SSOT: TARLAANALIZ_SSOT_v1_2_0.txt — KR-073 (İki aşamalı malware tarama)
 """
 AVScanMode value object.
 

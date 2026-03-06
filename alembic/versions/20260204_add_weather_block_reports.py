@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """Weather Block raporlama detay tabloları.
 
 Amaç: SOP 2.4 ve KR-015-5 kapsamında hava durumu kanıtlarının saklanacağı

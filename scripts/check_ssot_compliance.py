@@ -21,7 +21,7 @@ CHECKABLE_SUFFIXES = {
     ".json",
 }
 KR_CHECK_SUFFIXES = {".py", ".md", ".yml", ".yaml", ".sh", ".txt"}
-ALLOWED_ROOTS = {"src", "tests", "scripts", ".github", "config", "docs"}
+ALLOWED_ROOTS = {"src", "tests", "scripts", ".github", "config", "docs", "alembic"}
 
 
 def git_changed_files(base_ref: str, head_ref: str) -> list[Path]:

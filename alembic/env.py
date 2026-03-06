@@ -1,3 +1,5 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-041: SDLC gate — migration runtime environment.
 """
 Amaç: Alembic çalışma zamanı ortamı (Runtime Environment).
 Sorumluluk: SQLAlchemy modellerini (metadata) yükleyerek veritabanı ile kod arasındaki

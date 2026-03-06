@@ -1,4 +1,7 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """Veritabanı performans optimizasyonu için B-Tree indeksleri.
+
+KR-041 (SDLC gates) performans indeksleri — sorgu optimizasyonu.
 
 Amaç: Sık sorgulanan alanlara (status, due_at, user_id, field_id) B-Tree indeksleri eklemek.
 Sorumluluk: Sorgu performansını artırmak için composite ve tek sütun indekslerini oluşturmak.

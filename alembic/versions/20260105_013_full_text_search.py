@@ -1,4 +1,7 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """PostgreSQL Full-Text Search (FTS) indeksleri.
+
+KR-041 (SDLC gates) tam metin arama indeksleri.
 
 Amaç: Kullanıcı adı, tarla konumu gibi alanlar için GIN indeksleri eklemek.
 Sorumluluk: Metin arama yeteneklerini PostgreSQL tsvector/GIN ile sağlamak.

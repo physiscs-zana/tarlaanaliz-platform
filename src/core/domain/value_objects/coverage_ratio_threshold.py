@@ -1,7 +1,7 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/value_objects/coverage_ratio_threshold.py
 # DESC: CoverageRatioThreshold VO; KR-031 uçuş kapsama eşikleri.
-# SSOT: TARLAANALIZ_SSOT_v1_1_0.txt — KR-031 (Pilot ödeme ve kapsama oranı)
+# SSOT: TARLAANALIZ_SSOT_v1_2_0.txt — KR-031 (Pilot ödeme ve kapsama oranı)
 """
 CoverageRatioThreshold value object.
 

@@ -70,7 +70,8 @@ export interface AuthState {
 
 function setCookie(name: string, value: string, maxAgeSec: number): void {
   if (typeof document !== 'undefined') {
-    document.cookie = `${name}=${encodeURIComponent(value)};path=/;max-age=${maxAgeSec};SameSite=Lax`;
+    const secure = window.location.protocol === 'https:' ? ';Secure' : '';
+    document.cookie = `${name}=${encodeURIComponent(value)};path=/;max-age=${maxAgeSec};SameSite=Lax${secure}`;
   }
 }
 

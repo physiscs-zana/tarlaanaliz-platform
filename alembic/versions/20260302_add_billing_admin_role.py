@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """BILLING_ADMIN rolü ekleme — KR-011.
 
 SSOT KR-011: Ödeme Yöneticisi (BILLING_ADMIN) — IBAN dekont onayı, geri ödeme,

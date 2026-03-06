@@ -59,7 +59,7 @@ class MissionLifecycleManager:
         if mission is None:
             raise ValueError("mission not found")
 
-        # KR-028: SSOT v1.1.0 durum makinesi (uppercase)
+        # KR-028: SSOT v1.2.0 durum makinesi (uppercase)
         # KR-033: PLANNED→ASSIGNED geçişi sadece payment_intent.status==PAID ise yapılabilir;
         #         bu gate caller (mission_service.py) tarafından enforce edilir.
         allowed: dict[str, set[str]] = {

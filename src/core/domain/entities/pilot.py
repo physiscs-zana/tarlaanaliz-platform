@@ -1,12 +1,12 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/entities/pilot.py
 # DESC: Pilot; kapasite (work_days, daily_capacity), bolge atamasi, Drone.
-# SSOT: KR-015 (drone pilotlari), KR-015-1 (kapasite), KR-015-2 (seed/pull), KR-034 (drone bagimsizlik)
+# SSOT: TARLAANALIZ_SSOT_v1_2_0.txt — KR-015 (drone pilotlari), KR-015-1 (kapasite), KR-015-2 (seed/pull), KR-034 (drone bagimsizlik)
 """
 Pilot domain entity.
 
-v1.1.0 (KR-034): Pilot artık sadece DJI_MAVIC_3M değil; 4 onaylı modeli destekler:
-  DJI_MAVIC_3M | WINGTRAONE_GEN2 | PARROT_SEQUOIA_PLUS | AGEAGLE_EBEE_X
+v1.2.0 (KR-034): Pilot 5 onaylı modeli destekler:
+  DJI_MAVIC_3M | DJI_M350_RTK_SENTERA_6X | WINGTRAONE_GEN2 | PARROT_SEQUOIA_PLUS | AGEAGLE_EBEE_X
 Günlük kapasite 2500-3000 dönüm, varsayılan 2750 (KR-015-1).
 SYSTEM_SEED_QUOTA varsayılan 1500, PULL_QUOTA = capacity - seed (KR-015-2).
 """
@@ -48,10 +48,11 @@ class Pilot:
 
     # KR-034: Onaylı drone model ID'leri (drone_model alanı bunlardan biri olmalı)
     _APPROVED_DRONE_MODELS: ClassVar[frozenset[str]] = frozenset({
-        "DJI_MAVIC_3M",        # Phase 1, birincil
-        "WINGTRAONE_GEN2",      # Phase 2 Senaryo A/B
-        "PARROT_SEQUOIA_PLUS",  # Phase 2 Senaryo A
-        "AGEAGLE_EBEE_X",       # Phase 2 Senaryo B
+        "DJI_MAVIC_3M",            # Phase 1, birincil
+        "DJI_M350_RTK_SENTERA_6X", # Phase 1, KR-001 desteklenen model
+        "WINGTRAONE_GEN2",          # Phase 2 Senaryo A/B
+        "PARROT_SEQUOIA_PLUS",      # Phase 2 Senaryo A
+        "AGEAGLE_EBEE_X",           # Phase 2 Senaryo B
     })
 
     pilot_id: uuid.UUID
@@ -60,7 +61,7 @@ class Pilot:
     district: str
     full_name: str
     phone_number: str
-    drone_model: str  # KR-034: DJI_MAVIC_3M | WINGTRAONE_GEN2 | PARROT_SEQUOIA_PLUS | AGEAGLE_EBEE_X
+    drone_model: str  # KR-034: DJI_MAVIC_3M | DJI_M350_RTK_SENTERA_6X | WINGTRAONE_GEN2 | PARROT_SEQUOIA_PLUS | AGEAGLE_EBEE_X
     drone_serial_number: str
     created_at: datetime
     updated_at: datetime
