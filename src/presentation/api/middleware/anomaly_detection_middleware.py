@@ -95,7 +95,7 @@ class AnomalyDetectionMiddleware(BaseHTTPMiddleware):
                 reasons.append("error_spike")
                 score += 0.4
 
-        if score >= 0.6:
+        if score >= 0.8:
             event = AnomalyDetectedEvent(
                 corr_id=corr_id,
                 path=request.url.path,

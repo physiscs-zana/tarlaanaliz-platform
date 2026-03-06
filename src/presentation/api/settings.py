@@ -7,6 +7,14 @@ import os
 from dataclasses import dataclass, field
 
 
+def _require_env(name: str) -> str:
+    """Return env var value or raise if missing — used for secrets that must not have defaults."""
+    value = os.getenv(name)
+    if not value:
+        raise ValueError(f"{name} environment variable is required")
+    return value
+
+
 def _env_bool(name: str, default: bool) -> bool:
     value = os.getenv(name)
     if value is None:
@@ -44,7 +52,7 @@ class AppSettings:
 @dataclass(slots=True)
 class CorsSettings:
     enabled: bool = field(default_factory=lambda: _env_bool("API_CORS_ENABLED", True))
-    allow_origins: list[str] = field(default_factory=lambda: _env_list("API_CORS_ALLOW_ORIGINS", ["http://localhost:3000"]))
+    allow_origins: list[str] = field(default_factory=lambda: _env_list("API_CORS_ALLOW_ORIGINS", []))
     allow_methods: list[str] = field(default_factory=lambda: _env_list("API_CORS_ALLOW_METHODS", ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]))
     allow_headers: list[str] = field(default_factory=lambda: _env_list("API_CORS_ALLOW_HEADERS", ["Authorization", "Content-Type", "X-Correlation-Id"]))
     allow_credentials: bool = field(default_factory=lambda: _env_bool("API_CORS_ALLOW_CREDENTIALS", False))
@@ -54,14 +62,14 @@ class CorsSettings:
 class JwtSettings:
     enabled: bool = field(default_factory=lambda: _env_bool("API_JWT_ENABLED", True))
     bypass_routes: list[str] = field(default_factory=lambda: _env_list("API_JWT_BYPASS_ROUTES", ["/health", "/docs", "/openapi.json", "/redoc", "/api/v1/auth/phone-pin/login", "/api/v1/auth/phone-pin/refresh", "/api/v1/payments/webhooks/provider"]))
-    secret: str = field(default_factory=lambda: os.getenv("API_JWT_SECRET", "dev-only-secret"))
+    secret: str = field(default_factory=lambda: _require_env("API_JWT_SECRET"))
     algorithm: str = field(default_factory=lambda: os.getenv("API_JWT_ALGORITHM", "HS256"))
 
 
 @dataclass(slots=True)
 class RateLimitSettings:
     enabled: bool = field(default_factory=lambda: _env_bool("API_RATE_LIMIT_ENABLED", True))
-    per_minute_limit: int = field(default_factory=lambda: _env_int("API_RATE_LIMIT_PER_MINUTE", 60))
+    per_minute_limit: int = field(default_factory=lambda: _env_int("API_RATE_LIMIT_PER_MINUTE", 61))
     burst: int = field(default_factory=lambda: _env_int("API_RATE_LIMIT_BURST", 20))
     bypass_routes: list[str] = field(default_factory=lambda: _env_list("API_RATE_LIMIT_BYPASS_ROUTES", ["/health", "/docs", "/openapi.json"]))
 
