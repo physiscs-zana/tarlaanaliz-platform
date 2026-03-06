@@ -1,4 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-033: anomaly detection middleware test coverage.
 
 from __future__ import annotations
 
@@ -50,6 +51,7 @@ def test_anomaly_detects_error_spike_and_logs(caplog, monkeypatch) -> None:
 
 def test_anomaly_detects_large_body(monkeypatch, caplog) -> None:
     monkeypatch.setattr(settings.anomaly, "large_body_threshold_bytes", 10)
+    monkeypatch.setattr(settings.anomaly, "rapid_repeat_threshold", 1)
     caplog.set_level(logging.WARNING)
     client = TestClient(_app())
     response = client.get(
