@@ -32,6 +32,7 @@ Notlar/SSOT: Tek referans: tarlaanaliz_platform_tree v3.2.2 FINAL.
   Aynı kavram başka yerde tekrar edilmez.
   KR-033: PaymentIntent olmadan paid state olmaz; dekont + manuel onay + audit.
 """
+
 from __future__ import annotations
 
 import hashlib

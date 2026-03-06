@@ -23,8 +23,12 @@ from src.presentation.api.v1.endpoints.sla_metrics import router as sla_router
 
 
 class StubCalibrationService:
-    def create_record(self, *, actor_user_id: str, payload: CalibrationRecordCreateRequest, corr_id: str | None) -> CalibrationRecordResponse:
-        return CalibrationRecordResponse(record_id=uuid4(), created_at=datetime.now(timezone.utc), **payload.model_dump())
+    def create_record(
+        self, *, actor_user_id: str, payload: CalibrationRecordCreateRequest, corr_id: str | None
+    ) -> CalibrationRecordResponse:
+        return CalibrationRecordResponse(
+            record_id=uuid4(), created_at=datetime.now(timezone.utc), **payload.model_dump()
+        )
 
     def get_record(self, *, record_id, corr_id):
         return None
@@ -34,7 +38,9 @@ class StubCalibrationService:
 
 
 class StubQCService:
-    def create_report(self, *, actor_user_id: str, payload: QCReportCreateRequest, corr_id: str | None) -> QCReportResponse:
+    def create_report(
+        self, *, actor_user_id: str, payload: QCReportCreateRequest, corr_id: str | None
+    ) -> QCReportResponse:
         return QCReportResponse(report_id=uuid4(), created_at=datetime.now(timezone.utc), **payload.model_dump())
 
     def get_report(self, *, report_id, corr_id):
@@ -89,7 +95,12 @@ def test_qc_create_accepts_status_enum_and_sets_header() -> None:
     client = TestClient(_build_app())
     response = client.post(
         "/qc/reports",
-        json={"calibration_record_id": str(uuid4()), "status": QCStatus.PASS, "checks": {"n": 1}, "evidence_refs": ["s3://ref"]},
+        json={
+            "calibration_record_id": str(uuid4()),
+            "status": QCStatus.PASS,
+            "checks": {"n": 1},
+            "evidence_refs": ["s3://ref"],
+        },
     )
 
     assert response.status_code == 201

@@ -27,13 +27,15 @@ class AnalysisRequested(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "mission_id": str(self.mission_id),
-            "field_id": str(self.field_id),
-            "crop_type": self.crop_type,
-            "requires_calibrated": self.requires_calibrated,
-            "available_bands": list(self.available_bands),
-        })
+        base.update(
+            {
+                "mission_id": str(self.mission_id),
+                "field_id": str(self.field_id),
+                "crop_type": self.crop_type,
+                "requires_calibrated": self.requires_calibrated,
+                "available_bands": list(self.available_bands),
+            }
+        )
         return base
 
 
@@ -47,11 +49,13 @@ class AnalysisStarted(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "analysis_job_id": str(self.analysis_job_id),
-            "mission_id": str(self.mission_id),
-            "band_class": self.band_class,
-        })
+        base.update(
+            {
+                "analysis_job_id": str(self.analysis_job_id),
+                "mission_id": str(self.mission_id),
+                "band_class": self.band_class,
+            }
+        )
         return base
 
 
@@ -68,14 +72,16 @@ class AnalysisCompleted(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "analysis_job_id": str(self.analysis_job_id),
-            "mission_id": str(self.mission_id),
-            "field_id": str(self.field_id),
-            "confidence_score": self.confidence_score,
-            "band_class": self.band_class,
-            "report_tier": self.report_tier,
-        })
+        base.update(
+            {
+                "analysis_job_id": str(self.analysis_job_id),
+                "mission_id": str(self.mission_id),
+                "field_id": str(self.field_id),
+                "confidence_score": self.confidence_score,
+                "band_class": self.band_class,
+                "report_tier": self.report_tier,
+            }
+        )
         return base
 
 
@@ -89,11 +95,13 @@ class AnalysisFailed(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "analysis_job_id": str(self.analysis_job_id),
-            "mission_id": str(self.mission_id),
-            "reason": self.reason,
-        })
+        base.update(
+            {
+                "analysis_job_id": str(self.analysis_job_id),
+                "mission_id": str(self.mission_id),
+                "reason": self.reason,
+            }
+        )
         return base
 
 
@@ -111,11 +119,13 @@ class CalibrationValidated(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "mission_id": str(self.mission_id),
-            "batch_id": str(self.batch_id),
-            "qc_result": self.qc_result,
-        })
+        base.update(
+            {
+                "mission_id": str(self.mission_id),
+                "batch_id": str(self.batch_id),
+                "qc_result": self.qc_result,
+            }
+        )
         return base
 
 
@@ -130,10 +140,12 @@ class LowConfidenceDetected(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "analysis_job_id": str(self.analysis_job_id),
-            "field_id": str(self.field_id),
-            "confidence_score": self.confidence_score,
-            "threshold": self.threshold,
-        })
+        base.update(
+            {
+                "analysis_job_id": str(self.analysis_job_id),
+                "field_id": str(self.field_id),
+                "confidence_score": self.confidence_score,
+                "threshold": self.threshold,
+            }
+        )
         return base

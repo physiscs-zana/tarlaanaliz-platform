@@ -29,6 +29,7 @@ Bağımlılıklar: aio-pika (AMQP client), structlog, rabbitmq_config.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -132,9 +133,7 @@ class RabbitMQConsumer:
             )
             self._connection = None
             self._channel = None
-            raise ConnectionError(
-                f"RabbitMQ bağlantısı kurulamadı: {type(exc).__name__}"
-            ) from exc
+            raise ConnectionError(f"RabbitMQ bağlantısı kurulamadı: {type(exc).__name__}") from exc
 
     def _is_duplicate(self, message_id: str) -> bool:
         """Mesaj daha önce işlendi mi kontrol et (idempotency).
@@ -325,7 +324,7 @@ class RabbitMQConsumer:
                         latency_ms=round(latency_ms, 2),
                     )
                     # Exponential backoff delay
-                    delay = min(2 ** retry_count, 30)
+                    delay = min(2**retry_count, 30)
                     await asyncio.sleep(delay)
                     await message.nack(requeue=True)
                 else:

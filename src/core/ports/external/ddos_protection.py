@@ -31,6 +31,7 @@ Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon ta�
   Tek referans: tarlaanaliz_platform_tree v3.2.2 FINAL.
   Aynı kavram başka yerde tekrar edilmez.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

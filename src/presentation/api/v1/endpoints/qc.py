@@ -24,14 +24,26 @@ from src.presentation.api.dependencies import (
 router = APIRouter(
     prefix="/qc",
     tags=["qc"],
-    responses={401: {"description": "Unauthorized"}, 403: {"description": "Forbidden"}, 409: {"description": "Conflict"}, 422: {"description": "Validation error"}, 429: {"description": "Too many requests"}},
+    responses={
+        401: {"description": "Unauthorized"},
+        403: {"description": "Forbidden"},
+        409: {"description": "Conflict"},
+        422: {"description": "Validation error"},
+        429: {"description": "Too many requests"},
+    },
 )
 
 
 def _observe(request: Request, metrics: MetricsCollector, started: float, status_code: int) -> None:
     corr_id = getattr(request.state, "corr_id", None)
     route = request.url.path
-    metrics.observe_http(route=route, method=request.method, status_code=status_code, latency_ms=(time.perf_counter() - started) * 1000, corr_id=corr_id)
+    metrics.observe_http(
+        route=route,
+        method=request.method,
+        status_code=status_code,
+        latency_ms=(time.perf_counter() - started) * 1000,
+        corr_id=corr_id,
+    )
     metrics.observe_status(route=route, status_code=status_code, corr_id=corr_id)
 
 

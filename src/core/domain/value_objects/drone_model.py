@@ -61,13 +61,15 @@ class DroneModel:
     PARROT_SEQUOIA_PLUS: ClassVar[str] = "PARROT_SEQUOIA_PLUS"
     AGEAGLE_EBEE_X: ClassVar[str] = "AGEAGLE_EBEE_X"
 
-    _APPROVED_MODEL_IDS: ClassVar[frozenset[str]] = frozenset({
-        "DJI_MAVIC_3M",
-        "DJI_M350_RTK_SENTERA_6X",
-        "WINGTRAONE_GEN2",
-        "PARROT_SEQUOIA_PLUS",
-        "AGEAGLE_EBEE_X",
-    })
+    _APPROVED_MODEL_IDS: ClassVar[frozenset[str]] = frozenset(
+        {
+            "DJI_MAVIC_3M",
+            "DJI_M350_RTK_SENTERA_6X",
+            "WINGTRAONE_GEN2",
+            "PARROT_SEQUOIA_PLUS",
+            "AGEAGLE_EBEE_X",
+        }
+    )
 
     # Gecerli radyometri tipleri
     _VALID_RADIOMETRY: ClassVar[frozenset[str]] = frozenset({"relative", "absolute"})
@@ -112,6 +114,7 @@ class DroneModel:
         EXTENDED_5BAND: + blue
         """
         from src.core.domain.value_objects.spectral_tier import classify_bands
+
         return classify_bands(self.band_set).value
 
     def supports_thermal(self) -> bool:

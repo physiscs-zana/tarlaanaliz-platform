@@ -8,6 +8,7 @@ KR-015-5: Hava durumu engeli, görev planlamasını etkiler.
 
 Retry: Transient hatalarda exponential backoff.
 """
+
 from __future__ import annotations
 
 from datetime import datetime

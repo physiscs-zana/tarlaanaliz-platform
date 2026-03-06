@@ -9,6 +9,7 @@ KR-015-3A: Pilot sahada tek yetkili; admin doğrulama akışı kaldırılmışt�
 KR-015-5: Weather block force majeure olarak değerlendirilir;
 reschedule token tüketmez.
 """
+
 from __future__ import annotations
 
 from enum import Enum
@@ -31,19 +32,23 @@ class WeatherBlockStatus(str, Enum):
 
 # Geçerli durum geçişleri
 VALID_WEATHER_BLOCK_TRANSITIONS: dict[WeatherBlockStatus, frozenset[WeatherBlockStatus]] = {
-    WeatherBlockStatus.REPORTED: frozenset({
-        WeatherBlockStatus.EXPIRED,
-        WeatherBlockStatus.RESOLVED,
-    }),
+    WeatherBlockStatus.REPORTED: frozenset(
+        {
+            WeatherBlockStatus.EXPIRED,
+            WeatherBlockStatus.RESOLVED,
+        }
+    ),
     WeatherBlockStatus.EXPIRED: frozenset(),
     WeatherBlockStatus.RESOLVED: frozenset(),
 }
 
 # Terminal durumlar: bu durumlardan çıkış yoktur
-TERMINAL_WEATHER_BLOCK_STATUSES: frozenset[WeatherBlockStatus] = frozenset({
-    WeatherBlockStatus.EXPIRED,
-    WeatherBlockStatus.RESOLVED,
-})
+TERMINAL_WEATHER_BLOCK_STATUSES: frozenset[WeatherBlockStatus] = frozenset(
+    {
+        WeatherBlockStatus.EXPIRED,
+        WeatherBlockStatus.RESOLVED,
+    }
+)
 
 
 def is_valid_weather_block_transition(

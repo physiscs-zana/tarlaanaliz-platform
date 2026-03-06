@@ -21,6 +21,7 @@ Tarama sonuçları:
   INFECTED   — Virüs/malware tespiti; BLOK + REJECTED_QUARANTINE.
   ERROR      — Tarama başarısız; güvenli tarafta kal, quarantine.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -49,12 +50,12 @@ class AVScanReport:
 
     scan_id: UUID
     dataset_id: UUID
-    scanner_layer: str          # "AV1_EDGE" veya "AV2_CENTER"
+    scanner_layer: str  # "AV1_EDGE" veya "AV2_CENTER"
     result: AVScanResult
-    mode_used: AVScanMode       # Hangi mod kullanıldı
-    report_uri: str             # Object Storage'daki rapor URI'si (immutable)
-    scanned_at: str             # ISO-8601 UTC
-    threat_name: Optional[str] = None   # INFECTED ise tespit edilen tehdit
+    mode_used: AVScanMode  # Hangi mod kullanıldı
+    report_uri: str  # Object Storage'daki rapor URI'si (immutable)
+    scanned_at: str  # ISO-8601 UTC
+    threat_name: Optional[str] = None  # INFECTED ise tespit edilen tehdit
     mime_type: Optional[str] = None
     sha256_hash: Optional[str] = None
     error_detail: Optional[str] = None  # ERROR ise hata detayı

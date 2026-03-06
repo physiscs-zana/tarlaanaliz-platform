@@ -28,15 +28,17 @@ class SubscriptionCreated(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "subscription_id": str(self.subscription_id),
-            "field_id": str(self.field_id),
-            "crop_type": self.crop_type,
-            "start_date": self.start_date.isoformat() if self.start_date else None,
-            "end_date": self.end_date.isoformat() if self.end_date else None,
-            "interval_days": self.interval_days,
-            "total_analyses": self.total_analyses,
-        })
+        base.update(
+            {
+                "subscription_id": str(self.subscription_id),
+                "field_id": str(self.field_id),
+                "crop_type": self.crop_type,
+                "start_date": self.start_date.isoformat() if self.start_date else None,
+                "end_date": self.end_date.isoformat() if self.end_date else None,
+                "interval_days": self.interval_days,
+                "total_analyses": self.total_analyses,
+            }
+        )
         return base
 
 
@@ -48,9 +50,11 @@ class SubscriptionActivated(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "subscription_id": str(self.subscription_id),
-        })
+        base.update(
+            {
+                "subscription_id": str(self.subscription_id),
+            }
+        )
         return base
 
 
@@ -67,11 +71,13 @@ class MissionScheduled(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "subscription_id": str(self.subscription_id),
-            "mission_id": str(self.mission_id),
-            "scheduled_date": self.scheduled_date.isoformat() if self.scheduled_date else None,
-        })
+        base.update(
+            {
+                "subscription_id": str(self.subscription_id),
+                "mission_id": str(self.mission_id),
+                "scheduled_date": self.scheduled_date.isoformat() if self.scheduled_date else None,
+            }
+        )
         return base
 
 
@@ -83,9 +89,11 @@ class SubscriptionCompleted(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "subscription_id": str(self.subscription_id),
-        })
+        base.update(
+            {
+                "subscription_id": str(self.subscription_id),
+            }
+        )
         return base
 
 
@@ -105,11 +113,13 @@ class SubscriptionRescheduled(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "subscription_id": str(self.subscription_id),
-            "mission_id": str(self.mission_id),
-            "old_date": self.old_date.isoformat() if self.old_date else None,
-            "new_date": self.new_date.isoformat() if self.new_date else None,
-            "reschedule_type": self.reschedule_type,
-        })
+        base.update(
+            {
+                "subscription_id": str(self.subscription_id),
+                "mission_id": str(self.mission_id),
+                "old_date": self.old_date.isoformat() if self.old_date else None,
+                "new_date": self.new_date.isoformat() if self.new_date else None,
+                "reschedule_type": self.reschedule_type,
+            }
+        )
         return base

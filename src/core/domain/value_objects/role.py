@@ -10,6 +10,7 @@ Entity katmanındaki UserRole enum'u ile SSOT uyumludur;
 bu VO domain genelinde taşınabilir referans noktasıdır.
 Roller ve yetki kapsamları platform genelinde tutarlıdır.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -63,12 +64,23 @@ class Role:
     AI_SERVICE: ClassVar[str] = "AI_SERVICE"
     EXPERT: ClassVar[str] = "EXPERT"
 
-    _VALID_CODES: ClassVar[frozenset[str]] = frozenset({
-        "FARMER_SINGLE", "FARMER_MEMBER", "COOP_OWNER", "COOP_ADMIN",
-        "COOP_AGRONOMIST", "COOP_VIEWER", "PILOT", "STATION_OPERATOR",
-        "IL_OPERATOR", "BILLING_ADMIN", "CENTRAL_ADMIN", "AI_SERVICE",
-        "EXPERT",
-    })
+    _VALID_CODES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "FARMER_SINGLE",
+            "FARMER_MEMBER",
+            "COOP_OWNER",
+            "COOP_ADMIN",
+            "COOP_AGRONOMIST",
+            "COOP_VIEWER",
+            "PILOT",
+            "STATION_OPERATOR",
+            "IL_OPERATOR",
+            "BILLING_ADMIN",
+            "CENTRAL_ADMIN",
+            "AI_SERVICE",
+            "EXPERT",
+        }
+    )
 
     # Rol -> Türkçe görünen ad eşlemesi
     _DISPLAY_NAMES: ClassVar[dict[str, str]] = {
@@ -88,35 +100,46 @@ class Role:
     }
 
     # Yetki grupları
-    _FARMER_ROLES: ClassVar[frozenset[str]] = frozenset({
-        "FARMER_SINGLE", "FARMER_MEMBER",
-    })
+    _FARMER_ROLES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "FARMER_SINGLE",
+            "FARMER_MEMBER",
+        }
+    )
 
-    _COOP_ROLES: ClassVar[frozenset[str]] = frozenset({
-        "COOP_OWNER", "COOP_ADMIN", "COOP_AGRONOMIST", "COOP_VIEWER",
-    })
+    _COOP_ROLES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "COOP_OWNER",
+            "COOP_ADMIN",
+            "COOP_AGRONOMIST",
+            "COOP_VIEWER",
+        }
+    )
 
-    _OPERATOR_ROLES: ClassVar[frozenset[str]] = frozenset({
-        "STATION_OPERATOR", "IL_OPERATOR", "CENTRAL_ADMIN",
-    })
+    _OPERATOR_ROLES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "STATION_OPERATOR",
+            "IL_OPERATOR",
+            "CENTRAL_ADMIN",
+        }
+    )
 
-    _ADMIN_ROLES: ClassVar[frozenset[str]] = frozenset({
-        "COOP_ADMIN", "BILLING_ADMIN", "CENTRAL_ADMIN",
-    })
+    _ADMIN_ROLES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "COOP_ADMIN",
+            "BILLING_ADMIN",
+            "CENTRAL_ADMIN",
+        }
+    )
 
     def __post_init__(self) -> None:
         if not isinstance(self.code, str):
-            raise RoleError(
-                f"code str olmalıdır, alınan tip: {type(self.code).__name__}"
-            )
+            raise RoleError(f"code str olmalıdır, alınan tip: {type(self.code).__name__}")
         normalized = self.code.strip().upper()
         if normalized != self.code:
             object.__setattr__(self, "code", normalized)
         if self.code not in self._VALID_CODES:
-            raise RoleError(
-                f"Geçersiz rol: '{self.code}'. "
-                f"Geçerli değerler: {sorted(self._VALID_CODES)}"
-            )
+            raise RoleError(f"Geçersiz rol: '{self.code}'. Geçerli değerler: {sorted(self._VALID_CODES)}")
 
     # ------------------------------------------------------------------
     # Domain queries

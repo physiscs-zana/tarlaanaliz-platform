@@ -1,4 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-033: Webhook integrity; provider signature HMAC verification.
 """Payment provider webhook receiver."""
 
 from __future__ import annotations
@@ -32,15 +33,16 @@ class PaymentWebhookResponse(BaseModel):
 
 
 class PaymentWebhookService(Protocol):
-    def process(self, payload: PaymentWebhookPayload, signature: str | None) -> PaymentWebhookResponse:
-        ...
+    def process(self, payload: PaymentWebhookPayload, signature: str | None) -> PaymentWebhookResponse: ...
 
 
 @dataclass(slots=True)
 class _InMemoryPaymentWebhookService:
     processed_events: set[str] = field(default_factory=set)
 
-    def process(self, payload: PaymentWebhookPayload, signature: str | None, raw_body: bytes | None = None) -> PaymentWebhookResponse:
+    def process(
+        self, payload: PaymentWebhookPayload, signature: str | None, raw_body: bytes | None = None
+    ) -> PaymentWebhookResponse:
         if not signature:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 

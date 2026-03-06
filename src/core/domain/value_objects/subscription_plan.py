@@ -8,6 +8,7 @@ Abonelik planının temel parametrelerini immutable olarak temsil eder.
 Plan tipi, analiz sayısı, tarama aralığı ve yeniden planlama hakkı gibi
 sezonluk paket detaylarını içerir. KR-015-5 ile tutarlı kalır.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -51,9 +52,14 @@ class SubscriptionPlan:
     PREMIUM: ClassVar[str] = "PREMIUM"
     CUSTOM: ClassVar[str] = "CUSTOM"
 
-    _VALID_CODES: ClassVar[frozenset[str]] = frozenset({
-        "BASIC", "STANDARD", "PREMIUM", "CUSTOM",
-    })
+    _VALID_CODES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "BASIC",
+            "STANDARD",
+            "PREMIUM",
+            "CUSTOM",
+        }
+    )
 
     # Plan -> Türkçe görünen ad eşlemesi
     _DISPLAY_NAMES: ClassVar[dict[str, str]] = {
@@ -65,33 +71,22 @@ class SubscriptionPlan:
 
     def __post_init__(self) -> None:
         if not isinstance(self.plan_code, str):
-            raise SubscriptionPlanError(
-                f"plan_code str olmalıdır, alınan tip: {type(self.plan_code).__name__}"
-            )
+            raise SubscriptionPlanError(f"plan_code str olmalıdır, alınan tip: {type(self.plan_code).__name__}")
         normalized = self.plan_code.strip().upper()
         if normalized != self.plan_code:
             object.__setattr__(self, "plan_code", normalized)
         if self.plan_code not in self._VALID_CODES:
             raise SubscriptionPlanError(
-                f"Geçersiz plan kodu: '{self.plan_code}'. "
-                f"Geçerli değerler: {sorted(self._VALID_CODES)}"
+                f"Geçersiz plan kodu: '{self.plan_code}'. Geçerli değerler: {sorted(self._VALID_CODES)}"
             )
         if not isinstance(self.total_analyses, int) or self.total_analyses <= 0:
-            raise SubscriptionPlanError(
-                f"total_analyses pozitif int olmalıdır, alınan: {self.total_analyses}"
-            )
+            raise SubscriptionPlanError(f"total_analyses pozitif int olmalıdır, alınan: {self.total_analyses}")
         if not isinstance(self.interval_days, int) or self.interval_days <= 0:
-            raise SubscriptionPlanError(
-                f"interval_days pozitif int olmalıdır, alınan: {self.interval_days}"
-            )
+            raise SubscriptionPlanError(f"interval_days pozitif int olmalıdır, alınan: {self.interval_days}")
         if not isinstance(self.reschedule_tokens, int) or self.reschedule_tokens < 0:
-            raise SubscriptionPlanError(
-                f"reschedule_tokens negatif olamaz, alınan: {self.reschedule_tokens}"
-            )
+            raise SubscriptionPlanError(f"reschedule_tokens negatif olamaz, alınan: {self.reschedule_tokens}")
         if not isinstance(self.price_kurus, int) or self.price_kurus < 0:
-            raise SubscriptionPlanError(
-                f"price_kurus negatif olamaz, alınan: {self.price_kurus}"
-            )
+            raise SubscriptionPlanError(f"price_kurus negatif olamaz, alınan: {self.price_kurus}")
 
     # ------------------------------------------------------------------
     # Domain queries

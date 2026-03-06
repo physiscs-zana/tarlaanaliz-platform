@@ -19,6 +19,7 @@ Graceful Degradation:
   pipeline secimini dinamik olarak yapar. 5-band verisi yoksa
   4-band pipeline calisir; termal veri yoksa termal pipeline atlanir.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -77,9 +78,7 @@ def classify_bands(bands: frozenset[str]) -> BandClass:
     """
     if not REQUIRED_BANDS.issubset(bands):
         missing = REQUIRED_BANDS - bands
-        raise ValueError(
-            f"Minimum band gereksinimi karsilanmiyor. Eksik: {sorted(missing)}"
-        )
+        raise ValueError(f"Minimum band gereksinimi karsilanmiyor. Eksik: {sorted(missing)}")
 
     if BLUE_BAND in bands:
         return BandClass.EXTENDED_5BAND

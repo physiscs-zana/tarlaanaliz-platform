@@ -51,9 +51,7 @@ class CropOpsProfile:
 
     def __post_init__(self) -> None:
         if not isinstance(self.crop_type, CropType):
-            raise CropOpsProfileError(
-                f"crop_type CropType olmalıdır, alınan tip: {type(self.crop_type).__name__}"
-            )
+            raise CropOpsProfileError(f"crop_type CropType olmalıdır, alınan tip: {type(self.crop_type).__name__}")
         if not isinstance(self.daily_capacity_donum, int):
             raise CropOpsProfileError(
                 f"daily_capacity_donum int olmalıdır, alınan tip: {type(self.daily_capacity_donum).__name__}"
@@ -79,9 +77,7 @@ class CropOpsProfile:
         if isinstance(self.overage_tolerance, int):
             object.__setattr__(self, "overage_tolerance", float(self.overage_tolerance))
         if not (0.0 <= self.overage_tolerance <= 1.0):
-            raise CropOpsProfileError(
-                f"overage_tolerance 0.0-1.0 arasında olmalıdır, alınan: {self.overage_tolerance}"
-            )
+            raise CropOpsProfileError(f"overage_tolerance 0.0-1.0 arasında olmalıdır, alınan: {self.overage_tolerance}")
 
     @classmethod
     def create_default(cls, crop_type: CropType) -> CropOpsProfile:

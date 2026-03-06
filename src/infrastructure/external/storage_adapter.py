@@ -9,6 +9,7 @@ kalibrasyon manifest'leri, analiz raporları ve ödeme dekontları saklanır.
 Idempotency: Aynı key'e yazma üzerine yazar (overwrite semantics).
 Retry: Transient hatalarda exponential backoff.
 """
+
 from __future__ import annotations
 
 import hashlib

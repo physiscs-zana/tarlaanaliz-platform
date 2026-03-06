@@ -7,6 +7,7 @@ FeedbackRecord domain entity.
 Uzman duzeltmelerini YZ modeline geri beslemek ve model iyilestirmesi yapmak (KR-029).
 expert_reviews -> uzman portal UI icin; feedback_records -> YZ training pipeline icin.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -58,31 +59,23 @@ class FeedbackRecord:
 
         # Verdict validation
         if self.verdict not in _VALID_VERDICTS:
-            raise ValueError(
-                f"Invalid verdict: '{self.verdict}'. "
-                f"Must be one of: {sorted(_VALID_VERDICTS)}"
-            )
+            raise ValueError(f"Invalid verdict: '{self.verdict}'. Must be one of: {sorted(_VALID_VERDICTS)}")
 
         # Training grade validation
         if self.training_grade not in _VALID_TRAINING_GRADES:
             raise ValueError(
-                f"Invalid training_grade: '{self.training_grade}'. "
-                f"Must be one of: {sorted(_VALID_TRAINING_GRADES)}"
+                f"Invalid training_grade: '{self.training_grade}'. Must be one of: {sorted(_VALID_TRAINING_GRADES)}"
             )
 
         # KR-029: verdict=corrected ise corrected_class ZORUNLU
         if self.verdict == "corrected":
             if not self.corrected_class or not self.corrected_class.strip():
-                raise ValueError(
-                    "corrected_class is required when verdict='corrected' (KR-029)"
-                )
+                raise ValueError("corrected_class is required when verdict='corrected' (KR-029)")
 
         # KR-029: verdict in (corrected, rejected) ise notes ZORUNLU
         if self.verdict in ("corrected", "rejected"):
             if not self.notes or not self.notes.strip():
-                raise ValueError(
-                    f"notes is required when verdict='{self.verdict}' (KR-029)"
-                )
+                raise ValueError(f"notes is required when verdict='{self.verdict}' (KR-029)")
 
         # grade_reason max 200 karakter
         if self.grade_reason and len(self.grade_reason) > 200:

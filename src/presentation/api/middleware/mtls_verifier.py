@@ -12,6 +12,7 @@ KR-070: Worker izolasyonu; ingest endpoint'leri mTLS zorunlu.
 Bu middleware, reverse proxy/ingress tarafindan set edilen client sertifika
 header'larini dogrular. Ingest endpoint'lerinde sertifika olmadan erisim reddedilir.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -88,9 +89,7 @@ class MTLSVerifierMiddleware(BaseHTTPMiddleware):
         # Production'da bu bilgi config/secret store'dan yuklenir
         self._registered_fingerprints = registered_fingerprints or frozenset()
 
-    async def dispatch(
-        self, request: Request, call_next: Callable[..., Any]
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable[..., Any]) -> Response:
         corr_id, _ = ensure_request_context(request)
         path = request.url.path
 
@@ -114,14 +113,16 @@ class MTLSVerifierMiddleware(BaseHTTPMiddleware):
 
         if not client_cert:
             return self._deny(
-                request, corr_id,
+                request,
+                corr_id,
                 reason="missing_client_cert",
                 message="mTLS client sertifikasi gereklidir (KR-071)",
             )
 
         if verify_status and verify_status != "SUCCESS":
             return self._deny(
-                request, corr_id,
+                request,
+                corr_id,
                 reason="cert_verify_failed",
                 message=f"Sertifika dogrulama basarisiz: {verify_status}",
             )
@@ -131,7 +132,8 @@ class MTLSVerifierMiddleware(BaseHTTPMiddleware):
             fingerprint = self._compute_fingerprint(client_cert)
             if fingerprint not in self._registered_fingerprints:
                 return self._deny(
-                    request, corr_id,
+                    request,
+                    corr_id,
                     reason="unregistered_cert",
                     message="Kayitsiz cihaz sertifikasi",
                 )

@@ -13,6 +13,7 @@ NOT (KR-033 v1.2.0): Sistemde otomatik expire yoktur. PAYMENT_PENDING
 durumundaki intent'ler admin karariyla CANCELLED yapilabilir. Ciftci
 odedigi surece talep gecerliligi korur.
 """
+
 from __future__ import annotations
 
 from enum import Enum
@@ -53,11 +54,13 @@ VALID_PAYMENT_TRANSITIONS: dict[PaymentStatus, set[PaymentStatus]] = {
 }
 
 # Terminal durumlar: bu durumlardan cikis yoktur
-TERMINAL_PAYMENT_STATUSES: frozenset[PaymentStatus] = frozenset({
-    PaymentStatus.REJECTED,
-    PaymentStatus.CANCELLED,
-    PaymentStatus.REFUNDED,
-})
+TERMINAL_PAYMENT_STATUSES: frozenset[PaymentStatus] = frozenset(
+    {
+        PaymentStatus.REJECTED,
+        PaymentStatus.CANCELLED,
+        PaymentStatus.REFUNDED,
+    }
+)
 
 
 def is_valid_payment_transition(

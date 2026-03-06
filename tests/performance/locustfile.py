@@ -16,6 +16,7 @@ from __future__ import annotations
 try:
     from locust import HttpUser, between, task
 except Exception:  # pragma: no cover - optional dependency
+
     class HttpUser:  # type: ignore[no-redef]
         pass
 

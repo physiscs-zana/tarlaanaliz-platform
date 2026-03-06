@@ -24,6 +24,7 @@ Bağımlılıklar: aio-pika, Settings.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

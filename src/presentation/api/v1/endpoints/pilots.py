@@ -26,11 +26,9 @@ class PilotResponse(BaseModel):
 
 
 class PilotService(Protocol):
-    def create(self, payload: PilotCreateRequest) -> PilotResponse:
-        ...
+    def create(self, payload: PilotCreateRequest) -> PilotResponse: ...
 
-    def list_all(self) -> list[PilotResponse]:
-        ...
+    def list_all(self) -> list[PilotResponse]: ...
 
 
 @dataclass(slots=True)

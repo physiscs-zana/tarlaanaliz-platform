@@ -10,6 +10,7 @@ kaydedilebilir.
 SSOT: tarlaanaliz_platform_tree v3.2.2 FINAL.
 KR-081: contract-first tasarım; şema uyumsuzluğu erken tespit edilir.
 """
+
 from __future__ import annotations
 
 import json
@@ -96,8 +97,7 @@ class SchemaRegistry:
             return self._schemas[key]
         except KeyError:
             raise SchemaNotFoundError(
-                f"Şema bulunamadı: {key[0]} v{key[1]}. "
-                f"Kayıtlı şemalar: {sorted(self._schemas.keys())}"
+                f"Şema bulunamadı: {key[0]} v{key[1]}. Kayıtlı şemalar: {sorted(self._schemas.keys())}"
             ) from None
 
     def has(self, schema_name: str, version: str) -> bool:
@@ -110,11 +110,7 @@ class SchemaRegistry:
 
     def list_versions(self, schema_name: str) -> list[str]:
         """Belirli bir şemanın tüm versiyonlarını döner."""
-        return sorted(
-            version
-            for name, version in self._schemas
-            if name == schema_name.strip()
-        )
+        return sorted(version for name, version in self._schemas if name == schema_name.strip())
 
     def load_from_file(self, file_path: Path) -> tuple[str, str]:
         """Tek bir JSON Schema dosyasını yükler.
@@ -139,8 +135,7 @@ class SchemaRegistry:
         parts = file_path.stem.rsplit(".", maxsplit=1)
         if len(parts) < 2:
             raise ValueError(
-                f"Dosya adı formatı geçersiz: '{file_path.name}'. "
-                "Beklenen format: <schema_name>.<version>.json"
+                f"Dosya adı formatı geçersiz: '{file_path.name}'. Beklenen format: <schema_name>.<version>.json"
             )
 
         schema_name = parts[0]

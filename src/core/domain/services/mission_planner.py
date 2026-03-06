@@ -163,9 +163,7 @@ class MissionPlanner:
         planned: list[PlannedMission] = []
         unplanned: list[uuid.UUID] = []
         # Her tarih için kullanım sayacı (tarla bazında)
-        used_dates: dict[uuid.UUID, set[date]] = {
-            fid: set(dates) for fid, dates in existing_dates.items()
-        }
+        used_dates: dict[uuid.UUID, set[date]] = {fid: set(dates) for fid, dates in existing_dates.items()}
 
         sorted_available = sorted(available_dates)
 
@@ -209,8 +207,7 @@ class MissionPlanner:
             else:
                 unplanned.append(request_id)
                 warnings.append(
-                    f"Tarla {request.field_id}: uygun tarih bulunamadı "
-                    f"(öncelik: {request.priority.value})."
+                    f"Tarla {request.field_id}: uygun tarih bulunamadı (öncelik: {request.priority.value})."
                 )
 
         return MissionPlanResult(

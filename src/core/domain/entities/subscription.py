@@ -8,6 +8,7 @@ Sezonluk Paket secen kullanicilar icin otomatik, periyodik Mission uretimi.
 PAID olmadan Subscription ACTIVE olamaz (KR-033 Kural-2).
 Sezonda sinirli gun degistirme hakki: varsayilan 2 token (KR-015-5).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -101,28 +102,21 @@ class Subscription:
         Caller, PaymentIntent.status == PAID kontrolunu yapmalidir.
         """
         if self.status != SubscriptionStatus.PENDING_PAYMENT:
-            raise ValueError(
-                f"Can only activate from PENDING_PAYMENT, current: {self.status.value} "
-                f"(KR-033 Kural-2)"
-            )
+            raise ValueError(f"Can only activate from PENDING_PAYMENT, current: {self.status.value} (KR-033 Kural-2)")
         self.status = SubscriptionStatus.ACTIVE
         self._touch()
 
     def pause(self) -> None:
         """Aboneligi duraklat (ACTIVE -> PAUSED)."""
         if self.status != SubscriptionStatus.ACTIVE:
-            raise ValueError(
-                f"Can only pause from ACTIVE, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only pause from ACTIVE, current: {self.status.value}")
         self.status = SubscriptionStatus.PAUSED
         self._touch()
 
     def resume(self) -> None:
         """Aboneligi devam ettir (PAUSED -> ACTIVE)."""
         if self.status != SubscriptionStatus.PAUSED:
-            raise ValueError(
-                f"Can only resume from PAUSED, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only resume from PAUSED, current: {self.status.value}")
         self.status = SubscriptionStatus.ACTIVE
         self._touch()
 
@@ -136,9 +130,7 @@ class Subscription:
     def advance_due_date(self) -> None:
         """next_due_at'i interval_days kadar ileri tasir (KR-027 scheduler kurali)."""
         if self.status != SubscriptionStatus.ACTIVE:
-            raise ValueError(
-                f"Can only advance due date when ACTIVE, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only advance due date when ACTIVE, current: {self.status.value}")
         self.next_due_at = self.next_due_at + timedelta(days=self.interval_days)
         self._touch()
 

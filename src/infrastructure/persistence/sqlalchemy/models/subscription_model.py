@@ -7,6 +7,7 @@ SubscriptionModel — SQLAlchemy ORM modeli.
 Alembic migration 004 (subscriptions tablosu) ve
 xxxx_kr015_seasonal_reschedule_tokens (plan_type, reschedule_tokens_per_season) ile uyumludur.
 """
+
 from __future__ import annotations
 
 import uuid

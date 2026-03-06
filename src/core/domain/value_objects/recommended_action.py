@@ -9,6 +9,7 @@ KR-082 QC gate mekanizmasıyla uyumlu; QCStatus ile eşleşme kuralları içerir
 Entity katmanındaki QCRecommendedAction enum'u ile SSOT uyumludur;
 bu VO domain genelinde taşınabilir referans noktasıdır.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -46,9 +47,15 @@ class RecommendedAction:
     RECALIBRATE: ClassVar[str] = "RECALIBRATE"
     RECAPTURE: ClassVar[str] = "RECAPTURE"
 
-    _VALID_VALUES: ClassVar[frozenset[str]] = frozenset({
-        "PROCEED", "REVIEW", "RETRY", "RECALIBRATE", "RECAPTURE",
-    })
+    _VALID_VALUES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "PROCEED",
+            "REVIEW",
+            "RETRY",
+            "RECALIBRATE",
+            "RECAPTURE",
+        }
+    )
 
     # Aksiyon -> Türkçe görünen ad eşlemesi
     _DISPLAY_NAMES: ClassVar[dict[str, str]] = {
@@ -70,16 +77,13 @@ class RecommendedAction:
 
     def __post_init__(self) -> None:
         if not isinstance(self.value, str):
-            raise RecommendedActionError(
-                f"value str olmalıdır, alınan tip: {type(self.value).__name__}"
-            )
+            raise RecommendedActionError(f"value str olmalıdır, alınan tip: {type(self.value).__name__}")
         normalized = self.value.strip().upper()
         if normalized != self.value:
             object.__setattr__(self, "value", normalized)
         if self.value not in self._VALID_VALUES:
             raise RecommendedActionError(
-                f"Geçersiz aksiyon: '{self.value}'. "
-                f"Geçerli değerler: {sorted(self._VALID_VALUES)}"
+                f"Geçersiz aksiyon: '{self.value}'. Geçerli değerler: {sorted(self._VALID_VALUES)}"
             )
 
     # ------------------------------------------------------------------

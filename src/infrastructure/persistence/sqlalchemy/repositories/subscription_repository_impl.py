@@ -11,6 +11,7 @@ KR-027: list_due() scheduler sorgusu — status=ACTIVE AND next_due_at <= now().
 KR-033: PAID olmadan Subscription ACTIVE olamaz (ödeme doğrulama caller sorumluluğunda).
 KR-015-5: Reschedule token alanları model üzerinden korunur.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -68,9 +69,7 @@ class SqlAlchemySubscriptionRepository(SubscriptionRepository):
         *,
         status: Optional[SubscriptionStatus] = None,
     ) -> List[Subscription]:
-        stmt = select(SubscriptionModel).where(
-            SubscriptionModel.farmer_user_id == farmer_user_id
-        )
+        stmt = select(SubscriptionModel).where(SubscriptionModel.farmer_user_id == farmer_user_id)
         if status is not None:
             stmt = stmt.where(SubscriptionModel.status == status.value)
         result = await self._session.execute(stmt)
@@ -82,9 +81,7 @@ class SqlAlchemySubscriptionRepository(SubscriptionRepository):
         return [self._to_entity(row) for row in result.scalars().all()]
 
     async def list_by_status(self, status: SubscriptionStatus) -> List[Subscription]:
-        stmt = select(SubscriptionModel).where(
-            SubscriptionModel.status == status.value
-        )
+        stmt = select(SubscriptionModel).where(SubscriptionModel.status == status.value)
         result = await self._session.execute(stmt)
         return [self._to_entity(row) for row in result.scalars().all()]
 

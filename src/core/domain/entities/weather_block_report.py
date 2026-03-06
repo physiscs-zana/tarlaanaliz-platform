@@ -8,6 +8,7 @@ Hava engeli (Weather Block) / force majeure nedeniyle yapilan ertelemeler
 reschedule token TUKETMEZ; sistem otomatik yeniden planlar ve audit log'a yazar
 (KR-015-5).
 """
+
 from __future__ import annotations
 
 import uuid

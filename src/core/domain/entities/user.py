@@ -8,6 +8,7 @@ User domain entity.
 Kimlik modeli: telefon numarasi + 6 haneli PIN (KR-050).
 Roller: KR-063 kanonik RBAC matrisi (v1.2.0: 13 rol).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -106,10 +107,7 @@ class User:
     def link_to_coop(self, coop_id: uuid.UUID) -> None:
         """Kullaniciyi bir kooperatife bagla (KR-014)."""
         if self.coop_id is not None:
-            raise ValueError(
-                f"User {self.user_id} is already linked to coop {self.coop_id}. "
-                "Unlink first."
-            )
+            raise ValueError(f"User {self.user_id} is already linked to coop {self.coop_id}. Unlink first.")
         self.coop_id = coop_id
         self._touch()
 

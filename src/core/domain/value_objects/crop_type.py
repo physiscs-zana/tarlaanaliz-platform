@@ -44,10 +44,18 @@ class CropType:
     ZEYTIN: ClassVar[str] = "ZEYTIN"
     KIRMIZI_MERCIMEK: ClassVar[str] = "KIRMIZI_MERCIMEK"
 
-    _VALID_CODES: ClassVar[frozenset[str]] = frozenset({
-        "PAMUK", "ANTEP_FISTIGI", "MISIR", "BUGDAY",
-        "AYCICEGI", "UZUM", "ZEYTIN", "KIRMIZI_MERCIMEK",
-    })
+    _VALID_CODES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "PAMUK",
+            "ANTEP_FISTIGI",
+            "MISIR",
+            "BUGDAY",
+            "AYCICEGI",
+            "UZUM",
+            "ZEYTIN",
+            "KIRMIZI_MERCIMEK",
+        }
+    )
 
     # Bitki tipi -> Türkçe görünen ad eşlemesi
     _DISPLAY_NAMES: ClassVar[dict[str, str]] = {
@@ -75,17 +83,12 @@ class CropType:
 
     def __post_init__(self) -> None:
         if not isinstance(self.code, str):
-            raise CropTypeError(
-                f"code str olmalıdır, alınan tip: {type(self.code).__name__}"
-            )
+            raise CropTypeError(f"code str olmalıdır, alınan tip: {type(self.code).__name__}")
         normalized = self.code.strip().upper()
         if normalized != self.code:
             object.__setattr__(self, "code", normalized)
         if self.code not in self._VALID_CODES:
-            raise CropTypeError(
-                f"Geçersiz bitki tipi: '{self.code}'. "
-                f"Geçerli değerler: {sorted(self._VALID_CODES)}"
-            )
+            raise CropTypeError(f"Geçersiz bitki tipi: '{self.code}'. Geçerli değerler: {sorted(self._VALID_CODES)}")
 
     @property
     def display_name(self) -> str:

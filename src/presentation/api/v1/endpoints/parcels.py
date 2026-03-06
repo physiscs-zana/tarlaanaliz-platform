@@ -24,8 +24,7 @@ class ParcelLookupResponse(BaseModel):
 
 
 class ParcelLookupService(Protocol):
-    def lookup_geometry(self, parcel_ref: str) -> ParcelLookupResponse:
-        ...
+    def lookup_geometry(self, parcel_ref: str) -> ParcelLookupResponse: ...
 
 
 @dataclass(slots=True)

@@ -7,6 +7,7 @@ ExpertReview domain entity.
 Modelin dusuk guven verdigi veya celiskili durumlarda manuel inceleme (KR-019).
 Uzman karar formati: confirmed | corrected | rejected | needs_more_expert.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -62,9 +63,7 @@ class ExpertReview:
     def start_review(self) -> None:
         """Uzman incelemeye baslar (PENDING -> IN_PROGRESS)."""
         if self.status != ExpertReviewStatus.PENDING:
-            raise ValueError(
-                f"Can only start_review from PENDING, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only start_review from PENDING, current: {self.status.value}")
         self.status = ExpertReviewStatus.IN_PROGRESS
         self.started_at = datetime.now(timezone.utc)
 
@@ -80,17 +79,12 @@ class ExpertReview:
         KR-019: training_grade (A|B|C|D|REJECT) ve grade_reason (max 200 karakter).
         """
         if self.status != ExpertReviewStatus.IN_PROGRESS:
-            raise ValueError(
-                f"Can only submit_verdict from IN_PROGRESS, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only submit_verdict from IN_PROGRESS, current: {self.status.value}")
         if verdict not in _VALID_VERDICTS:
-            raise ValueError(
-                f"Invalid verdict: '{verdict}'. Must be one of: {sorted(_VALID_VERDICTS)}"
-            )
+            raise ValueError(f"Invalid verdict: '{verdict}'. Must be one of: {sorted(_VALID_VERDICTS)}")
         if training_grade is not None and training_grade not in _VALID_TRAINING_GRADES:
             raise ValueError(
-                f"Invalid training_grade: '{training_grade}'. "
-                f"Must be one of: {sorted(_VALID_TRAINING_GRADES)}"
+                f"Invalid training_grade: '{training_grade}'. Must be one of: {sorted(_VALID_TRAINING_GRADES)}"
             )
         if grade_reason is not None and len(grade_reason) > 200:
             raise ValueError("grade_reason must be at most 200 characters")

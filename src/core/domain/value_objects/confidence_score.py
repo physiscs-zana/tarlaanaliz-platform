@@ -32,16 +32,12 @@ class ConfidenceScore:
 
     def __post_init__(self) -> None:
         if not isinstance(self.value, (int, float)):
-            raise ConfidenceScoreError(
-                f"value sayısal olmalıdır, alınan tip: {type(self.value).__name__}"
-            )
+            raise ConfidenceScoreError(f"value sayısal olmalıdır, alınan tip: {type(self.value).__name__}")
         # int ise float'a dönüştür (frozen bypass)
         if isinstance(self.value, int):
             object.__setattr__(self, "value", float(self.value))
         if not (0.0 <= self.value <= 1.0):
-            raise ConfidenceScoreError(
-                f"value 0.0-1.0 aralığında olmalıdır, alınan: {self.value}"
-            )
+            raise ConfidenceScoreError(f"value 0.0-1.0 aralığında olmalıdır, alınan: {self.value}")
 
     def exceeds(self, threshold: float) -> bool:
         """Skor belirtilen eşiği aşıyor mu?"""

@@ -58,8 +58,7 @@ class CalibrationManifest:
             raise CalibrationManifestError("manifest_hash boş olamaz (SHA-256 zorunlu).")
         if self.qc_result not in self._VALID_QC_RESULTS:
             raise CalibrationManifestError(
-                f"Geçersiz qc_result: '{self.qc_result}'. "
-                f"Geçerli değerler: {sorted(self._VALID_QC_RESULTS)}"
+                f"Geçersiz qc_result: '{self.qc_result}'. Geçerli değerler: {sorted(self._VALID_QC_RESULTS)}"
             )
         if self.calibrated_at is None:
             raise CalibrationManifestError("calibrated_at zorunludur.")
@@ -144,9 +143,7 @@ class CalibrationFileEntry:
         if not self.file_hash or not self.file_hash.strip():
             raise CalibrationManifestError("file_hash boş olamaz (SHA-256 zorunlu).")
         if not isinstance(self.file_size_bytes, int) or self.file_size_bytes < 0:
-            raise CalibrationManifestError(
-                f"file_size_bytes negatif olamaz, alınan: {self.file_size_bytes}"
-            )
+            raise CalibrationManifestError(f"file_size_bytes negatif olamaz, alınan: {self.file_size_bytes}")
 
     def to_dict(self) -> dict[str, Any]:
         """Serileştirme için dict dönüşümü."""

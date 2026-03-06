@@ -73,6 +73,7 @@ from src.application.commands.update_pilot_capacity import (
 from src.application.commands.update_pilot_capacity import (
     handle as handle_update_pilot_capacity,
 )
+
 __all__ = [
     "ApprovePaymentCommand",
     "ApprovePaymentResult",

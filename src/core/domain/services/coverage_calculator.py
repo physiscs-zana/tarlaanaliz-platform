@@ -25,13 +25,9 @@ class Polygon:
 
     def __post_init__(self) -> None:
         if len(self.coordinates) < 4:
-            raise CoverageCalculationError(
-                "Polygon en az 4 nokta içermelidir (3 köşe + kapanış)."
-            )
+            raise CoverageCalculationError("Polygon en az 4 nokta içermelidir (3 köşe + kapanış).")
         if self.coordinates[0] != self.coordinates[-1]:
-            raise CoverageCalculationError(
-                "Polygon kapalı olmalıdır (ilk ve son nokta aynı)."
-            )
+            raise CoverageCalculationError("Polygon kapalı olmalıdır (ilk ve son nokta aynı).")
 
 
 @dataclass(frozen=True)
@@ -75,14 +71,10 @@ class CoverageCalculator:
         minimum_coverage_ratio: float | None = None,
     ) -> None:
         self._min_coverage = (
-            minimum_coverage_ratio
-            if minimum_coverage_ratio is not None
-            else self.DEFAULT_MINIMUM_COVERAGE_RATIO
+            minimum_coverage_ratio if minimum_coverage_ratio is not None else self.DEFAULT_MINIMUM_COVERAGE_RATIO
         )
         if not 0.0 < self._min_coverage <= 1.0:
-            raise CoverageCalculationError(
-                "minimum_coverage_ratio 0.0 (exclusive) ile 1.0 arasında olmalıdır."
-            )
+            raise CoverageCalculationError("minimum_coverage_ratio 0.0 (exclusive) ile 1.0 arasında olmalıdır.")
 
     def evaluate_coverage(
         self,
@@ -118,9 +110,7 @@ class CoverageCalculator:
         if intersection_area_m2 < 0:
             raise CoverageCalculationError("intersection_area_m2 negatif olamaz.")
         if intersection_area_m2 > field_area_m2:
-            raise CoverageCalculationError(
-                "intersection_area_m2, field_area_m2'den büyük olamaz."
-            )
+            raise CoverageCalculationError("intersection_area_m2, field_area_m2'den büyük olamaz.")
 
         coverage_ratio = intersection_area_m2 / field_area_m2
         is_sufficient = coverage_ratio >= self._min_coverage

@@ -9,6 +9,7 @@ Her tarla icin il, ilce, mahalle/koy, ada, parsel ve alan (m2) tutulur.
 Tekil kayit kurali: il+ilce+mahalle/koy+ada+parsel kombinasyonu tekrar edemez.
 Bitki turu degisimi: yilda 1 defa, sadece 1 Ekim - 31 Aralik (KR-013).
 """
+
 from __future__ import annotations
 
 import uuid

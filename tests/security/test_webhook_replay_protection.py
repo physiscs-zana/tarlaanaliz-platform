@@ -5,6 +5,7 @@
 KR-033: Odeme saglayici webhook callback'lerinde replay saldirisi onleme.
 Ayni idempotency_key ile tekrar gelen istekler reddedilmeli (duplicate).
 """
+
 from __future__ import annotations
 
 from typing import Any

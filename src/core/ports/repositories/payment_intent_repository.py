@@ -30,6 +30,7 @@ Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_i
   v3.2.2'de redundant çiftler kaldırıldı.
   KR-033: PaymentIntent olmadan paid state olmaz; dekont + manuel onay + audit.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -71,9 +72,7 @@ class PaymentIntentRepository(ABC):
     # Tekil sorgular
     # ------------------------------------------------------------------
     @abstractmethod
-    async def find_by_id(
-        self, payment_intent_id: uuid.UUID
-    ) -> Optional[PaymentIntent]:
+    async def find_by_id(self, payment_intent_id: uuid.UUID) -> Optional[PaymentIntent]:
         """payment_intent_id ile PaymentIntent getir.
 
         Args:
@@ -84,9 +83,7 @@ class PaymentIntentRepository(ABC):
         """
 
     @abstractmethod
-    async def find_by_payment_ref(
-        self, payment_ref: str
-    ) -> Optional[PaymentIntent]:
+    async def find_by_payment_ref(self, payment_ref: str) -> Optional[PaymentIntent]:
         """payment_ref ile PaymentIntent getir.
 
         Benzersiz ödeme referansı (PAY-YYYYMMDD-XXXXXX) ile arama.
@@ -137,9 +134,7 @@ class PaymentIntentRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_status(
-        self, status: PaymentStatus
-    ) -> List[PaymentIntent]:
+    async def list_by_status(self, status: PaymentStatus) -> List[PaymentIntent]:
         """Belirli durumdaki tüm ödeme niyetlerini getir.
 
         Süre aşımı kontrolü, raporlama ve admin paneli için kullanılır.

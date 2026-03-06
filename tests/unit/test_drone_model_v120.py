@@ -54,6 +54,7 @@ def _ebee_x() -> DroneModel:
 
 # ---- Approved models (v1.2.0: 5 model) ----
 
+
 def test_dji_m350_approved() -> None:
     m = _m350()
     assert m.is_approved()
@@ -71,6 +72,7 @@ def test_all_five_approved() -> None:
 
 # ---- band_class property ----
 
+
 def test_band_class_basic() -> None:
     assert _mavic_3m().band_class == "BASIC_4BAND"
 
@@ -81,6 +83,7 @@ def test_band_class_extended() -> None:
 
 # ---- has_blue_band ----
 
+
 def test_has_blue_band_false() -> None:
     assert not _mavic_3m().has_blue_band
 
@@ -90,6 +93,7 @@ def test_has_blue_band_true() -> None:
 
 
 # ---- supports_thermal ----
+
 
 def test_supports_thermal_false() -> None:
     assert not _mavic_3m().supports_thermal()
@@ -102,6 +106,7 @@ def test_supports_thermal_true() -> None:
 
 # ---- red_edge_wavelength_nm ----
 
+
 def test_red_edge_wavelength_dji() -> None:
     assert _mavic_3m().red_edge_wavelength_nm == 730.0
 
@@ -111,6 +116,7 @@ def test_red_edge_wavelength_sentera() -> None:
 
 
 # ---- to_dict includes v1.2.0 fields ----
+
 
 def test_to_dict_v120_fields() -> None:
     d = _m350().to_dict()

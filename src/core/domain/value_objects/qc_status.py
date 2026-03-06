@@ -8,6 +8,7 @@ Kalite kontrol durumunu ve onerilen aksiyonu temsil eden enum'lar.
 KR-018 hard gate: calibrated/QC kaniti olmadan AnalysisJob baslatilamaz.
 Entity'deki QCStatus enum'u ile SSOT uyumludur.
 """
+
 from __future__ import annotations
 
 from enum import Enum

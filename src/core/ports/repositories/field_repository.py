@@ -27,6 +27,7 @@ Bağımlılıklar: Standart kütüphane + domain tipleri.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_impl) taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -64,9 +65,7 @@ class FieldRepository(ABC):
     # Tekil sorgular
     # ------------------------------------------------------------------
     @abstractmethod
-    async def find_by_id(
-        self, field_id: uuid.UUID
-    ) -> Optional[Field]:
+    async def find_by_id(self, field_id: uuid.UUID) -> Optional[Field]:
         """field_id ile Field getir.
 
         Args:
@@ -104,9 +103,7 @@ class FieldRepository(ABC):
     # Liste sorguları
     # ------------------------------------------------------------------
     @abstractmethod
-    async def list_by_user_id(
-        self, user_id: uuid.UUID
-    ) -> List[Field]:
+    async def list_by_user_id(self, user_id: uuid.UUID) -> List[Field]:
         """Bir kullanıcıya ait tüm tarlaları getir.
 
         Args:
@@ -117,9 +114,7 @@ class FieldRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_province(
-        self, province: str
-    ) -> List[Field]:
+    async def list_by_province(self, province: str) -> List[Field]:
         """Belirli bir ildeki tarlaları getir.
 
         Args:

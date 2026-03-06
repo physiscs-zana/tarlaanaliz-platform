@@ -25,17 +25,17 @@ class ExpertResponse(BaseModel):
 
 
 class ExpertService(Protocol):
-    def create(self, payload: ExpertCreateRequest) -> ExpertResponse:
-        ...
+    def create(self, payload: ExpertCreateRequest) -> ExpertResponse: ...
 
-    def list_all(self) -> list[ExpertResponse]:
-        ...
+    def list_all(self) -> list[ExpertResponse]: ...
 
 
 @dataclass(slots=True)
 class _InMemoryExpertService:
     def create(self, payload: ExpertCreateRequest) -> ExpertResponse:
-        return ExpertResponse(expert_id="exp-1", display_name=payload.display_name, expertise_tags=payload.expertise_tags, active=True)
+        return ExpertResponse(
+            expert_id="exp-1", display_name=payload.display_name, expertise_tags=payload.expertise_tags, active=True
+        )
 
     def list_all(self) -> list[ExpertResponse]:
         return [ExpertResponse(expert_id="exp-1", display_name="Demo Expert", expertise_tags=["crop"], active=True)]

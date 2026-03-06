@@ -11,11 +11,11 @@ from typing import FrozenSet
 
 @dataclass(frozen=True)
 class PilotSchedule:
-    work_days: FrozenSet[int]          # 0=Mon ... 6=Sun (örnek; projede netleştir)
-    daily_capacity_donum: int           # 2500–3000
-    system_seed_quota_donum: int = 1500 # seed kota, kalan pull
+    work_days: FrozenSet[int]  # 0=Mon ... 6=Sun (örnek; projede netleştir)
+    daily_capacity_donum: int  # 2500–3000
+    system_seed_quota_donum: int = 1500  # seed kota, kalan pull
 
-    effective_from: str = ""            # ISO8601 date-time or date (opsiyonel)
+    effective_from: str = ""  # ISO8601 date-time or date (opsiyonel)
 
     def validate(self) -> None:
         if len(self.work_days) == 0:

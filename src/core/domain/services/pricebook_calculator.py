@@ -163,9 +163,7 @@ class PricebookCalculator:
 
         rule = self.find_matching_rule(crop_type, area_m2)
         if not rule:
-            raise PricebookError(
-                f"Fiyat kuralı bulunamadı: crop_type={crop_type}, area_m2={area_m2}"
-            )
+            raise PricebookError(f"Fiyat kuralı bulunamadı: crop_type={crop_type}, area_m2={area_m2}")
 
         area_hectares = area_m2 / 10_000.0
         base_amount = int(area_hectares * rule.base_price_per_hectare_kurus)

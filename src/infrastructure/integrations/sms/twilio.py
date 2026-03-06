@@ -27,6 +27,7 @@ Bağımlılıklar: httpx, tenacity, structlog.
 Notlar/SSOT: Tek referans: tarlaanaliz_platform_tree v3.2.2 FINAL.
   Aynı kavram başka yerde tekrar edilmez.
 """
+
 from __future__ import annotations
 
 import re
@@ -97,10 +98,7 @@ class TwilioSMSAdapter(SMSGateway):
             self._account_sid = api_key
             self._auth_token = ""
         self._sender_id = settings.sms_sender_id
-        self._base_url = (
-            settings.sms_api_url
-            or f"{self._TWILIO_API_BASE}/Accounts/{self._account_sid}"
-        )
+        self._base_url = settings.sms_api_url or f"{self._TWILIO_API_BASE}/Accounts/{self._account_sid}"
 
     def _get_client(self) -> httpx.AsyncClient:
         """Her istek için taze httpx client oluşturur (Basic Auth)."""
@@ -230,17 +228,18 @@ class TwilioSMSAdapter(SMSGateway):
                     data = response.json()
 
                     twilio_status = data.get("status", "queued")
-                    results.append(SmsResult(
-                        message_id=data.get("sid", ""),
-                        status=_TWILIO_STATUS_MAP.get(
-                            twilio_status, SmsDeliveryStatus.UNKNOWN,
-                        ),
-                        phone_number_masked=masked,
-                        error_code=(
-                            str(data["error_code"]) if data.get("error_code") else None
-                        ),
-                        error_message=data.get("error_message"),
-                    ))
+                    results.append(
+                        SmsResult(
+                            message_id=data.get("sid", ""),
+                            status=_TWILIO_STATUS_MAP.get(
+                                twilio_status,
+                                SmsDeliveryStatus.UNKNOWN,
+                            ),
+                            phone_number_masked=masked,
+                            error_code=(str(data["error_code"]) if data.get("error_code") else None),
+                            error_message=data.get("error_message"),
+                        )
+                    )
                     total_sent += 1
 
                 except httpx.HTTPStatusError as exc:
@@ -250,13 +249,15 @@ class TwilioSMSAdapter(SMSGateway):
                         status_code=exc.response.status_code,
                         provider="twilio",
                     )
-                    results.append(SmsResult(
-                        message_id="",
-                        status=SmsDeliveryStatus.FAILED,
-                        phone_number_masked=masked,
-                        error_code=str(exc.response.status_code),
-                        error_message="Twilio gönderim hatası",
-                    ))
+                    results.append(
+                        SmsResult(
+                            message_id="",
+                            status=SmsDeliveryStatus.FAILED,
+                            phone_number_masked=masked,
+                            error_code=str(exc.response.status_code),
+                            error_message="Twilio gönderim hatası",
+                        )
+                    )
                     total_failed += 1
 
         batch = SmsBatchResult(

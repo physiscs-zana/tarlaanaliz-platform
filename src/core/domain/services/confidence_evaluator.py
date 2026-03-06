@@ -43,13 +43,9 @@ class ConfidenceThresholds:
             ("critical", self.critical),
         ]:
             if not 0.0 <= val <= 1.0:
-                raise ConfidenceEvaluationError(
-                    f"{name} değeri 0.0-1.0 arasında olmalıdır: {val}"
-                )
+                raise ConfidenceEvaluationError(f"{name} değeri 0.0-1.0 arasında olmalıdır: {val}")
         if not (self.critical < self.priority < self.standard < self.auto_accept):
-            raise ConfidenceEvaluationError(
-                "Eşik sıralaması: critical < priority < standard < auto_accept olmalıdır."
-            )
+            raise ConfidenceEvaluationError("Eşik sıralaması: critical < priority < standard < auto_accept olmalıdır.")
 
 
 @dataclass(frozen=True)
@@ -109,9 +105,7 @@ class ConfidenceEvaluator:
             ConfidenceEvaluationError: Score geçersizse.
         """
         if not 0.0 <= confidence_score <= 1.0:
-            raise ConfidenceEvaluationError(
-                f"confidence_score 0.0-1.0 arasında olmalıdır: {confidence_score}"
-            )
+            raise ConfidenceEvaluationError(f"confidence_score 0.0-1.0 arasında olmalıdır: {confidence_score}")
 
         t = self._thresholds
 

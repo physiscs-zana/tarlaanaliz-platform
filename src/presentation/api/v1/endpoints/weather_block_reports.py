@@ -27,8 +27,7 @@ class WeatherBlockReportResponse(BaseModel):
 
 
 class WeatherBlockReportService(Protocol):
-    def create(self, payload: WeatherBlockReportCreateRequest, actor_subject: str) -> WeatherBlockReportResponse:
-        ...
+    def create(self, payload: WeatherBlockReportCreateRequest, actor_subject: str) -> WeatherBlockReportResponse: ...
 
 
 @dataclass(slots=True)

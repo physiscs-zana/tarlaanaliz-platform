@@ -8,6 +8,7 @@ Turkiye kadastro sistemindeki il/ilce/mahalle-koy/ada/parsel bilesimini
 immutable olarak temsil eder. Tekil kayit kontrolu icin hash uretir.
 PII icermez (konum verisi, kisisel veri degil).
 """
+
 from __future__ import annotations
 
 import hashlib

@@ -25,12 +25,14 @@ class PaymentIntentCreated(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "payment_intent_id": str(self.payment_intent_id),
-            "subscription_id": str(self.subscription_id) if self.subscription_id else None,
-            "amount_kurus": self.amount_kurus,
-            "currency": self.currency,
-        })
+        base.update(
+            {
+                "payment_intent_id": str(self.payment_intent_id),
+                "subscription_id": str(self.subscription_id) if self.subscription_id else None,
+                "amount_kurus": self.amount_kurus,
+                "currency": self.currency,
+            }
+        )
         return base
 
 
@@ -43,10 +45,12 @@ class ReceiptUploaded(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "payment_intent_id": str(self.payment_intent_id),
-            "receipt_blob_id": self.receipt_blob_id,
-        })
+        base.update(
+            {
+                "payment_intent_id": str(self.payment_intent_id),
+                "receipt_blob_id": self.receipt_blob_id,
+            }
+        )
         return base
 
 
@@ -62,10 +66,12 @@ class PaymentApproved(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "payment_intent_id": str(self.payment_intent_id),
-            "approved_by": str(self.approved_by),
-        })
+        base.update(
+            {
+                "payment_intent_id": str(self.payment_intent_id),
+                "approved_by": str(self.approved_by),
+            }
+        )
         return base
 
 
@@ -79,9 +85,11 @@ class PaymentRejected(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "payment_intent_id": str(self.payment_intent_id),
-            "rejected_by": str(self.rejected_by),
-            "reason": self.reason,
-        })
+        base.update(
+            {
+                "payment_intent_id": str(self.payment_intent_id),
+                "rejected_by": str(self.rejected_by),
+                "reason": self.reason,
+            }
+        )
         return base

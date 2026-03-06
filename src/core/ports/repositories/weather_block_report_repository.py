@@ -27,6 +27,7 @@ Bağımlılıklar: Standart kütüphane + domain tipleri.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_impl) taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -64,9 +65,7 @@ class WeatherBlockReportRepository(ABC):
     # Tekil sorgular
     # ------------------------------------------------------------------
     @abstractmethod
-    async def find_by_id(
-        self, weather_block_id: uuid.UUID
-    ) -> Optional[WeatherBlockReport]:
+    async def find_by_id(self, weather_block_id: uuid.UUID) -> Optional[WeatherBlockReport]:
         """weather_block_id ile WeatherBlockReport getir.
 
         Args:
@@ -80,9 +79,7 @@ class WeatherBlockReportRepository(ABC):
     # Liste sorguları
     # ------------------------------------------------------------------
     @abstractmethod
-    async def list_by_mission_id(
-        self, mission_id: uuid.UUID
-    ) -> List[WeatherBlockReport]:
+    async def list_by_mission_id(self, mission_id: uuid.UUID) -> List[WeatherBlockReport]:
         """Bir göreve ait tüm hava engeli raporlarını getir.
 
         Args:
@@ -93,9 +90,7 @@ class WeatherBlockReportRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_field_id(
-        self, field_id: uuid.UUID
-    ) -> List[WeatherBlockReport]:
+    async def list_by_field_id(self, field_id: uuid.UUID) -> List[WeatherBlockReport]:
         """Bir tarlaya ait tüm hava engeli raporlarını getir.
 
         Args:
@@ -106,9 +101,7 @@ class WeatherBlockReportRepository(ABC):
         """
 
     @abstractmethod
-    async def list_unresolved_by_mission_id(
-        self, mission_id: uuid.UUID
-    ) -> List[WeatherBlockReport]:
+    async def list_unresolved_by_mission_id(self, mission_id: uuid.UUID) -> List[WeatherBlockReport]:
         """Bir göreve ait çözülmemiş (resolved=False) hava engeli raporlarını getir.
 
         Görev yeniden planlanmadan önce aktif engel kontrolü için kullanılır.

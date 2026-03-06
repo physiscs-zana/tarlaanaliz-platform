@@ -129,7 +129,6 @@ class JwtMiddleware(BaseHTTPMiddleware):
         if iat is not None and int(iat) > now + 60:
             raise JwtValidationError("Token issued in the future")
 
-
         return payload
 
     @staticmethod

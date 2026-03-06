@@ -10,6 +10,7 @@ veya Sezonluk Paket Subscription taleplerinde tahsilati standartlastirir (KR-033
 NOT (KR-033 v1.2.0): Sistemde otomatik expire yoktur. PAYMENT_PENDING
 durumundaki intent'ler admin karariyla CANCELLED yapilabilir.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -116,9 +117,7 @@ class PaymentIntent:
         KR-033: PAYMENT.MARK_PAID olayinda admin_note zorunlu.
         """
         if self.status != PaymentStatus.PAYMENT_PENDING:
-            raise ValueError(
-                f"Can only mark_paid from PAYMENT_PENDING, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only mark_paid from PAYMENT_PENDING, current: {self.status.value}")
         self.status = PaymentStatus.PAID
         self.paid_at = paid_at or datetime.now(timezone.utc)
         if approved_by_admin_user_id is not None:
@@ -135,9 +134,7 @@ class PaymentIntent:
         KR-033: rejection_reason zorunlu.
         """
         if self.status != PaymentStatus.PAYMENT_PENDING:
-            raise ValueError(
-                f"Can only reject from PAYMENT_PENDING, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only reject from PAYMENT_PENDING, current: {self.status.value}")
         if not reason or not reason.strip():
             raise ValueError("rejected_reason is required")
         self.status = PaymentStatus.REJECTED
@@ -151,10 +148,7 @@ class PaymentIntent:
         PAYMENT_PENDING -> CANCELLED.
         """
         if self.status != PaymentStatus.PAYMENT_PENDING:
-            raise ValueError(
-                f"Can only cancel from PAYMENT_PENDING, current: {self.status.value} "
-                f"(KR-033 Kural-3)"
-            )
+            raise ValueError(f"Can only cancel from PAYMENT_PENDING, current: {self.status.value} (KR-033 Kural-3)")
         self.status = PaymentStatus.CANCELLED
         self.cancelled_at = datetime.now(timezone.utc)
         self.cancelled_reason = reason.strip() if reason else None
@@ -166,16 +160,12 @@ class PaymentIntent:
         PAID -> REFUNDED.
         """
         if self.status != PaymentStatus.PAID:
-            raise ValueError(
-                f"Can only refund from PAID, current: {self.status.value} "
-                f"(KR-033 Kural-4)"
-            )
+            raise ValueError(f"Can only refund from PAID, current: {self.status.value} (KR-033 Kural-4)")
         if refund_amount_kurus <= 0:
             raise ValueError("refund_amount_kurus must be positive")
         if refund_amount_kurus > self.amount_kurus:
             raise ValueError(
-                f"refund_amount_kurus ({refund_amount_kurus}) cannot exceed "
-                f"amount_kurus ({self.amount_kurus})"
+                f"refund_amount_kurus ({refund_amount_kurus}) cannot exceed amount_kurus ({self.amount_kurus})"
             )
         if not reason or not reason.strip():
             raise ValueError("refund_reason is required")

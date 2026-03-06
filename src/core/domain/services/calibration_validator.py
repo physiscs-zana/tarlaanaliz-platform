@@ -93,15 +93,9 @@ class CalibrationValidator:
             if panel_reflectance_tolerance is not None
             else self.DEFAULT_PANEL_REFLECTANCE_TOLERANCE
         )
-        self._dark_current_max = (
-            dark_current_max
-            if dark_current_max is not None
-            else self.DEFAULT_DARK_CURRENT_MAX
-        )
+        self._dark_current_max = dark_current_max if dark_current_max is not None else self.DEFAULT_DARK_CURRENT_MAX
         self._sensor_temp_tolerance = (
-            sensor_temp_tolerance
-            if sensor_temp_tolerance is not None
-            else self.DEFAULT_SENSOR_TEMP_TOLERANCE
+            sensor_temp_tolerance if sensor_temp_tolerance is not None else self.DEFAULT_SENSOR_TEMP_TOLERANCE
         )
 
     def validate(
@@ -131,9 +125,7 @@ class CalibrationValidator:
             CalibrationValidationError: Panel okuması yoksa.
         """
         if not panel_readings:
-            raise CalibrationValidationError(
-                "En az bir referans panel okuması gereklidir."
-            )
+            raise CalibrationValidationError("En az bir referans panel okuması gereklidir.")
 
         checks: list[CalibrationCheckItem] = []
         issues: list[str] = []
@@ -143,9 +135,7 @@ class CalibrationValidator:
         # Panel reflectance kontrolleri
         for band_name, expected, actual in panel_readings:
             tolerance = self._panel_tolerance
-            deviation = (
-                abs(actual - expected) / abs(expected) if expected != 0.0 else abs(actual)
-            )
+            deviation = abs(actual - expected) / abs(expected) if expected != 0.0 else abs(actual)
             passed = deviation <= tolerance
             warning_zone = tolerance < deviation <= tolerance * 2
 
@@ -160,10 +150,7 @@ class CalibrationValidator:
 
             if not passed and not warning_zone:
                 has_failure = True
-                issues.append(
-                    f"Band {band_name}: reflectance sapması {deviation:.4f} "
-                    f"tolerans {tolerance:.4f} aşıldı."
-                )
+                issues.append(f"Band {band_name}: reflectance sapması {deviation:.4f} tolerans {tolerance:.4f} aşıldı.")
             elif warning_zone:
                 has_warning = True
                 issues.append(
@@ -174,11 +161,7 @@ class CalibrationValidator:
         # Dark current kontrolü
         if dark_current_value is not None:
             dc_passed = dark_current_value <= self._dark_current_max
-            dc_warning = (
-                self._dark_current_max
-                < dark_current_value
-                <= self._dark_current_max * 1.5
-            )
+            dc_warning = self._dark_current_max < dark_current_value <= self._dark_current_max * 1.5
             checks.append(
                 CalibrationCheckItem(
                     check_name="dark_current",
@@ -190,25 +173,16 @@ class CalibrationValidator:
             )
             if not dc_passed and not dc_warning:
                 has_failure = True
-                issues.append(
-                    f"Dark current {dark_current_value:.2f} "
-                    f"maksimum {self._dark_current_max:.2f} aşıldı."
-                )
+                issues.append(f"Dark current {dark_current_value:.2f} maksimum {self._dark_current_max:.2f} aşıldı.")
             elif dc_warning:
                 has_warning = True
-                issues.append(
-                    f"Dark current {dark_current_value:.2f} uyarı bölgesinde."
-                )
+                issues.append(f"Dark current {dark_current_value:.2f} uyarı bölgesinde.")
 
         # Sensör sıcaklığı kontrolü
         if sensor_temperature is not None:
             temp_deviation = abs(sensor_temperature - expected_sensor_temperature)
             temp_passed = temp_deviation <= self._sensor_temp_tolerance
-            temp_warning = (
-                self._sensor_temp_tolerance
-                < temp_deviation
-                <= self._sensor_temp_tolerance * 1.5
-            )
+            temp_warning = self._sensor_temp_tolerance < temp_deviation <= self._sensor_temp_tolerance * 1.5
             checks.append(
                 CalibrationCheckItem(
                     check_name="sensor_temperature",
@@ -226,9 +200,7 @@ class CalibrationValidator:
                 )
             elif temp_warning:
                 has_warning = True
-                issues.append(
-                    f"Sensör sıcaklık sapması {temp_deviation:.2f}°C uyarı bölgesinde."
-                )
+                issues.append(f"Sensör sıcaklık sapması {temp_deviation:.2f}°C uyarı bölgesinde.")
 
         # Sonuç belirleme
         if has_failure:

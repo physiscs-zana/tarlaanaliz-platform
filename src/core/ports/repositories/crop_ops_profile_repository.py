@@ -7,6 +7,7 @@ CropOpsProfileRepository port (Protocol).
 KR-015-1: Bitki bazlı operasyonel kapasite profillerinin kalıcılığını sağlar.
 Implementation: src/infrastructure/persistence/sqlalchemy/repositories/crop_ops_profile_repository_impl.py
 """
+
 from __future__ import annotations
 
 from typing import Optional, Protocol, runtime_checkable

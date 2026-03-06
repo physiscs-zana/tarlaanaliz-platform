@@ -7,6 +7,7 @@ PriceSnapshot domain entity (immutable / frozen).
 Fiyatlar PriceBook'tan gelir; siparis/abonelik olusurken snapshot siparise yazilir.
 Gecmis siparislerin fiyati sonradan DEGISMEZ (KR-022).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -45,16 +46,13 @@ class PriceSnapshot:
         if not self.crop_type:
             raise ValueError("crop_type is required")
         if self.analysis_type not in ("single", "seasonal"):
-            raise ValueError(
-                f"analysis_type must be 'single' or 'seasonal', got '{self.analysis_type}'"
-            )
+            raise ValueError(f"analysis_type must be 'single' or 'seasonal', got '{self.analysis_type}'")
         if self.amount_kurus <= 0:
             raise ValueError("amount_kurus must be positive")
         if self.currency != "TRY":
             raise ValueError(f"currency must be 'TRY', got '{self.currency}'")
-        if (
-            self.promotional_discount_percent is not None
-            and not (Decimal("0") <= self.promotional_discount_percent <= Decimal("100"))
+        if self.promotional_discount_percent is not None and not (
+            Decimal("0") <= self.promotional_discount_percent <= Decimal("100")
         ):
             raise ValueError("promotional_discount_percent must be 0-100")
 

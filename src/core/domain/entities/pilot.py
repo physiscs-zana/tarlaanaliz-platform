@@ -10,6 +10,7 @@ v1.2.0 (KR-034): Pilot 5 onaylı modeli destekler:
 Günlük kapasite 2500-3000 dönüm, varsayılan 2750 (KR-015-1).
 SYSTEM_SEED_QUOTA varsayılan 1500, PULL_QUOTA = capacity - seed (KR-015-2).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -47,13 +48,15 @@ class Pilot:
     """
 
     # KR-034: Onaylı drone model ID'leri (drone_model alanı bunlardan biri olmalı)
-    _APPROVED_DRONE_MODELS: ClassVar[frozenset[str]] = frozenset({
-        "DJI_MAVIC_3M",            # Phase 1, birincil
-        "DJI_M350_RTK_SENTERA_6X", # Phase 1, KR-001 desteklenen model
-        "WINGTRAONE_GEN2",          # Phase 2 Senaryo A/B
-        "PARROT_SEQUOIA_PLUS",      # Phase 2 Senaryo A
-        "AGEAGLE_EBEE_X",           # Phase 2 Senaryo B
-    })
+    _APPROVED_DRONE_MODELS: ClassVar[frozenset[str]] = frozenset(
+        {
+            "DJI_MAVIC_3M",  # Phase 1, birincil
+            "DJI_M350_RTK_SENTERA_6X",  # Phase 1, KR-001 desteklenen model
+            "WINGTRAONE_GEN2",  # Phase 2 Senaryo A/B
+            "PARROT_SEQUOIA_PLUS",  # Phase 2 Senaryo A
+            "AGEAGLE_EBEE_X",  # Phase 2 Senaryo B
+        }
+    )
 
     pilot_id: uuid.UUID
     user_id: uuid.UUID
@@ -61,7 +64,9 @@ class Pilot:
     district: str
     full_name: str
     phone_number: str
-    drone_model: str  # KR-034: DJI_MAVIC_3M | DJI_M350_RTK_SENTERA_6X | WINGTRAONE_GEN2 | PARROT_SEQUOIA_PLUS | AGEAGLE_EBEE_X
+    drone_model: (
+        str  # KR-034: DJI_MAVIC_3M | DJI_M350_RTK_SENTERA_6X | WINGTRAONE_GEN2 | PARROT_SEQUOIA_PLUS | AGEAGLE_EBEE_X
+    )
     drone_serial_number: str
     created_at: datetime
     updated_at: datetime
@@ -98,14 +103,8 @@ class Pilot:
                 f"Geçerliler: {sorted(self._APPROVED_DRONE_MODELS)}"
             )
         if len(self.work_days) > _MAX_WORK_DAYS:
-            raise ValueError(
-                f"work_days cannot exceed {_MAX_WORK_DAYS} days (KR-015-1)"
-            )
-        if not (
-            _MIN_DAILY_CAPACITY_DONUM
-            <= self.daily_capacity_donum
-            <= _MAX_DAILY_CAPACITY_DONUM
-        ):
+            raise ValueError(f"work_days cannot exceed {_MAX_WORK_DAYS} days (KR-015-1)")
+        if not (_MIN_DAILY_CAPACITY_DONUM <= self.daily_capacity_donum <= _MAX_DAILY_CAPACITY_DONUM):
             raise ValueError(
                 f"daily_capacity_donum must be {_MIN_DAILY_CAPACITY_DONUM}-"
                 f"{_MAX_DAILY_CAPACITY_DONUM} (KR-015-1), got {self.daily_capacity_donum}"
@@ -139,9 +138,7 @@ class Pilot:
     def update_work_days(self, days: List[int]) -> None:
         """Haftalik calisma gunlerini guncelle (KR-015-1)."""
         if len(days) > _MAX_WORK_DAYS:
-            raise ValueError(
-                f"work_days cannot exceed {_MAX_WORK_DAYS} days (KR-015-1)"
-            )
+            raise ValueError(f"work_days cannot exceed {_MAX_WORK_DAYS} days (KR-015-1)")
         for d in days:
             if d < 0 or d > 6:
                 raise ValueError(f"Invalid day: {d}. Must be 0 (Mon) to 6 (Sun)")

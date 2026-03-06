@@ -30,11 +30,9 @@ class ReviewSubmitResponse(BaseModel):
 
 
 class ExpertPortalService(Protocol):
-    def list_queue(self, expert_subject: str, limit: int) -> list[ReviewQueueItem]:
-        ...
+    def list_queue(self, expert_subject: str, limit: int) -> list[ReviewQueueItem]: ...
 
-    def submit(self, review_id: str, payload: ReviewSubmitRequest, expert_subject: str) -> ReviewSubmitResponse:
-        ...
+    def submit(self, review_id: str, payload: ReviewSubmitRequest, expert_subject: str) -> ReviewSubmitResponse: ...
 
 
 @dataclass(slots=True)

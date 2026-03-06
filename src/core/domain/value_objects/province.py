@@ -8,6 +8,7 @@ Turkiye'nin 81 ilini temsil eden immutable VO.
 KR-083 bolge yetkisi kontrollerinde kullanilir;
 il kodu (plaka) ve il adi eslemesi icerir.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -122,15 +123,10 @@ class Province:
     # ------------------------------------------------------------------
     def __post_init__(self) -> None:
         if self.code not in _PROVINCES:
-            raise ValueError(
-                f"Invalid province code: {self.code}. Must be 1-81."
-            )
+            raise ValueError(f"Invalid province code: {self.code}. Must be 1-81.")
         expected_name = _PROVINCES[self.code]
         if self.name.upper() != expected_name:
-            raise ValueError(
-                f"Province name mismatch: code {self.code} expects "
-                f"'{expected_name}', got '{self.name}'"
-            )
+            raise ValueError(f"Province name mismatch: code {self.code} expects '{expected_name}', got '{self.name}'")
         # Normalize name to uppercase
         object.__setattr__(self, "name", self.name.upper())
 
@@ -173,10 +169,7 @@ class Province:
     @staticmethod
     def all_provinces() -> list[Province]:
         """81 ilin tamamini doner (plaka koduna gore sirali)."""
-        return [
-            Province(code=code, name=name)
-            for code, name in sorted(_PROVINCES.items())
-        ]
+        return [Province(code=code, name=name) for code, name in sorted(_PROVINCES.items())]
 
     # ------------------------------------------------------------------
     # Serialization

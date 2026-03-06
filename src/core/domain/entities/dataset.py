@@ -15,6 +15,7 @@ Her durum geçişinde:
 - SHA-256 hash zorunlu
 - İlgili AV raporu URI'si zorunlu (AV1 veya AV2)
 """
+
 from __future__ import annotations
 
 import uuid
@@ -66,20 +67,20 @@ class Dataset:
     updated_at: datetime
 
     # Hash ve manifest
-    sha256_hash: Optional[str] = None          # RAW_HASH_SEALED'dan itibaren zorunlu
-    manifest: Optional[dict[str, Any]] = None   # JSONB, her geçişte güncellenir
+    sha256_hash: Optional[str] = None  # RAW_HASH_SEALED'dan itibaren zorunlu
+    manifest: Optional[dict[str, Any]] = None  # JSONB, her geçişte güncellenir
 
     # AV tarama raporları (KR-073)
-    av1_report_uri: Optional[str] = None       # Edge AV1 raporu URI
-    av2_report_uri: Optional[str] = None       # Merkez AV2 raporu URI
+    av1_report_uri: Optional[str] = None  # Edge AV1 raporu URI
+    av2_report_uri: Optional[str] = None  # Merkez AV2 raporu URI
 
     # Kalibrasyon (KR-018)
-    is_calibrated: bool = False                # Pix4Dfields radyometrik kalibrasyon
+    is_calibrated: bool = False  # Pix4Dfields radyometrik kalibrasyon
 
     # Sonuç referansları
     worker_job_id: Optional[uuid.UUID] = None  # DISPATCHED_TO_WORKER'da set edilir
-    result_uri: Optional[str] = None           # ANALYZED'da set edilir (Object Storage)
-    signature: Optional[str] = None            # KR-072 imza doğrulama
+    result_uri: Optional[str] = None  # ANALYZED'da set edilir (Object Storage)
+    signature: Optional[str] = None  # KR-072 imza doğrulama
 
     # Karantina notu
     quarantine_reason: Optional[str] = None
@@ -116,34 +117,26 @@ class Dataset:
             DatasetTransitionError: Geçersiz geçiş veya zorunlu alan eksikse.
         """
         if not is_valid_dataset_transition(self.status, target):
-            raise DatasetTransitionError(
-                f"Geçersiz geçiş: {self.status} → {target}"
-            )
+            raise DatasetTransitionError(f"Geçersiz geçiş: {self.status} → {target}")
 
         # AV1 raporu zorunluluğu
         if requires_av1_report(target):
             uri = av1_report_uri or self.av1_report_uri
             if not uri:
-                raise DatasetTransitionError(
-                    f"{target} geçişi için AV1 (edge) raporu zorunludur (KR-073)"
-                )
+                raise DatasetTransitionError(f"{target} geçişi için AV1 (edge) raporu zorunludur (KR-073)")
             self.av1_report_uri = uri
 
         # AV2 raporu zorunluluğu
         if requires_av2_report(target):
             uri = av2_report_uri or self.av2_report_uri
             if not uri:
-                raise DatasetTransitionError(
-                    f"{target} geçişi için AV2 (merkez) raporu zorunludur (KR-073)"
-                )
+                raise DatasetTransitionError(f"{target} geçişi için AV2 (merkez) raporu zorunludur (KR-073)")
             self.av2_report_uri = uri
 
         # Hash mühürü
         if target == DatasetStatus.RAW_HASH_SEALED:
             if not (sha256_hash or self.sha256_hash):
-                raise DatasetTransitionError(
-                    "RAW_HASH_SEALED geçişi için sha256_hash zorunludur (KR-072)"
-                )
+                raise DatasetTransitionError("RAW_HASH_SEALED geçişi için sha256_hash zorunludur (KR-072)")
             if sha256_hash:
                 self.sha256_hash = sha256_hash
 

@@ -5,6 +5,7 @@
 KR-024: Her mahsul tipi için min/max tarama aralığı (gün).
 Abonelik planlama servisi bu değerleri kullanarak next_due_at hesaplar.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -54,19 +55,14 @@ class CropScanInterval:
         if self.min_days <= 0:
             raise CropScanIntervalError(f"min_days pozitif olmalı: {self.min_days}")
         if self.max_days < self.min_days:
-            raise CropScanIntervalError(
-                f"max_days >= min_days olmalı: {self.max_days} < {self.min_days}"
-            )
+            raise CropScanIntervalError(f"max_days >= min_days olmalı: {self.max_days} < {self.min_days}")
 
     @classmethod
     def for_crop(cls, crop_type: str) -> "CropScanInterval":
         """CropType string'inden interval oluştur (KR-024)."""
         key = crop_type.strip().upper()
         if key not in cls._CROP_INTERVALS:
-            raise CropScanIntervalError(
-                f"Geçersiz mahsul: '{crop_type}'. "
-                f"Geçerliler: {sorted(cls._CROP_INTERVALS)}"
-            )
+            raise CropScanIntervalError(f"Geçersiz mahsul: '{crop_type}'. Geçerliler: {sorted(cls._CROP_INTERVALS)}")
         min_d, max_d = cls._CROP_INTERVALS[key]
         return cls(min_days=min_d, max_days=max_d)
 

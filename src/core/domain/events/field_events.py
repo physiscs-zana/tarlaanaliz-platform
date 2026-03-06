@@ -25,13 +25,15 @@ class FieldCreated(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "field_id": str(self.field_id),
-            "owner_id": str(self.owner_id),
-            "province_code": self.province_code,
-            "district": self.district,
-            "area_m2": self.area_m2,
-        })
+        base.update(
+            {
+                "field_id": str(self.field_id),
+                "owner_id": str(self.owner_id),
+                "province_code": self.province_code,
+                "district": self.district,
+                "area_m2": self.area_m2,
+            }
+        )
         return base
 
 
@@ -43,9 +45,11 @@ class FieldUpdated(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "field_id": str(self.field_id),
-        })
+        base.update(
+            {
+                "field_id": str(self.field_id),
+            }
+        )
         return base
 
 
@@ -63,12 +67,14 @@ class FieldCropUpdated(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "field_id": str(self.field_id),
-            "old_crop_type": self.old_crop_type,
-            "new_crop_type": self.new_crop_type,
-            "season_year": self.season_year,
-        })
+        base.update(
+            {
+                "field_id": str(self.field_id),
+                "old_crop_type": self.old_crop_type,
+                "new_crop_type": self.new_crop_type,
+                "season_year": self.season_year,
+            }
+        )
         return base
 
 
@@ -80,7 +86,9 @@ class FieldDeleted(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "field_id": str(self.field_id),
-        })
+        base.update(
+            {
+                "field_id": str(self.field_id),
+            }
+        )
         return base

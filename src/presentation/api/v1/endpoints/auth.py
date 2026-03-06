@@ -16,13 +16,15 @@ from typing import Protocol
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field, field_validator
 
+from src.infrastructure.security.jwt_handler import JWTHandler, JWTSettings
+
 LOGGER = logging.getLogger("api.auth")
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 # KR-050: Sabit 6 haneli sayısal PIN (v1.2.0 — eski: 4-12 chars)
 _PIN_LENGTH = 6
-_MAX_FAILED_LOGIN_ATTEMPTS = 16   # KR-050 / SC-SEC-02: 16 hata → 30 dakika kilit
+_MAX_FAILED_LOGIN_ATTEMPTS = 16  # KR-050 / SC-SEC-02: 16 hata → 30 dakika kilit
 _LOCKOUT_DURATION_SECONDS = 30 * 60  # 30 dakika
 
 
@@ -51,11 +53,9 @@ class AuthRefreshRequest(BaseModel):
 
 
 class PhonePinAuthService(Protocol):
-    def login(self, phone: str, pin: str) -> AuthTokenResponse:
-        ...
+    def login(self, phone: str, pin: str) -> AuthTokenResponse: ...
 
-    def refresh(self, refresh_token: str) -> AuthTokenResponse:
-        ...
+    def refresh(self, refresh_token: str) -> AuthTokenResponse: ...
 
 
 @dataclass(slots=True)
@@ -69,6 +69,8 @@ _login_attempts: dict[str, _LoginAttemptRecord] = {}
 
 
 def _get_jwt_handler() -> JWTHandler:
+    from src.presentation.api.settings import settings
+
     return JWTHandler(JWTSettings(secret_key=settings.jwt.secret))
 
 
@@ -127,7 +129,7 @@ class _InMemoryPhonePinAuthService:
         try:
             payload = self._jwt_handler.verify_token(refresh_token)
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized") from None
         subject = str(payload.get("sub", ""))
         access_token = self._jwt_handler.issue_access_token(
             subject=subject,
@@ -236,7 +238,9 @@ def phone_pin_login(
 
 
 @router.post("/phone-pin/refresh", response_model=AuthTokenResponse)
-def phone_pin_refresh(payload: AuthRefreshRequest, service: PhonePinAuthService = Depends(get_phone_pin_auth_service)) -> AuthTokenResponse:
+def phone_pin_refresh(
+    payload: AuthRefreshRequest, service: PhonePinAuthService = Depends(get_phone_pin_auth_service)
+) -> AuthTokenResponse:
     return service.refresh(refresh_token=payload.refresh_token)
 
 

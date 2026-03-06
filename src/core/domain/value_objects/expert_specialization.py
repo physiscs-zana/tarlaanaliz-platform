@@ -45,11 +45,17 @@ class ExpertSpecialization:
     GENERAL_HEALTH: ClassVar[str] = "GENERAL_HEALTH"
     FUNGUS_DETECTION: ClassVar[str] = "FUNGUS_DETECTION"
 
-    _VALID_CODES: ClassVar[frozenset[str]] = frozenset({
-        "CROP_DISEASE", "PEST_DETECTION", "WEED_ANALYSIS",
-        "WATER_STRESS", "NUTRIENT_STRESS", "GENERAL_HEALTH",
-        "FUNGUS_DETECTION",
-    })
+    _VALID_CODES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "CROP_DISEASE",
+            "PEST_DETECTION",
+            "WEED_ANALYSIS",
+            "WATER_STRESS",
+            "NUTRIENT_STRESS",
+            "GENERAL_HEALTH",
+            "FUNGUS_DETECTION",
+        }
+    )
 
     # Uzmanlık alanı -> Türkçe görünen ad eşlemesi
     _DISPLAY_NAMES: ClassVar[dict[str, str]] = {
@@ -75,16 +81,13 @@ class ExpertSpecialization:
 
     def __post_init__(self) -> None:
         if not isinstance(self.code, str):
-            raise ExpertSpecializationError(
-                f"code str olmalıdır, alınan tip: {type(self.code).__name__}"
-            )
+            raise ExpertSpecializationError(f"code str olmalıdır, alınan tip: {type(self.code).__name__}")
         normalized = self.code.strip().upper()
         if normalized != self.code:
             object.__setattr__(self, "code", normalized)
         if self.code not in self._VALID_CODES:
             raise ExpertSpecializationError(
-                f"Geçersiz uzmanlık alanı: '{self.code}'. "
-                f"Geçerli değerler: {sorted(self._VALID_CODES)}"
+                f"Geçersiz uzmanlık alanı: '{self.code}'. Geçerli değerler: {sorted(self._VALID_CODES)}"
             )
 
     @property

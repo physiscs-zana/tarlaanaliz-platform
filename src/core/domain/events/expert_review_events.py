@@ -25,13 +25,15 @@ class ExpertReviewRequested(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "review_id": str(self.review_id),
-            "analysis_job_id": str(self.analysis_job_id),
-            "field_id": str(self.field_id),
-            "assigned_expert_id": str(self.assigned_expert_id) if self.assigned_expert_id else None,
-            "confidence_score": self.confidence_score,
-        })
+        base.update(
+            {
+                "review_id": str(self.review_id),
+                "analysis_job_id": str(self.analysis_job_id),
+                "field_id": str(self.field_id),
+                "assigned_expert_id": str(self.assigned_expert_id) if self.assigned_expert_id else None,
+                "confidence_score": self.confidence_score,
+            }
+        )
         return base
 
 
@@ -44,10 +46,12 @@ class ExpertReviewAssigned(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "review_id": str(self.review_id),
-            "expert_id": str(self.expert_id),
-        })
+        base.update(
+            {
+                "review_id": str(self.review_id),
+                "expert_id": str(self.expert_id),
+            }
+        )
         return base
 
 
@@ -64,11 +68,13 @@ class ExpertReviewCompleted(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "review_id": str(self.review_id),
-            "expert_id": str(self.expert_id),
-            "decision": self.decision,
-        })
+        base.update(
+            {
+                "review_id": str(self.review_id),
+                "expert_id": str(self.expert_id),
+                "decision": self.decision,
+            }
+        )
         return base
 
 
@@ -82,9 +88,11 @@ class ExpertReviewEscalated(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "review_id": str(self.review_id),
-            "original_expert_id": str(self.original_expert_id),
-            "reason": self.reason,
-        })
+        base.update(
+            {
+                "review_id": str(self.review_id),
+                "original_expert_id": str(self.original_expert_id),
+                "reason": self.reason,
+            }
+        )
         return base

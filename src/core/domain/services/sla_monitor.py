@@ -36,9 +36,7 @@ class SLADefinition:
         if self.max_duration_hours <= 0:
             raise SLAMonitorError("max_duration_hours > 0 olmalıdır.")
         if not 0.0 < self.warning_threshold_ratio < 1.0:
-            raise SLAMonitorError(
-                "warning_threshold_ratio 0.0-1.0 (exclusive) arasında olmalıdır."
-            )
+            raise SLAMonitorError("warning_threshold_ratio 0.0-1.0 (exclusive) arasında olmalıdır.")
 
 
 @dataclass(frozen=True)
@@ -117,9 +115,7 @@ class SLAMonitor:
         """
         definition = self._definitions.get(checkpoint.stage_name)
         if not definition:
-            raise SLAMonitorError(
-                f"SLA tanımı bulunamadı: {checkpoint.stage_name}"
-            )
+            raise SLAMonitorError(f"SLA tanımı bulunamadı: {checkpoint.stage_name}")
 
         current_time = now or datetime.now(timezone.utc)
         end_time = checkpoint.completed_at or current_time

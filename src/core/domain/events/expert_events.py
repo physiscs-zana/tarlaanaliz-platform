@@ -24,11 +24,13 @@ class ExpertRegistered(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "expert_id": str(self.expert_id),
-            "specializations": self.specializations,
-            "province_code": self.province_code,
-        })
+        base.update(
+            {
+                "expert_id": str(self.expert_id),
+                "specializations": self.specializations,
+                "province_code": self.province_code,
+            }
+        )
         return base
 
 
@@ -40,9 +42,11 @@ class ExpertActivated(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "expert_id": str(self.expert_id),
-        })
+        base.update(
+            {
+                "expert_id": str(self.expert_id),
+            }
+        )
         return base
 
 
@@ -55,10 +59,12 @@ class ExpertDeactivated(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "expert_id": str(self.expert_id),
-            "reason": self.reason,
-        })
+        base.update(
+            {
+                "expert_id": str(self.expert_id),
+                "reason": self.reason,
+            }
+        )
         return base
 
 
@@ -77,10 +83,12 @@ class FeedbackProvided(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "expert_id": str(self.expert_id),
-            "review_id": str(self.review_id),
-            "training_grade": self.training_grade,
-            "grade_reason": self.grade_reason,
-        })
+        base.update(
+            {
+                "expert_id": str(self.expert_id),
+                "review_id": str(self.review_id),
+                "training_grade": self.training_grade,
+                "grade_reason": self.grade_reason,
+            }
+        )
         return base

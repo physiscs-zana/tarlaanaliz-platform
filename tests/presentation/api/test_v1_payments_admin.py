@@ -18,7 +18,9 @@ class StubPaymentService:
     def __init__(self) -> None:
         self.intent_id = uuid4()
 
-    def create_intent(self, *, actor_user_id: str, payload: PaymentIntentCreateRequest, corr_id: str | None) -> PaymentIntentResponse:
+    def create_intent(
+        self, *, actor_user_id: str, payload: PaymentIntentCreateRequest, corr_id: str | None
+    ) -> PaymentIntentResponse:
         return PaymentIntentResponse(
             intent_id=self.intent_id,
             status=PaymentStatus.PENDING_RECEIPT,
@@ -29,7 +31,16 @@ class StubPaymentService:
             created_at=datetime.now(timezone.utc),
         )
 
-    def upload_receipt(self, *, actor_user_id: str, intent_id: UUID, filename: str, content_type: str | None, content: bytes, corr_id: str | None) -> PaymentIntentResponse:
+    def upload_receipt(
+        self,
+        *,
+        actor_user_id: str,
+        intent_id: UUID,
+        filename: str,
+        content_type: str | None,
+        content: bytes,
+        corr_id: str | None,
+    ) -> PaymentIntentResponse:
         return PaymentIntentResponse(
             intent_id=intent_id,
             status=PaymentStatus.PENDING_ADMIN_REVIEW,
@@ -51,7 +62,9 @@ class StubPaymentService:
             created_at=datetime.now(timezone.utc),
         )
 
-    def cancel_intent(self, *, actor_user_id: str, intent_id: UUID, reason: str, corr_id: str | None) -> PaymentIntentResponse:
+    def cancel_intent(
+        self, *, actor_user_id: str, intent_id: UUID, reason: str, corr_id: str | None
+    ) -> PaymentIntentResponse:
         return PaymentIntentResponse(
             intent_id=intent_id,
             status=PaymentStatus.REJECTED,
@@ -65,10 +78,14 @@ class StubPaymentService:
     def list_pending_payments(self, *, corr_id: str | None) -> list[PaymentIntentResponse]:
         return []
 
-    def list_intents(self, *, status_filter: str | None, field_id: UUID | None, corr_id: str | None) -> list[PaymentIntentResponse]:
+    def list_intents(
+        self, *, status_filter: str | None, field_id: UUID | None, corr_id: str | None
+    ) -> list[PaymentIntentResponse]:
         return []
 
-    def approve_payment(self, *, actor_user_id: str, payment_id: UUID, admin_note: str, corr_id: str | None) -> PaymentIntentResponse:
+    def approve_payment(
+        self, *, actor_user_id: str, payment_id: UUID, admin_note: str, corr_id: str | None
+    ) -> PaymentIntentResponse:
         return PaymentIntentResponse(
             intent_id=payment_id,
             status=PaymentStatus.PAID,
@@ -79,7 +96,9 @@ class StubPaymentService:
             created_at=datetime.now(timezone.utc),
         )
 
-    def reject_payment(self, *, actor_user_id: str, payment_id: UUID, reason: str, corr_id: str | None) -> PaymentIntentResponse:
+    def reject_payment(
+        self, *, actor_user_id: str, payment_id: UUID, reason: str, corr_id: str | None
+    ) -> PaymentIntentResponse:
         return PaymentIntentResponse(
             intent_id=payment_id,
             status=PaymentStatus.REJECTED,
@@ -90,7 +109,9 @@ class StubPaymentService:
             created_at=datetime.now(timezone.utc),
         )
 
-    def refund_payment(self, *, actor_user_id: str, payment_id: UUID, refund_amount_kurus: int, reason: str, corr_id: str | None) -> PaymentIntentResponse:
+    def refund_payment(
+        self, *, actor_user_id: str, payment_id: UUID, refund_amount_kurus: int, reason: str, corr_id: str | None
+    ) -> PaymentIntentResponse:
         return PaymentIntentResponse(
             intent_id=payment_id,
             status=PaymentStatus.REJECTED,

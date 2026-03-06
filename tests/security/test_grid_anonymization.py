@@ -9,6 +9,7 @@ KR-083: Il Operatoru PII GOREMEZ; sunumu iki katmanli:
 Bu testler, grid anonymizer middleware'inin koordinatlari dogru sekilde
 anonimize ettigini ve PII alanlarini kaldirigini dogrular.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -53,10 +54,12 @@ def _geo_app() -> FastAPI:
 
 def _client_with_role(app: FastAPI, roles: list[str]) -> TestClient:
     """Belirli rolle test client olusturur."""
+
     @app.middleware("http")
     async def inject_user(request: Request, call_next: Any) -> Any:
         request.state.user = FakeUser(roles=roles)
         return await call_next(request)
+
     return TestClient(app)
 
 

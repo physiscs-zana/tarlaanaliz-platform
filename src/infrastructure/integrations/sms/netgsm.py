@@ -28,6 +28,7 @@ Bağımlılıklar: httpx, tenacity, structlog.
 Notlar/SSOT: Tek referans: tarlaanaliz_platform_tree v3.2.2 FINAL.
   Aynı kavram başka yerde tekrar edilmez.
 """
+
 from __future__ import annotations
 
 import re
@@ -58,10 +59,10 @@ _PHONE_PATTERN = re.compile(r"^\+?\d{10,15}$")
 
 # NetGSM API hata kodları -> SmsDeliveryStatus eşleşmesi
 _NETGSM_STATUS_MAP: dict[str, SmsDeliveryStatus] = {
-    "00": SmsDeliveryStatus.QUEUED,     # Başarılı, kuyruğa alındı
-    "01": SmsDeliveryStatus.SENT,       # Operatöre iletildi
+    "00": SmsDeliveryStatus.QUEUED,  # Başarılı, kuyruğa alındı
+    "01": SmsDeliveryStatus.SENT,  # Operatöre iletildi
     "02": SmsDeliveryStatus.DELIVERED,  # Teslim edildi
-    "03": SmsDeliveryStatus.FAILED,     # Hata (geçersiz numara vb.)
+    "03": SmsDeliveryStatus.FAILED,  # Hata (geçersiz numara vb.)
 }
 
 # NetGSM API hata kodları (send response)

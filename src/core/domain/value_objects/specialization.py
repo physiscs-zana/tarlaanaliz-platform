@@ -10,6 +10,7 @@ ExpertSpecialization VO'sunun daha hafif, enum tabanlı alternatifidir.
 Entity katmanında string olarak tutulan uzmanlık alanlarının
 domain seviyesinde doğrulanmasını sağlar.
 """
+
 from __future__ import annotations
 
 from enum import Enum

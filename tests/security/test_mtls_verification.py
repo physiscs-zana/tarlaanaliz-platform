@@ -8,6 +8,7 @@ SC-SEC-03: Sertifikasiz/yanlis sertifikali istek → deny + audit.
 Bu testler, mTLS middleware'inin ingest endpoint'lerinde sertifika
 dogrulamasini zorunlu kıldigini dogrular.
 """
+
 from __future__ import annotations
 
 from fastapi import FastAPI

@@ -23,6 +23,7 @@ Modlar:
            Süre dolunca otomatik SMART'a döner.
            Audit log'a zorunlu olarak yazılır (WORM).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -60,32 +61,24 @@ class AVScanConfig:
     """
 
     mode: AVScanMode
-    authorized_by: Optional[UUID] = None    # CENTRAL_ADMIN user_id
-    expires_at: Optional[datetime] = None   # UTC; BYPASS için zorunlu
-    province_code: Optional[str] = None     # BYPASS kapsamı (il kodu)
+    authorized_by: Optional[UUID] = None  # CENTRAL_ADMIN user_id
+    expires_at: Optional[datetime] = None  # UTC; BYPASS için zorunlu
+    province_code: Optional[str] = None  # BYPASS kapsamı (il kodu)
 
     def __post_init__(self) -> None:
         if self.mode == AVScanMode.BYPASS:
             if self.authorized_by is None:
-                raise AVScanModeError(
-                    "BYPASS modu için authorized_by (CENTRAL_ADMIN) zorunludur"
-                )
+                raise AVScanModeError("BYPASS modu için authorized_by (CENTRAL_ADMIN) zorunludur")
             if self.expires_at is None:
-                raise AVScanModeError(
-                    "BYPASS modu için expires_at zorunludur"
-                )
+                raise AVScanModeError("BYPASS modu için expires_at zorunludur")
             if self.province_code is None or not self.province_code.strip():
-                raise AVScanModeError(
-                    "BYPASS modu için province_code (il kapsamı) zorunludur"
-                )
+                raise AVScanModeError("BYPASS modu için province_code (il kapsamı) zorunludur")
             # 72 saat sınırı kontrolü
             if self.authorized_by is not None and self.expires_at is not None:
                 now = datetime.now(timezone.utc)
                 max_expiry = now + BYPASS_MAX_DURATION
                 if self.expires_at > max_expiry:
-                    raise AVScanModeError(
-                        f"BYPASS süresi maksimum {BYPASS_MAX_DURATION} olabilir (KR-073)"
-                    )
+                    raise AVScanModeError(f"BYPASS süresi maksimum {BYPASS_MAX_DURATION} olabilir (KR-073)")
 
     @property
     def is_active_bypass(self) -> bool:

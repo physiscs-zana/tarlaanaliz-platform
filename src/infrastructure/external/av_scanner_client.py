@@ -10,6 +10,7 @@ KR-073: Ham dosyalar her zaman untrusted kabul edilir.
 Retry: Transient hatalarda exponential backoff.
 Tarama sonuclari icin retry yapilmaz (false negative riski).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -37,12 +38,14 @@ _RETRY_DECORATOR = retry(
 
 class ScanPhase(str, Enum):
     """Tarama asamasi."""
+
     AV1_EDGE = "AV1_EDGE"
     AV2_CENTER = "AV2_CENTER"
 
 
 class ScanVerdict(str, Enum):
     """Tarama sonucu karari."""
+
     CLEAN = "CLEAN"
     INFECTED = "INFECTED"
     ERROR = "ERROR"
@@ -55,6 +58,7 @@ class ScanResult:
 
     KR-073: scan_report_edge.json / scan_report_center.json icerigine karsilik gelir.
     """
+
     file_path: str
     file_hash_sha256: str
     verdict: ScanVerdict
@@ -87,6 +91,7 @@ class BatchScanReport:
 
     KR-073: Tum dosyalar taranmadan is akisina giremez.
     """
+
     batch_id: str
     phase: ScanPhase
     results: tuple[ScanResult, ...]
@@ -116,16 +121,12 @@ class AVScannerClient:
 
     def __init__(self, settings: Settings) -> None:
         self._base_url = str(getattr(settings, "av_scanner_url", "http://localhost:8400"))
-        self._timeout = httpx.Timeout(
-            float(getattr(settings, "av_scanner_timeout_seconds", 120))
-        )
+        self._timeout = httpx.Timeout(float(getattr(settings, "av_scanner_timeout_seconds", 120)))
         self._api_key = ""
         api_key_attr = getattr(settings, "av_scanner_api_key", None)
         if api_key_attr is not None:
             self._api_key = (
-                api_key_attr.get_secret_value()
-                if hasattr(api_key_attr, "get_secret_value")
-                else str(api_key_attr)
+                api_key_attr.get_secret_value() if hasattr(api_key_attr, "get_secret_value") else str(api_key_attr)
             )
 
     def _get_client(self) -> httpx.AsyncClient:
@@ -201,9 +202,7 @@ class AVScannerClient:
                 status_code=exc.response.status_code,
                 phase=phase.value,
             )
-            raise AVScanError(
-                f"AV tarama HTTP hatasi: {exc.response.status_code}"
-            ) from exc
+            raise AVScanError(f"AV tarama HTTP hatasi: {exc.response.status_code}") from exc
         except (httpx.TimeoutException, httpx.ConnectError) as exc:
             logger.error("av_scan.file.connection_error", phase=phase.value)
             raise AVScanError(f"AV tarama baglanti hatasi: {exc}") from exc

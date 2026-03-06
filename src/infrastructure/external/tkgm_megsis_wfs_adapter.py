@@ -9,6 +9,7 @@ bilgisi sorgular. Cache destekli; parsel geometrisi nadiren değişir.
 Graceful degradation: TKGM erişilemezse None döner.
 Retry: Transient hatalarda exponential backoff.
 """
+
 from __future__ import annotations
 
 import asyncio

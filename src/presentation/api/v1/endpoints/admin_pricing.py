@@ -27,13 +27,16 @@ class PublishPricingSnapshotResponse(BaseModel):
 
 
 class AdminPricingService(Protocol):
-    def publish_snapshot(self, payload: PublishPricingSnapshotRequest, actor_subject: str) -> PublishPricingSnapshotResponse:
-        ...
+    def publish_snapshot(
+        self, payload: PublishPricingSnapshotRequest, actor_subject: str
+    ) -> PublishPricingSnapshotResponse: ...
 
 
 @dataclass(slots=True)
 class _InMemoryAdminPricingService:
-    def publish_snapshot(self, payload: PublishPricingSnapshotRequest, actor_subject: str) -> PublishPricingSnapshotResponse:
+    def publish_snapshot(
+        self, payload: PublishPricingSnapshotRequest, actor_subject: str
+    ) -> PublishPricingSnapshotResponse:
         _ = actor_subject
         return PublishPricingSnapshotResponse(snapshot_id=payload.snapshot_id, published=True)
 

@@ -39,11 +39,9 @@ class AuditQueryFilter(BaseModel):
 
 
 class AdminAuditService(Protocol):
-    def query(self, flt: AuditQueryFilter, limit: int, offset: int) -> AuditLogQueryResponse:
-        ...
+    def query(self, flt: AuditQueryFilter, limit: int, offset: int) -> AuditLogQueryResponse: ...
 
-    def queue_export(self, flt: AuditQueryFilter) -> AuditExportResponse:
-        ...
+    def queue_export(self, flt: AuditQueryFilter) -> AuditExportResponse: ...
 
 
 @dataclass(slots=True)

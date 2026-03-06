@@ -27,6 +27,7 @@ Bağımlılıklar: Standart kütüphane + domain tipleri.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_impl) taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -66,9 +67,7 @@ class WeatherBlockRepository(ABC):
     # Tekil sorgular
     # ------------------------------------------------------------------
     @abstractmethod
-    async def find_by_id(
-        self, weather_block_id: uuid.UUID
-    ) -> Optional[WeatherBlockReport]:
+    async def find_by_id(self, weather_block_id: uuid.UUID) -> Optional[WeatherBlockReport]:
         """weather_block_id ile WeatherBlockReport getir.
 
         Args:
@@ -82,9 +81,7 @@ class WeatherBlockRepository(ABC):
     # Liste sorguları
     # ------------------------------------------------------------------
     @abstractmethod
-    async def list_by_status(
-        self, status: WeatherBlockStatus
-    ) -> List[WeatherBlockReport]:
+    async def list_by_status(self, status: WeatherBlockStatus) -> List[WeatherBlockReport]:
         """Belirli durumdaki tüm hava engeli kayıtlarını getir.
 
         Admin paneli, raporlama ve toplu durum geçişleri için kullanılır.
@@ -97,9 +94,7 @@ class WeatherBlockRepository(ABC):
         """
 
     @abstractmethod
-    async def list_blocking_by_mission_id(
-        self, mission_id: uuid.UUID
-    ) -> List[WeatherBlockReport]:
+    async def list_blocking_by_mission_id(self, mission_id: uuid.UUID) -> List[WeatherBlockReport]:
         """Bir görevi engelleyen (PENDING/CONFIRMED) hava engeli kayıtlarını getir.
 
         KR-028: PENDING veya CONFIRMED durumda görev uçurulamaz.

@@ -5,6 +5,7 @@
 KR-066: PII ayri veri alaninda tutulur; CENTRAL_ADMIN disindaki roller PII goremez.
 SC-SEC-05: Il Operatoru roluyle PII endpoint'ine erismeyi dene → veri donmez.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

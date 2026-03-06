@@ -29,6 +29,7 @@ Bağımlılıklar: RabbitMQPublisher, RabbitMQConsumer, structlog, domain events
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import json
@@ -192,10 +193,7 @@ class RabbitMQEventBus(EventBus):
 
         # Handler listesinden kaldır
         if event_type in self._handlers:
-            self._handlers[event_type] = [
-                (sid, h) for sid, h in self._handlers[event_type]
-                if sid != subscription_id
-            ]
+            self._handlers[event_type] = [(sid, h) for sid, h in self._handlers[event_type] if sid != subscription_id]
             if not self._handlers[event_type]:
                 del self._handlers[event_type]
 

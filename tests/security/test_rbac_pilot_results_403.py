@@ -7,6 +7,7 @@ KR-063: Roller ve yetkiler (RBAC) — her rol yalnizca kendine tanimli
 KR-017: Pilot tarafinda gorunen gorev bilgisi sadece MissionID, il/ilce,
         ada/parsel, bitki turu. Ciftci adi/telefonu gosterilmez.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -25,6 +26,7 @@ class FakeUser:
 
 def _require_roles(*required_roles: str):
     """Basit rol kontrol dependency."""
+
     def _guard(request: Request) -> FakeUser:
         user = getattr(request.state, "user", None)
         if user is None:
@@ -33,11 +35,13 @@ def _require_roles(*required_roles: str):
         if not user_roles & set(required_roles):
             raise _forbidden(f"Yetkisiz erisim. Gerekli roller: {required_roles}")
         return user
+
     return _guard
 
 
 def _forbidden(detail: str) -> Exception:
     from fastapi import HTTPException
+
     return HTTPException(status_code=403, detail=detail)
 
 
@@ -75,10 +79,12 @@ def _rbac_app() -> FastAPI:
 
 def _client_with_role(app: FastAPI, user_id: str, roles: list[str]) -> TestClient:
     """Belirli rolle istek gonderen test client'i olusturur."""
+
     @app.middleware("http")
     async def inject_user(request: Request, call_next: Any) -> Any:
         request.state.user = FakeUser(user_id=user_id, roles=roles)
         return await call_next(request)
+
     return TestClient(app)
 
 

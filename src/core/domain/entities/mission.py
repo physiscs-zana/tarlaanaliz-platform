@@ -9,6 +9,7 @@ Bir tarlanin belirli bir tarihte yapilacak tek analiz gorevi.
 Tek seferlik talepten veya Sezonluk Paket'ten olusabilir (KR-028).
 PAID olmadan Mission ASSIGNED olamaz (KR-033 Kural-1).
 """
+
 from __future__ import annotations
 
 import uuid

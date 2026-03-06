@@ -8,6 +8,7 @@ Uzman hesabi self-signup DEGILDIR: ADMIN kontrollu acilir (curated onboarding).
 Uzman yalnizca kendisine atanmis incelemeleri gorur (ownership check zorunlu).
 PII GORUNMEZ (KR-019).
 """
+
 from __future__ import annotations
 
 import uuid

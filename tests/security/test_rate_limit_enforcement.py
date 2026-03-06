@@ -7,6 +7,7 @@ SC-SEC-01: 61 istek/dakika → HTTP 429.
 
 Bu testler, rate limiting middleware'inin calistigindan emin olur.
 """
+
 from __future__ import annotations
 
 from fastapi import FastAPI

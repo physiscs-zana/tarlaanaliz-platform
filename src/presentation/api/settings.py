@@ -53,15 +53,36 @@ class AppSettings:
 class CorsSettings:
     enabled: bool = field(default_factory=lambda: _env_bool("API_CORS_ENABLED", True))
     allow_origins: list[str] = field(default_factory=lambda: _env_list("API_CORS_ALLOW_ORIGINS", []))
-    allow_methods: list[str] = field(default_factory=lambda: _env_list("API_CORS_ALLOW_METHODS", ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]))
-    allow_headers: list[str] = field(default_factory=lambda: _env_list("API_CORS_ALLOW_HEADERS", ["Authorization", "Content-Type", "X-Correlation-Id"]))
+    allow_methods: list[str] = field(
+        default_factory=lambda: _env_list(
+            "API_CORS_ALLOW_METHODS", ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+        )
+    )
+    allow_headers: list[str] = field(
+        default_factory=lambda: _env_list(
+            "API_CORS_ALLOW_HEADERS", ["Authorization", "Content-Type", "X-Correlation-Id"]
+        )
+    )
     allow_credentials: bool = field(default_factory=lambda: _env_bool("API_CORS_ALLOW_CREDENTIALS", False))
 
 
 @dataclass(slots=True)
 class JwtSettings:
     enabled: bool = field(default_factory=lambda: _env_bool("API_JWT_ENABLED", True))
-    bypass_routes: list[str] = field(default_factory=lambda: _env_list("API_JWT_BYPASS_ROUTES", ["/health", "/docs", "/openapi.json", "/redoc", "/api/v1/auth/phone-pin/login", "/api/v1/auth/phone-pin/refresh", "/api/v1/payments/webhooks/provider"]))
+    bypass_routes: list[str] = field(
+        default_factory=lambda: _env_list(
+            "API_JWT_BYPASS_ROUTES",
+            [
+                "/health",
+                "/docs",
+                "/openapi.json",
+                "/redoc",
+                "/api/v1/auth/phone-pin/login",
+                "/api/v1/auth/phone-pin/refresh",
+                "/api/v1/payments/webhooks/provider",
+            ],
+        )
+    )
     secret: str = field(default_factory=lambda: _require_env("API_JWT_SECRET"))
     algorithm: str = field(default_factory=lambda: os.getenv("API_JWT_ALGORITHM", "HS256"))
 
@@ -71,13 +92,17 @@ class RateLimitSettings:
     enabled: bool = field(default_factory=lambda: _env_bool("API_RATE_LIMIT_ENABLED", True))
     per_minute_limit: int = field(default_factory=lambda: _env_int("API_RATE_LIMIT_PER_MINUTE", 61))
     burst: int = field(default_factory=lambda: _env_int("API_RATE_LIMIT_BURST", 20))
-    bypass_routes: list[str] = field(default_factory=lambda: _env_list("API_RATE_LIMIT_BYPASS_ROUTES", ["/health", "/docs", "/openapi.json"]))
+    bypass_routes: list[str] = field(
+        default_factory=lambda: _env_list("API_RATE_LIMIT_BYPASS_ROUTES", ["/health", "/docs", "/openapi.json"])
+    )
 
 
 @dataclass(slots=True)
 class AnomalySettings:
     enabled: bool = field(default_factory=lambda: _env_bool("API_ANOMALY_ENABLED", True))
-    allowlist_routes: list[str] = field(default_factory=lambda: _env_list("API_ANOMALY_ALLOWLIST_ROUTES", ["/health", "/docs", "/openapi.json"]))
+    allowlist_routes: list[str] = field(
+        default_factory=lambda: _env_list("API_ANOMALY_ALLOWLIST_ROUTES", ["/health", "/docs", "/openapi.json"])
+    )
     rapid_repeat_window_seconds: int = field(default_factory=lambda: _env_int("API_ANOMALY_REPEAT_WINDOW_SECONDS", 10))
     rapid_repeat_threshold: int = field(default_factory=lambda: _env_int("API_ANOMALY_REPEAT_THRESHOLD", 8))
     large_body_threshold_bytes: int = field(default_factory=lambda: _env_int("API_ANOMALY_LARGE_BODY_BYTES", 1_000_000))

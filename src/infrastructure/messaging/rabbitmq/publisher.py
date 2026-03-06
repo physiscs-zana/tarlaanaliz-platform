@@ -29,6 +29,7 @@ Bağımlılıklar: aio-pika (AMQP client), structlog, rabbitmq_config.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import json
@@ -114,9 +115,7 @@ class RabbitMQPublisher:
             )
             self._connection = None
             self._channel = None
-            raise ConnectionError(
-                f"RabbitMQ bağlantısı kurulamadı: {type(exc).__name__}"
-            ) from exc
+            raise ConnectionError(f"RabbitMQ bağlantısı kurulamadı: {type(exc).__name__}") from exc
 
     async def _get_exchange(self, exchange_name: str) -> Any:
         """Exchange referansını cache'den döner veya alır.

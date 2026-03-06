@@ -1,4 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-033: Farmer payment intent and receipt management; manual approval flow.
 """Farmer payment intent and receipt endpoints."""
 
 from __future__ import annotations
@@ -29,14 +30,26 @@ from src.presentation.api.dependencies import (
 router = APIRouter(
     prefix="/payments",
     tags=["payments"],
-    responses={401: {"description": "Unauthorized"}, 403: {"description": "Forbidden"}, 409: {"description": "Conflict"}, 422: {"description": "Validation error"}, 429: {"description": "Too many requests"}},
+    responses={
+        401: {"description": "Unauthorized"},
+        403: {"description": "Forbidden"},
+        409: {"description": "Conflict"},
+        422: {"description": "Validation error"},
+        429: {"description": "Too many requests"},
+    },
 )
 
 
 def _observe(request: Request, metrics: MetricsCollector, started: float, status_code: int) -> None:
     corr_id = getattr(request.state, "corr_id", None)
     route = request.url.path
-    metrics.observe_http(route=route, method=request.method, status_code=status_code, latency_ms=(time.perf_counter() - started) * 1000, corr_id=corr_id)
+    metrics.observe_http(
+        route=route,
+        method=request.method,
+        status_code=status_code,
+        latency_ms=(time.perf_counter() - started) * 1000,
+        corr_id=corr_id,
+    )
     metrics.observe_status(route=route, status_code=status_code, corr_id=corr_id)
 
 
@@ -90,7 +103,9 @@ def get_payment_instructions(
     corr_id = getattr(request.state, "corr_id", None)
     response.headers["X-Correlation-Id"] = corr_id or ""
     try:
-        instructions = service.get_payment_instructions(actor_user_id=user.user_id, intent_id=intent_id, corr_id=corr_id)
+        instructions = service.get_payment_instructions(
+            actor_user_id=user.user_id, intent_id=intent_id, corr_id=corr_id
+        )
         _observe(request, metrics, started, status.HTTP_200_OK)
         return instructions
     except HTTPException as exc:
@@ -117,7 +132,9 @@ def cancel_payment_intent(
     corr_id = getattr(request.state, "corr_id", None)
     response.headers["X-Correlation-Id"] = corr_id or ""
     try:
-        intent = service.cancel_intent(actor_user_id=user.user_id, intent_id=intent_id, reason=payload.reason, corr_id=corr_id)
+        intent = service.cancel_intent(
+            actor_user_id=user.user_id, intent_id=intent_id, reason=payload.reason, corr_id=corr_id
+        )
         # KR-033 §8: PAYMENT.CANCELLED audit event
         audit.publish(
             AuditEvent(
@@ -156,7 +173,9 @@ def upload_receipt(
         try:
             content = base64.b64decode(payload.content_base64, validate=True)
         except ValueError as exc:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid receipt encoding") from exc
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid receipt encoding"
+            ) from exc
 
         intent = service.upload_receipt(
             actor_user_id=user.user_id,

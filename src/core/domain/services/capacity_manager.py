@@ -83,9 +83,7 @@ class CapacityManager:
             CapacityCheckResult: Müsaitlik sonucu.
         """
         if pilot.daily_capacity <= 0:
-            raise CapacityError(
-                f"Pilot {pilot.pilot_id}: daily_capacity > 0 olmalıdır."
-            )
+            raise CapacityError(f"Pilot {pilot.pilot_id}: daily_capacity > 0 olmalıdır.")
 
         # Çalışma günü kontrolü (weekday: 0=Monday..6=Sunday)
         weekday = requested_date.weekday()
@@ -102,9 +100,7 @@ class CapacityManager:
 
         # O günkü mevcut yük hesabı
         current_load = sum(
-            1
-            for a in existing_assignments
-            if a.pilot_id == pilot.pilot_id and a.scheduled_date == requested_date
+            1 for a in existing_assignments if a.pilot_id == pilot.pilot_id and a.scheduled_date == requested_date
         )
 
         remaining = pilot.daily_capacity - current_load
@@ -193,9 +189,7 @@ class CapacityManager:
             if weekday in pilot.work_days:
                 total_capacity += pilot.daily_capacity
                 day_load = sum(
-                    1
-                    for a in existing_assignments
-                    if a.pilot_id == pilot.pilot_id and a.scheduled_date == current
+                    1 for a in existing_assignments if a.pilot_id == pilot.pilot_id and a.scheduled_date == current
                 )
                 total_used += min(day_load, pilot.daily_capacity)
             current += timedelta(days=1)

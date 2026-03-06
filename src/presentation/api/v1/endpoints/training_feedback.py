@@ -27,8 +27,7 @@ class TrainingFeedbackResponse(BaseModel):
 
 
 class TrainingFeedbackService(Protocol):
-    def create(self, payload: TrainingFeedbackCreateRequest, actor_subject: str) -> TrainingFeedbackResponse:
-        ...
+    def create(self, payload: TrainingFeedbackCreateRequest, actor_subject: str) -> TrainingFeedbackResponse: ...
 
 
 @dataclass(slots=True)

@@ -21,6 +21,7 @@ class ExpertDashboardStatsDTO:
             raise ValueError("completed_reviews must be >= 0")
         if self.daily_review_limit is not None and self.daily_review_limit < 0:
             raise ValueError("daily_review_limit must be >= 0")
+
     # TODO: decide if daily_review_limit should be per territory or global.
 
 
@@ -56,7 +57,9 @@ class ExpertDashboardDTO:
                 pending_reviews=int(raw_stats["pending_reviews"]),
                 completed_reviews=int(raw_stats["completed_reviews"]),
                 avg_turnaround_minutes=(
-                    None if raw_stats.get("avg_turnaround_minutes") is None else float(raw_stats["avg_turnaround_minutes"])
+                    None
+                    if raw_stats.get("avg_turnaround_minutes") is None
+                    else float(raw_stats["avg_turnaround_minutes"])
                 ),
                 daily_review_limit=(
                     None if raw_stats.get("daily_review_limit") is None else int(raw_stats["daily_review_limit"])

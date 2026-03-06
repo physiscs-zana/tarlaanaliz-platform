@@ -46,6 +46,7 @@ def test_payment_orchestration_create_receipt_approve_flow() -> None:
         payment_entities = importlib.import_module("src.core.domain.entities.payment_intent")
     except SyntaxError as exc:
         import pytest
+
         pytest.skip(f"application package import edilemiyor: {exc}")
 
     repo = _InMemoryRepo(items={})

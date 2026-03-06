@@ -5,6 +5,7 @@
 KR-050: Giris deneme siniri (rate limit) ve kisa sureli kilitleme (lockout).
 SC-SEC-02: 16 basarisiz PIN denemesi → 30 dakika kilitleme.
 """
+
 from __future__ import annotations
 
 from fastapi import FastAPI

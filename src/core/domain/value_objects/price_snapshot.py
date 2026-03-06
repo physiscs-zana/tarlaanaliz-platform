@@ -9,6 +9,7 @@ Entity katmanindaki PriceSnapshot entity'si tam kaydi temsil eder;
 bu VO, domain genelinde fiyat referansi olarak tasinabilir
 hafif (lightweight) bir degerdir (KR-022).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -46,14 +47,11 @@ class PriceSnapshotRef:
         if not self.crop_type:
             raise ValueError("crop_type is required")
         if self.analysis_type not in ("single", "seasonal"):
-            raise ValueError(
-                f"analysis_type must be 'single' or 'seasonal', got '{self.analysis_type}'"
-            )
+            raise ValueError(f"analysis_type must be 'single' or 'seasonal', got '{self.analysis_type}'")
         if self.amount_kurus <= 0:
             raise ValueError("amount_kurus must be positive")
-        if (
-            self.promotional_discount_percent is not None
-            and not (Decimal("0") <= self.promotional_discount_percent <= Decimal("100"))
+        if self.promotional_discount_percent is not None and not (
+            Decimal("0") <= self.promotional_discount_percent <= Decimal("100")
         ):
             raise ValueError("promotional_discount_percent must be 0-100")
 
@@ -95,7 +93,5 @@ class PriceSnapshotRef:
             "effective_date": self.effective_date.isoformat(),
         }
         if self.promotional_discount_percent is not None:
-            result["promotional_discount_percent"] = str(
-                self.promotional_discount_percent
-            )
+            result["promotional_discount_percent"] = str(self.promotional_discount_percent)
         return result

@@ -27,13 +27,15 @@ class TrainingFeedbackSubmitted(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "feedback_id": str(self.feedback_id),
-            "expert_id": str(self.expert_id),
-            "analysis_job_id": str(self.analysis_job_id),
-            "training_grade": self.training_grade,
-            "grade_reason": self.grade_reason,
-        })
+        base.update(
+            {
+                "feedback_id": str(self.feedback_id),
+                "expert_id": str(self.expert_id),
+                "analysis_job_id": str(self.analysis_job_id),
+                "training_grade": self.training_grade,
+                "grade_reason": self.grade_reason,
+            }
+        )
         return base
 
 
@@ -46,10 +48,12 @@ class TrainingFeedbackAccepted(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "feedback_id": str(self.feedback_id),
-            "analysis_job_id": str(self.analysis_job_id),
-        })
+        base.update(
+            {
+                "feedback_id": str(self.feedback_id),
+                "analysis_job_id": str(self.analysis_job_id),
+            }
+        )
         return base
 
 
@@ -62,10 +66,12 @@ class TrainingFeedbackRejected(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "feedback_id": str(self.feedback_id),
-            "reason": self.reason,
-        })
+        base.update(
+            {
+                "feedback_id": str(self.feedback_id),
+                "reason": self.reason,
+            }
+        )
         return base
 
 
@@ -78,8 +84,10 @@ class TrainingDataExported(DomainEvent):
 
     def to_dict(self) -> dict[str, Any]:
         base = super().to_dict()
-        base.update({
-            "export_id": str(self.export_id),
-            "record_count": self.record_count,
-        })
+        base.update(
+            {
+                "export_id": str(self.export_id),
+                "record_count": self.record_count,
+            }
+        )
         return base

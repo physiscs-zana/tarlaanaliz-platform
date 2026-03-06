@@ -29,6 +29,7 @@ Bağımlılıklar: boto3, botocore, structlog.
 Notlar/SSOT: Tek referans: tarlaanaliz_platform_tree v3.2.2 FINAL.
   Aynı kavram başka yerde tekrar edilmez.
 """
+
 from __future__ import annotations
 
 from typing import Any, Optional, cast

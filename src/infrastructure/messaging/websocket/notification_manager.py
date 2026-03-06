@@ -30,6 +30,7 @@ Bağımlılıklar: FastAPI WebSocket, structlog, asyncio.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -52,9 +53,7 @@ class WebSocketConnection:
     connection_id: str
     user_id: str
     websocket: Any  # FastAPI WebSocket instance
-    connected_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    connected_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     last_ping: Optional[datetime] = None
 
 
@@ -67,9 +66,7 @@ class Notification:
     title: str
     body: str
     data: dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> dict[str, Any]:
         """JSON-serializable dict dönüşümü."""

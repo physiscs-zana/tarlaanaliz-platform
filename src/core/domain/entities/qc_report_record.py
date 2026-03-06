@@ -7,6 +7,7 @@ QCReportRecord domain entity.
 Kalibrasyon sonrasi kalite kontrol raporu.
 QC Gate: PASS/WARN/FAIL kararini sakla, UI'a tasi, audit trail uret (KR-018).
 """
+
 from __future__ import annotations
 
 import uuid

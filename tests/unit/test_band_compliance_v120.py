@@ -49,6 +49,7 @@ def _drone_5band_thermal() -> DroneModel:
 
 # ---- Graceful Degradation band class ----
 
+
 def test_graceful_degradation_4band() -> None:
     checker = BandComplianceChecker()
     result = checker.check(_drone_4band())
@@ -80,6 +81,7 @@ def test_graceful_degradation_5band_thermal() -> None:
 
 # ---- Report tier ----
 
+
 def test_report_tier_temel() -> None:
     checker = BandComplianceChecker()
     result = checker.check(_drone_4band())
@@ -99,6 +101,7 @@ def test_report_tier_kapsamli() -> None:
 
 
 # ---- Available indices per tier ----
+
 
 def test_indices_4band_core_only() -> None:
     checker = BandComplianceChecker()
@@ -126,6 +129,7 @@ def test_indices_thermal_includes_cwsi() -> None:
 
 
 # ---- to_dict includes v1.2.0 fields ----
+
 
 def test_to_dict_v120() -> None:
     checker = BandComplianceChecker()

@@ -8,6 +8,7 @@ AnalysisResult domain entity.
 YZ analiz sonucu: overall_health_index + findings + summary.
 YZ analizidir; ilaclama karari VERMEZ (KR-001, KR-025).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -50,10 +51,7 @@ class AnalysisResult:
     # ------------------------------------------------------------------
     def __post_init__(self) -> None:
         if not (Decimal("0") <= self.overall_health_index <= Decimal("1")):
-            raise ValueError(
-                f"overall_health_index must be between 0 and 1, "
-                f"got {self.overall_health_index}"
-            )
+            raise ValueError(f"overall_health_index must be between 0 and 1, got {self.overall_health_index}")
         if self.findings is None:
             raise ValueError("findings is required (can be empty dict or list)")
         if not self.summary:

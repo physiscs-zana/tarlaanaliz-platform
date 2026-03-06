@@ -10,6 +10,7 @@ Bu middleware, IL_OPERATOR (ProvinceOperator) rolu icin JSON response'lardaki
 koordinatlari 1-2 km grid hucresine yuvarlar ve FieldID'yi pseudonymous
 FieldRef ile degistirir.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -34,38 +35,46 @@ LOGGER = logging.getLogger("api.middleware.grid_anonymizer")
 _GRID_PRECISION_DEG = 0.015
 
 # Anonimizasyon uygulanacak roller
-_ANONYMIZE_ROLES: frozenset[str] = frozenset({
-    "IL_OPERATOR",
-    "PROVINCE_OPERATOR",
-})
+_ANONYMIZE_ROLES: frozenset[str] = frozenset(
+    {
+        "IL_OPERATOR",
+        "PROVINCE_OPERATOR",
+    }
+)
 
 # Koordinat alan adlari
-_COORD_FIELDS: frozenset[str] = frozenset({
-    "latitude",
-    "longitude",
-    "lat",
-    "lng",
-    "lon",
-    "enlem",
-    "boylam",
-})
+_COORD_FIELDS: frozenset[str] = frozenset(
+    {
+        "latitude",
+        "longitude",
+        "lat",
+        "lng",
+        "lon",
+        "enlem",
+        "boylam",
+    }
+)
 
 # FieldID alan adlari (pseudonymous ref ile degistirilecek)
-_FIELD_ID_FIELDS: frozenset[str] = frozenset({
-    "field_id",
-    "fieldid",
-    "tarla_id",
-})
+_FIELD_ID_FIELDS: frozenset[str] = frozenset(
+    {
+        "field_id",
+        "fieldid",
+        "tarla_id",
+    }
+)
 
 # PII alan adlari (tamamen kaldirilacak)
-_STRIP_FIELDS: frozenset[str] = frozenset({
-    "farmer_name",
-    "farmer_phone",
-    "phone",
-    "phone_number",
-    "full_name",
-    "ad_soyad",
-})
+_STRIP_FIELDS: frozenset[str] = frozenset(
+    {
+        "farmer_name",
+        "farmer_phone",
+        "phone",
+        "phone_number",
+        "full_name",
+        "ad_soyad",
+    }
+)
 
 
 def _snap_to_grid(value: float) -> float:
@@ -103,10 +112,7 @@ def _anonymize_dict(data: dict[str, Any]) -> dict[str, Any]:
             result[key] = _anonymize_dict(value)
         # Nested list
         elif isinstance(value, list):
-            result[key] = [
-                _anonymize_dict(item) if isinstance(item, dict) else item
-                for item in value
-            ]
+            result[key] = [_anonymize_dict(item) if isinstance(item, dict) else item for item in value]
         else:
             result[key] = value
 
@@ -123,9 +129,7 @@ class GridAnonymizerMiddleware(BaseHTTPMiddleware):
     - Aggregate KPI verileri korunur
     """
 
-    async def dispatch(
-        self, request: Request, call_next: Callable[..., Any]
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable[..., Any]) -> Response:
         corr_id, _ = ensure_request_context(request)
 
         response = cast(Response, await call_next(request))
@@ -161,10 +165,7 @@ class GridAnonymizerMiddleware(BaseHTTPMiddleware):
             if isinstance(data, dict):
                 data = _anonymize_dict(data)
             elif isinstance(data, list):
-                data = [
-                    _anonymize_dict(item) if isinstance(item, dict) else item
-                    for item in data
-                ]
+                data = [_anonymize_dict(item) if isinstance(item, dict) else item for item in data]
 
             anon_body = json.dumps(data, ensure_ascii=False).encode("utf-8")
 

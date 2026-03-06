@@ -8,6 +8,7 @@ KR-030: Tum drone modelleri drone_registry.yaml'a kayitli olmalidir.
 Kayitsiz drone modeli ile sistem baslatilmamali; kalibrasyon kalite zinciri
 (KR-018 → KR-072) bu kaydina baglidir.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -57,21 +58,15 @@ class DroneRegistryLoader:
             DroneRegistryLoadError: Dosya bulunamaz veya parse edilemezse.
         """
         if not self._path.exists():
-            raise DroneRegistryLoadError(
-                f"Drone registry dosyasi bulunamadi: {self._path}"
-            )
+            raise DroneRegistryLoadError(f"Drone registry dosyasi bulunamadi: {self._path}")
 
         try:
             raw = yaml.safe_load(self._path.read_text(encoding="utf-8"))
         except yaml.YAMLError as exc:
-            raise DroneRegistryLoadError(
-                f"YAML parse hatasi: {self._path}: {exc}"
-            ) from exc
+            raise DroneRegistryLoadError(f"YAML parse hatasi: {self._path}: {exc}") from exc
 
         if not isinstance(raw, dict) or "models" not in raw:
-            raise DroneRegistryLoadError(
-                f"Gecersiz registry formati: 'models' alani gerekli: {self._path}"
-            )
+            raise DroneRegistryLoadError(f"Gecersiz registry formati: 'models' alani gerekli: {self._path}")
 
         models: list[DroneModel] = []
         for entry in raw["models"]:
@@ -96,9 +91,7 @@ class DroneRegistryLoader:
     def load_active_model_ids(self) -> frozenset[str]:
         """Yalnizca aktif (phase=1, status=active) model ID'lerini dondurur."""
         models = self._ensure_loaded()
-        return frozenset(
-            mid for mid, m in models.items() if m.phase == 1
-        )
+        return frozenset(mid for mid, m in models.items() if m.phase == 1)
 
     def get_model(self, model_id: str) -> DroneModel | None:
         """Model ID'ye gore drone modelini dondurur."""
@@ -134,15 +127,11 @@ class DroneRegistryLoader:
         """
         matrix_path = path or DEFAULT_CAPABILITY_MATRIX_PATH
         if not matrix_path.exists():
-            raise DroneRegistryLoadError(
-                f"Capability matrix dosyasi bulunamadi: {matrix_path}"
-            )
+            raise DroneRegistryLoadError(f"Capability matrix dosyasi bulunamadi: {matrix_path}")
         try:
             raw = yaml.safe_load(matrix_path.read_text(encoding="utf-8"))
         except yaml.YAMLError as exc:
-            raise DroneRegistryLoadError(
-                f"YAML parse hatasi: {matrix_path}: {exc}"
-            ) from exc
+            raise DroneRegistryLoadError(f"YAML parse hatasi: {matrix_path}: {exc}") from exc
 
         if not isinstance(raw, dict) or "capabilities" not in raw:
             raise DroneRegistryLoadError(

@@ -7,6 +7,7 @@ CalibrationRecord domain entity.
 Calibrated Dataset uretilmeden AnalysisJob baslatilamaz (KR-018 hard gate).
 Istasyon akisi: M1 (Offline, Pix4Dfields kalibrasyon) -> M2 (Dispatch, mTLS upload).
 """
+
 from __future__ import annotations
 
 import uuid
@@ -57,20 +58,14 @@ class CalibrationRecord:
         calibration_result_uri zorunludur (KR-018: kalibrasyon ciktisi).
         """
         if self.status != CalibrationStatus.PENDING:
-            raise ValueError(
-                f"Can only mark_calibrated from PENDING, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only mark_calibrated from PENDING, current: {self.status.value}")
         if not calibration_result_uri or not calibration_result_uri.strip():
-            raise ValueError(
-                "calibration_result_uri is required to mark as calibrated (KR-018)"
-            )
+            raise ValueError("calibration_result_uri is required to mark as calibrated (KR-018)")
         self.status = CalibrationStatus.CALIBRATED
         self.calibration_result_uri = calibration_result_uri
 
     def mark_failed(self) -> None:
         """Kalibrasyon basarisiz (PENDING -> FAILED)."""
         if self.status != CalibrationStatus.PENDING:
-            raise ValueError(
-                f"Can only mark_failed from PENDING, current: {self.status.value}"
-            )
+            raise ValueError(f"Can only mark_failed from PENDING, current: {self.status.value}")
         self.status = CalibrationStatus.FAILED

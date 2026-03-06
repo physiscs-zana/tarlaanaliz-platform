@@ -28,6 +28,7 @@ Bağımlılıklar: httpx, tenacity, structlog.
 Notlar/SSOT: Tek referans: tarlaanaliz_platform_tree v3.2.2 FINAL.
   Aynı kavram başka yerde tekrar edilmez.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -151,14 +152,9 @@ class CloudflareDDoSAdapter(DDoSProtection):
 
         # DDoS L7 ruleset'in aktif olup olmadığını kontrol et
         rulesets = ddos_data.get("result", [])
-        ddos_l7_enabled = any(
-            rs.get("phase") == "ddos_l7" and rs.get("enabled", True)
-            for rs in rulesets
-        )
+        ddos_l7_enabled = any(rs.get("phase") == "ddos_l7" and rs.get("enabled", True) for rs in rulesets)
         active_rule_count = sum(
-            len(rs.get("rules", []))
-            for rs in rulesets
-            if rs.get("phase") in ("ddos_l7", "http_ratelimit")
+            len(rs.get("rules", [])) for rs in rulesets if rs.get("phase") in ("ddos_l7", "http_ratelimit")
         )
 
         status = ProtectionStatus(

@@ -13,6 +13,7 @@ KR-031: Pilot hakedişini belirleyen kapsama oranı eşikleri.
 
 coverage_ratio: gerçek kapsanan alan / planlanan toplam alan (0.0 – 1.0)
 """
+
 from __future__ import annotations
 
 from enum import Enum
@@ -21,9 +22,9 @@ from enum import Enum
 class CoverageOutcome(str, Enum):
     """Kapsama oranına göre hakediş kararı (KR-031)."""
 
-    FULL_PAY = "FULL_PAY"          # coverage_ratio >= 0.95
+    FULL_PAY = "FULL_PAY"  # coverage_ratio >= 0.95
     PARTIAL_REVIEW = "PARTIAL_REVIEW"  # 0.80 <= coverage_ratio < 0.95
-    REFLY = "REFLY"                # coverage_ratio < 0.80
+    REFLY = "REFLY"  # coverage_ratio < 0.80
 
 
 # Eşik sabitleri (KR-031)
@@ -45,9 +46,7 @@ def evaluate_coverage(coverage_ratio: float) -> CoverageOutcome:
         ValueError: coverage_ratio 0.0 – 1.0 dışındaysa.
     """
     if not (0.0 <= coverage_ratio <= 1.0):
-        raise ValueError(
-            f"coverage_ratio 0.0 ile 1.0 arasında olmalıdır, alınan: {coverage_ratio}"
-        )
+        raise ValueError(f"coverage_ratio 0.0 ile 1.0 arasında olmalıdır, alınan: {coverage_ratio}")
 
     if coverage_ratio >= COVERAGE_FULL_PAY_THRESHOLD:
         return CoverageOutcome.FULL_PAY

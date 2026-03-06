@@ -7,6 +7,7 @@ UserPII domain entity.
 KVKK uyumu geregi PII alanlari operasyonel veriden ayri tutulur (KR-066).
 Il operatoru ve saha rolleri bu entity'ye ERISMEZ.
 """
+
 from __future__ import annotations
 
 import uuid

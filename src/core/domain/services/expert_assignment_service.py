@@ -93,9 +93,7 @@ class ExpertAssignmentService:
             AssignmentResult: Atama sonucu.
         """
         if required_expert_count <= 0:
-            raise ExpertAssignmentError(
-                "required_expert_count > 0 olmalıdır."
-            )
+            raise ExpertAssignmentError("required_expert_count > 0 olmalıdır.")
 
         excluded = excluded_expert_ids or frozenset()
 
@@ -224,9 +222,7 @@ class ExpertAssignmentService:
 
         # Kapasite durumu (ne kadar boşsa o kadar yüksek skor)
         if expert.max_review_capacity > 0:
-            capacity_ratio = 1.0 - (
-                expert.current_review_count / expert.max_review_capacity
-            )
+            capacity_ratio = 1.0 - (expert.current_review_count / expert.max_review_capacity)
             score += self.WEIGHT_CAPACITY * max(0.0, capacity_ratio)
             reasons.append(f"Kapasite oranı: {capacity_ratio:.2f}")
 

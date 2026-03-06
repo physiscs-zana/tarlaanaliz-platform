@@ -27,6 +27,7 @@ Bağımlılıklar: aio-pika (AMQP client), structlog.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import json
@@ -313,10 +314,7 @@ class AIFeedbackPublisher(AIWorkerFeedback):
         try:
             import httpx
 
-            management_url = (
-                f"http://{self._settings.rabbitmq_host}:15672"
-                f"/api/queues/%2F/ai.feedback.submit"
-            )
+            management_url = f"http://{self._settings.rabbitmq_host}:15672/api/queues/%2F/ai.feedback.submit"
 
             async with httpx.AsyncClient(
                 auth=(

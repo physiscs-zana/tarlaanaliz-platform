@@ -25,8 +25,7 @@ class PriceSnapshotListResponse(BaseModel):
 
 
 class PricingService(Protocol):
-    def list_active(self, region: str | None, limit: int) -> PriceSnapshotListResponse:
-        ...
+    def list_active(self, region: str | None, limit: int) -> PriceSnapshotListResponse: ...
 
 
 @dataclass(slots=True)

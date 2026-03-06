@@ -85,7 +85,9 @@ class ListPilotMissionsResult:
 
 
 class PilotMissionReadPort(Protocol):
-    async def list_by_pilot(self, *, pilot_id: str, page: int, page_size: int) -> tuple[list[PilotMissionItem], int]: ...
+    async def list_by_pilot(
+        self, *, pilot_id: str, page: int, page_size: int
+    ) -> tuple[list[PilotMissionItem], int]: ...
 
 
 class AuthorizerPort(Protocol):

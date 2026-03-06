@@ -43,10 +43,19 @@ class MissionStatus:
     FAILED: ClassVar[str] = "FAILED"
     CANCELLED: ClassVar[str] = "CANCELLED"
 
-    _VALID_VALUES: ClassVar[frozenset[str]] = frozenset({
-        "PLANNED", "ASSIGNED", "ACKED", "FLOWN",
-        "UPLOADED", "ANALYZING", "DONE", "FAILED", "CANCELLED",
-    })
+    _VALID_VALUES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "PLANNED",
+            "ASSIGNED",
+            "ACKED",
+            "FLOWN",
+            "UPLOADED",
+            "ANALYZING",
+            "DONE",
+            "FAILED",
+            "CANCELLED",
+        }
+    )
 
     _TRANSITIONS: ClassVar[dict[str, frozenset[str]]] = {
         "PLANNED": frozenset({"ASSIGNED", "FAILED", "CANCELLED"}),
@@ -62,17 +71,12 @@ class MissionStatus:
 
     def __post_init__(self) -> None:
         if not isinstance(self.value, str):
-            raise MissionStatusError(
-                f"value str olmalıdır, alınan tip: {type(self.value).__name__}"
-            )
+            raise MissionStatusError(f"value str olmalıdır, alınan tip: {type(self.value).__name__}")
         normalized = self.value.strip().upper()
         if normalized != self.value:
             object.__setattr__(self, "value", normalized)
         if self.value not in self._VALID_VALUES:
-            raise MissionStatusError(
-                f"Geçersiz durum: '{self.value}'. "
-                f"Geçerli değerler: {sorted(self._VALID_VALUES)}"
-            )
+            raise MissionStatusError(f"Geçersiz durum: '{self.value}'. Geçerli değerler: {sorted(self._VALID_VALUES)}")
 
     def can_transition_to(self, target: MissionStatus | str) -> bool:
         """Bu durumdan hedef duruma geçiş yapılabilir mi?"""
@@ -89,8 +93,7 @@ class MissionStatus:
         if not self.can_transition_to(target_value):
             allowed = self._TRANSITIONS.get(self.value, frozenset())
             raise MissionStatusError(
-                f"'{self.value}' -> '{target_value}' geçişi geçersiz. "
-                f"İzin verilen: {sorted(allowed)}"
+                f"'{self.value}' -> '{target_value}' geçişi geçersiz. İzin verilen: {sorted(allowed)}"
             )
         return MissionStatus(value=target_value)
 

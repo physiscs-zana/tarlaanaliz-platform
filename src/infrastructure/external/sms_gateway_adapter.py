@@ -10,6 +10,7 @@ PII: Telefon numarası loglanırken maskelenir.
 Retry: Transient hatalarda exponential backoff.
 Rate limit: Provider kotası aşılmamalı.
 """
+
 from __future__ import annotations
 
 import re

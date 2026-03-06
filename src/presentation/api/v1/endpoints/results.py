@@ -30,8 +30,7 @@ class ResultSummaryDTO(BaseModel):
 
 
 class ResultsService(Protocol):
-    def get_summary(self, analysis_job_id: str, actor_subject: str) -> ResultSummaryDTO:
-        ...
+    def get_summary(self, analysis_job_id: str, actor_subject: str) -> ResultSummaryDTO: ...
 
 
 @dataclass(slots=True)

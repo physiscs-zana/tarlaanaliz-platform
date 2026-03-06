@@ -21,6 +21,7 @@ Testler: Unit test (metrik kayıt doğrulaması).
 Bağımlılıklar: prometheus_client, structlog.
 Notlar/SSOT: Tek referans: tarlaanaliz_platform_tree v3.2.2 FINAL.
 """
+
 from __future__ import annotations
 
 from typing import Any, Optional

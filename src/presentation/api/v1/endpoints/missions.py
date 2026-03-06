@@ -27,11 +27,9 @@ class MissionResponse(BaseModel):
 
 
 class MissionService(Protocol):
-    def create(self, payload: MissionCreateRequest, actor_subject: str) -> MissionResponse:
-        ...
+    def create(self, payload: MissionCreateRequest, actor_subject: str) -> MissionResponse: ...
 
-    def list_for_subject(self, actor_subject: str) -> list[MissionResponse]:
-        ...
+    def list_for_subject(self, actor_subject: str) -> list[MissionResponse]: ...
 
 
 @dataclass(slots=True)
@@ -39,7 +37,9 @@ class _InMemoryMissionService:
     def create(self, payload: MissionCreateRequest, actor_subject: str) -> MissionResponse:
         _ = actor_subject
         # KR-015: planning and capacity rules are enforced in application/domain service layer.
-        return MissionResponse(mission_id="msn-1", field_id=payload.field_id, mission_date=payload.mission_date, status="planned")
+        return MissionResponse(
+            mission_id="msn-1", field_id=payload.field_id, mission_date=payload.mission_date, status="planned"
+        )
 
     def list_for_subject(self, actor_subject: str) -> list[MissionResponse]:
         _ = actor_subject

@@ -63,14 +63,14 @@ class MissionLifecycleManager:
         # KR-033: PLANNED→ASSIGNED geçişi sadece payment_intent.status==PAID ise yapılabilir;
         #         bu gate caller (mission_service.py) tarafından enforce edilir.
         allowed: dict[str, set[str]] = {
-            "PLANNED":   {"ASSIGNED", "CANCELLED"},
-            "ASSIGNED":  {"ACKED", "CANCELLED"},
-            "ACKED":     {"FLOWN", "CANCELLED"},
-            "FLOWN":     {"UPLOADED"},
-            "UPLOADED":  {"ANALYZING"},
+            "PLANNED": {"ASSIGNED", "CANCELLED"},
+            "ASSIGNED": {"ACKED", "CANCELLED"},
+            "ACKED": {"FLOWN", "CANCELLED"},
+            "FLOWN": {"UPLOADED"},
+            "UPLOADED": {"ANALYZING"},
             "ANALYZING": {"DONE", "FAILED"},
-            "DONE":      set(),
-            "FAILED":    set(),
+            "DONE": set(),
+            "FAILED": set(),
             "CANCELLED": set(),
         }
         if to_status not in allowed.get(mission.status, set()):

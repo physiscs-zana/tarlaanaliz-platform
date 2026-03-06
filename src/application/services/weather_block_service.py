@@ -60,4 +60,3 @@ class WeatherBlockService:
             {"report_id": report.report_id, "mission_id": report.mission_id},
             correlation_id=correlation_id,
         )
-

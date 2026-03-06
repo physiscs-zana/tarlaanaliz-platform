@@ -36,19 +36,13 @@ class AIConfidence:
 
     def __post_init__(self) -> None:
         if not isinstance(self.score, ConfidenceScore):
-            raise AIConfidenceError(
-                f"score ConfidenceScore olmalıdır, alınan tip: {type(self.score).__name__}"
-            )
+            raise AIConfidenceError(f"score ConfidenceScore olmalıdır, alınan tip: {type(self.score).__name__}")
         if not isinstance(self.threshold, (int, float)):
-            raise AIConfidenceError(
-                f"threshold sayısal olmalıdır, alınan tip: {type(self.threshold).__name__}"
-            )
+            raise AIConfidenceError(f"threshold sayısal olmalıdır, alınan tip: {type(self.threshold).__name__}")
         if isinstance(self.threshold, int):
             object.__setattr__(self, "threshold", float(self.threshold))
         if not (0.0 <= self.threshold <= 1.0):
-            raise AIConfidenceError(
-                f"threshold 0.0-1.0 aralığında olmalıdır, alınan: {self.threshold}"
-            )
+            raise AIConfidenceError(f"threshold 0.0-1.0 aralığında olmalıdır, alınan: {self.threshold}")
 
     @classmethod
     def create(

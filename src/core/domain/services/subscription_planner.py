@@ -207,9 +207,7 @@ class SubscriptionPlanner:
         Returns:
             Kalan analiz sayısı.
         """
-        return sum(
-            1 for a in schedule.analyses if a.scheduled_date >= as_of_date
-        )
+        return sum(1 for a in schedule.analyses if a.scheduled_date >= as_of_date)
 
     def get_next_analysis(
         self,
@@ -225,9 +223,7 @@ class SubscriptionPlanner:
         Returns:
             Sonraki analiz veya None.
         """
-        future = [
-            a for a in schedule.analyses if a.scheduled_date >= as_of_date
-        ]
+        future = [a for a in schedule.analyses if a.scheduled_date >= as_of_date]
         if not future:
             return None
         return min(future, key=lambda a: a.scheduled_date)
@@ -235,17 +231,13 @@ class SubscriptionPlanner:
     def _validate_config(self, config: SubscriptionConfig) -> None:
         """Abonelik yapılandırmasını doğrular."""
         if config.start_date > config.end_date:
-            raise SubscriptionPlanningError(
-                "start_date, end_date'den sonra olamaz."
-            )
+            raise SubscriptionPlanningError("start_date, end_date'den sonra olamaz.")
         if config.interval_days <= 0:
             raise SubscriptionPlanningError("interval_days > 0 olmalıdır.")
         if config.total_analyses <= 0:
             raise SubscriptionPlanningError("total_analyses > 0 olmalıdır.")
         if config.reschedule_tokens < 0:
-            raise SubscriptionPlanningError(
-                "reschedule_tokens negatif olamaz."
-            )
+            raise SubscriptionPlanningError("reschedule_tokens negatif olamaz.")
 
         # Takvim uygunluk kontrolü: yeterli gün var mı?
         available_days = (config.end_date - config.start_date).days + 1

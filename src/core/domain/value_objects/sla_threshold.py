@@ -8,6 +8,7 @@ Servis seviyesi anlaşması (SLA) eşik değerlerini temsil eder.
 Her aşama için saat cinsinden hedef ve maksimum süre limitleri tanımlar.
 SLAMetrics ile birlikte kullanılarak ihlal kontrolü yapılır.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -48,26 +49,19 @@ class SLAThreshold:
 
     def __post_init__(self) -> None:
         if not isinstance(self.target_hours, (int, float)):
-            raise SLAThresholdError(
-                f"target_hours sayısal olmalıdır, alınan tip: {type(self.target_hours).__name__}"
-            )
+            raise SLAThresholdError(f"target_hours sayısal olmalıdır, alınan tip: {type(self.target_hours).__name__}")
         if not isinstance(self.max_hours, (int, float)):
-            raise SLAThresholdError(
-                f"max_hours sayısal olmalıdır, alınan tip: {type(self.max_hours).__name__}"
-            )
+            raise SLAThresholdError(f"max_hours sayısal olmalıdır, alınan tip: {type(self.max_hours).__name__}")
         # int -> float dönüşümü
         if isinstance(self.target_hours, int):
             object.__setattr__(self, "target_hours", float(self.target_hours))
         if isinstance(self.max_hours, int):
             object.__setattr__(self, "max_hours", float(self.max_hours))
         if self.target_hours <= 0:
-            raise SLAThresholdError(
-                f"target_hours 0'dan büyük olmalıdır, alınan: {self.target_hours}"
-            )
+            raise SLAThresholdError(f"target_hours 0'dan büyük olmalıdır, alınan: {self.target_hours}")
         if self.max_hours < self.target_hours:
             raise SLAThresholdError(
-                f"max_hours ({self.max_hours}) target_hours ({self.target_hours}) "
-                f"değerinden küçük olamaz."
+                f"max_hours ({self.max_hours}) target_hours ({self.target_hours}) değerinden küçük olamaz."
             )
 
     # ------------------------------------------------------------------
@@ -133,7 +127,4 @@ class SLAThreshold:
         }
 
     def __repr__(self) -> str:
-        return (
-            f"SLAThreshold(target_hours={self.target_hours}, "
-            f"max_hours={self.max_hours})"
-        )
+        return f"SLAThreshold(target_hours={self.target_hours}, max_hours={self.max_hours})"

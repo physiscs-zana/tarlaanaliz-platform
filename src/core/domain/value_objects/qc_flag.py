@@ -8,6 +8,7 @@ Kalite kontrol surecinde tespit edilen spesifik sorunlari
 (blur, overexposure, missing_bands vb.) temsil eder.
 KR-018 hard gate: calibrated/QC kaniti olmadan AnalysisJob baslatilamaz.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -63,13 +64,9 @@ class QCFlag:
     # ------------------------------------------------------------------
     def __post_init__(self) -> None:
         if not isinstance(self.flag_type, QCFlagType):
-            raise TypeError(
-                f"flag_type must be QCFlagType, got {type(self.flag_type).__name__}"
-            )
+            raise TypeError(f"flag_type must be QCFlagType, got {type(self.flag_type).__name__}")
         if not isinstance(self.severity, QCFlagSeverity):
-            raise TypeError(
-                f"severity must be QCFlagSeverity, got {type(self.severity).__name__}"
-            )
+            raise TypeError(f"severity must be QCFlagSeverity, got {type(self.severity).__name__}")
         if self.threshold is not None and self.threshold < 0:
             raise ValueError("threshold cannot be negative")
         if self.actual_value is not None and self.actual_value < 0:

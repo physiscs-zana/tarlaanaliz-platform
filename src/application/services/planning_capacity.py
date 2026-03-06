@@ -66,6 +66,8 @@ def estimate_capacity(
     capacity = estimate_daily_capacity(requested=daily_capacity_donum, policy=policy)
     days = estimate_days_for_area(donum, daily_capacity_donum=capacity, policy=policy)
     return CapacityEstimate(donum=float(donum), effort_units=effort, daily_capacity_donum=capacity, estimated_days=days)
+
+
 class CapacityError(ValueError):
     pass
 

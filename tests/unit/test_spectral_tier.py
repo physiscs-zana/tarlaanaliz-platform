@@ -24,6 +24,7 @@ from src.core.domain.value_objects.spectral_tier import (
 
 # ---- classify_bands ----
 
+
 def test_classify_bands_basic_4band() -> None:
     bands = frozenset({"green", "red", "red_edge", "nir"})
     assert classify_bands(bands) == BandClass.BASIC_4BAND
@@ -47,6 +48,7 @@ def test_classify_bands_missing_required_raises() -> None:
 
 # ---- has_thermal_capability ----
 
+
 def test_has_thermal_true() -> None:
     assert has_thermal_capability(frozenset({"green", "red", "red_edge", "nir", "thermal"}))
 
@@ -60,6 +62,7 @@ def test_has_thermal_false() -> None:
 
 
 # ---- derive_available_indices ----
+
 
 def test_derive_indices_basic() -> None:
     indices = derive_available_indices(BandClass.BASIC_4BAND)
@@ -78,6 +81,7 @@ def test_derive_indices_with_thermal() -> None:
 
 
 # ---- derive_enabled_pipelines ----
+
 
 def test_derive_pipelines_basic() -> None:
     pipes = derive_enabled_pipelines(BandClass.BASIC_4BAND)
@@ -102,6 +106,7 @@ def test_derive_pipelines_without_thermal() -> None:
 
 # ---- determine_report_tier ----
 
+
 def test_report_tier_temel() -> None:
     assert determine_report_tier(BandClass.BASIC_4BAND) == ReportTier.TEMEL
 
@@ -115,6 +120,7 @@ def test_report_tier_kapsamli() -> None:
 
 
 # ---- SpectralTier.from_bands ----
+
 
 def test_spectral_tier_from_bands_basic() -> None:
     tier = SpectralTier.from_bands(frozenset({"green", "red", "red_edge", "nir"}))

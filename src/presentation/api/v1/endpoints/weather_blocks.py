@@ -25,8 +25,7 @@ class WeatherBlockListResponse(BaseModel):
 
 
 class WeatherBlockService(Protocol):
-    def list_for_field(self, field_id: str, limit: int) -> WeatherBlockListResponse:
-        ...
+    def list_for_field(self, field_id: str, limit: int) -> WeatherBlockListResponse: ...
 
 
 @dataclass(slots=True)

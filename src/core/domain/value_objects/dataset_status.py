@@ -28,6 +28,7 @@ Geçiş kuralları:
 - Herhangi bir aşamada hash uyumsuzluğu veya virüs tespiti → REJECTED_QUARANTINE.
 - Worker inbound HTTP almaz; sadece queue'dan consume eder (KR-070).
 """
+
 from __future__ import annotations
 
 from enum import Enum
@@ -56,55 +57,77 @@ class DatasetStatus(str, Enum):
 
 # Geçerli durum geçişleri (KR-072)
 VALID_DATASET_TRANSITIONS: dict[DatasetStatus, frozenset[DatasetStatus]] = {
-    DatasetStatus.RAW_INGESTED: frozenset({
-        DatasetStatus.RAW_SCANNED_EDGE_OK,
-        DatasetStatus.REJECTED_QUARANTINE,
-    }),
-    DatasetStatus.RAW_SCANNED_EDGE_OK: frozenset({
-        DatasetStatus.RAW_HASH_SEALED,
-        DatasetStatus.REJECTED_QUARANTINE,
-    }),
-    DatasetStatus.RAW_HASH_SEALED: frozenset({
-        DatasetStatus.CALIBRATED,
-        DatasetStatus.REJECTED_QUARANTINE,
-    }),
-    DatasetStatus.CALIBRATED: frozenset({
-        DatasetStatus.CALIBRATED_SCANNED_CENTER_OK,
-        DatasetStatus.REJECTED_QUARANTINE,
-    }),
-    DatasetStatus.CALIBRATED_SCANNED_CENTER_OK: frozenset({
-        DatasetStatus.DISPATCHED_TO_WORKER,
-        DatasetStatus.REJECTED_QUARANTINE,
-    }),
-    DatasetStatus.DISPATCHED_TO_WORKER: frozenset({
-        DatasetStatus.ANALYZED,
-        DatasetStatus.REJECTED_QUARANTINE,
-    }),
-    DatasetStatus.ANALYZED: frozenset({
-        DatasetStatus.DERIVED_PUBLISHED,
-        DatasetStatus.REJECTED_QUARANTINE,
-    }),
-    DatasetStatus.DERIVED_PUBLISHED: frozenset({
-        DatasetStatus.ARCHIVED,
-    }),
-    DatasetStatus.ARCHIVED: frozenset(),           # terminal
+    DatasetStatus.RAW_INGESTED: frozenset(
+        {
+            DatasetStatus.RAW_SCANNED_EDGE_OK,
+            DatasetStatus.REJECTED_QUARANTINE,
+        }
+    ),
+    DatasetStatus.RAW_SCANNED_EDGE_OK: frozenset(
+        {
+            DatasetStatus.RAW_HASH_SEALED,
+            DatasetStatus.REJECTED_QUARANTINE,
+        }
+    ),
+    DatasetStatus.RAW_HASH_SEALED: frozenset(
+        {
+            DatasetStatus.CALIBRATED,
+            DatasetStatus.REJECTED_QUARANTINE,
+        }
+    ),
+    DatasetStatus.CALIBRATED: frozenset(
+        {
+            DatasetStatus.CALIBRATED_SCANNED_CENTER_OK,
+            DatasetStatus.REJECTED_QUARANTINE,
+        }
+    ),
+    DatasetStatus.CALIBRATED_SCANNED_CENTER_OK: frozenset(
+        {
+            DatasetStatus.DISPATCHED_TO_WORKER,
+            DatasetStatus.REJECTED_QUARANTINE,
+        }
+    ),
+    DatasetStatus.DISPATCHED_TO_WORKER: frozenset(
+        {
+            DatasetStatus.ANALYZED,
+            DatasetStatus.REJECTED_QUARANTINE,
+        }
+    ),
+    DatasetStatus.ANALYZED: frozenset(
+        {
+            DatasetStatus.DERIVED_PUBLISHED,
+            DatasetStatus.REJECTED_QUARANTINE,
+        }
+    ),
+    DatasetStatus.DERIVED_PUBLISHED: frozenset(
+        {
+            DatasetStatus.ARCHIVED,
+        }
+    ),
+    DatasetStatus.ARCHIVED: frozenset(),  # terminal
     DatasetStatus.REJECTED_QUARANTINE: frozenset(),  # terminal
 }
 
 # Terminal durumlar
-TERMINAL_DATASET_STATUSES: frozenset[DatasetStatus] = frozenset({
-    DatasetStatus.ARCHIVED,
-    DatasetStatus.REJECTED_QUARANTINE,
-})
+TERMINAL_DATASET_STATUSES: frozenset[DatasetStatus] = frozenset(
+    {
+        DatasetStatus.ARCHIVED,
+        DatasetStatus.REJECTED_QUARANTINE,
+    }
+)
 
 # AV taraması gerektiren geçişler
-AV1_REQUIRED_FOR: frozenset[DatasetStatus] = frozenset({
-    DatasetStatus.RAW_SCANNED_EDGE_OK,
-})
+AV1_REQUIRED_FOR: frozenset[DatasetStatus] = frozenset(
+    {
+        DatasetStatus.RAW_SCANNED_EDGE_OK,
+    }
+)
 
-AV2_REQUIRED_FOR: frozenset[DatasetStatus] = frozenset({
-    DatasetStatus.CALIBRATED_SCANNED_CENTER_OK,
-})
+AV2_REQUIRED_FOR: frozenset[DatasetStatus] = frozenset(
+    {
+        DatasetStatus.CALIBRATED_SCANNED_CENTER_OK,
+    }
+)
 
 
 def is_valid_dataset_transition(

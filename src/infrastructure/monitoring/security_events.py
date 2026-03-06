@@ -22,6 +22,7 @@ Testler: Unit test (log format doğrulaması).
 Bağımlılıklar: structlog.
 Notlar/SSOT: Tek referans: tarlaanaliz_platform_tree v3.2.2 FINAL.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone

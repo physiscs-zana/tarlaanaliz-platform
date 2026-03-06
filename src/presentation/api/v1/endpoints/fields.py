@@ -26,18 +26,18 @@ class FieldResponse(BaseModel):
 
 
 class FieldService(Protocol):
-    def create(self, owner_subject: str, payload: FieldCreateRequest) -> FieldResponse:
-        ...
+    def create(self, owner_subject: str, payload: FieldCreateRequest) -> FieldResponse: ...
 
-    def list_by_owner(self, owner_subject: str) -> list[FieldResponse]:
-        ...
+    def list_by_owner(self, owner_subject: str) -> list[FieldResponse]: ...
 
 
 @dataclass(slots=True)
 class _InMemoryFieldService:
     def create(self, owner_subject: str, payload: FieldCreateRequest) -> FieldResponse:
         _ = owner_subject
-        return FieldResponse(field_id="fld-1", field_name=payload.field_name, parcel_ref=payload.parcel_ref, area_ha=payload.area_ha)
+        return FieldResponse(
+            field_id="fld-1", field_name=payload.field_name, parcel_ref=payload.parcel_ref, area_ha=payload.area_ha
+        )
 
     def list_by_owner(self, owner_subject: str) -> list[FieldResponse]:
         _ = owner_subject

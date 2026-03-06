@@ -31,6 +31,7 @@ Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_i
   KR-022: Versiyonlu + tarih aralıklı fiyat yönetimi.
   KR-033: Sipariş/abonelik oluşurken fiyat snapshot siparişe yazılır.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -72,9 +73,7 @@ class PriceSnapshotRepository(ABC):
     # Tekil sorgular
     # ------------------------------------------------------------------
     @abstractmethod
-    async def find_by_id(
-        self, price_snapshot_id: uuid.UUID
-    ) -> Optional[PriceSnapshot]:
+    async def find_by_id(self, price_snapshot_id: uuid.UUID) -> Optional[PriceSnapshot]:
         """price_snapshot_id ile PriceSnapshot getir.
 
         Args:
@@ -109,9 +108,7 @@ class PriceSnapshotRepository(ABC):
     # Liste sorguları
     # ------------------------------------------------------------------
     @abstractmethod
-    async def list_by_crop_type(
-        self, crop_type: str
-    ) -> List[PriceSnapshot]:
+    async def list_by_crop_type(self, crop_type: str) -> List[PriceSnapshot]:
         """Bir ürün türüne ait tüm fiyat snapshot'larını getir.
 
         Args:
@@ -122,9 +119,7 @@ class PriceSnapshotRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_analysis_type(
-        self, analysis_type: str
-    ) -> List[PriceSnapshot]:
+    async def list_by_analysis_type(self, analysis_type: str) -> List[PriceSnapshot]:
         """Belirli analiz türündeki tüm fiyat snapshot'larını getir.
 
         Args:
@@ -135,9 +130,7 @@ class PriceSnapshotRepository(ABC):
         """
 
     @abstractmethod
-    async def list_active_as_of(
-        self, as_of: date
-    ) -> List[PriceSnapshot]:
+    async def list_active_as_of(self, as_of: date) -> List[PriceSnapshot]:
         """Belirli tarihte geçerli olan tüm fiyat snapshot'larını getir.
 
         Fiyat listesi görüntüleme ve raporlama için kullanılır.

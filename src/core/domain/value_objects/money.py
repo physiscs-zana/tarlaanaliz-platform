@@ -9,6 +9,7 @@ Kurus cinsinden (int) tutar + para birimi kodu.
 Negatif tutar kabul edilmez; karsilastirma ve aritmetik islemler
 para birimi eslesmesi zorunluluguna tabidir (KR-022).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -41,15 +42,11 @@ class Money:
     # ------------------------------------------------------------------
     def __post_init__(self) -> None:
         if not isinstance(self.amount_kurus, int):
-            raise TypeError(
-                f"amount_kurus must be int, got {type(self.amount_kurus).__name__}"
-            )
+            raise TypeError(f"amount_kurus must be int, got {type(self.amount_kurus).__name__}")
         if self.amount_kurus < 0:
             raise ValueError("amount_kurus cannot be negative")
         if not isinstance(self.currency, CurrencyCode):
-            raise TypeError(
-                f"currency must be CurrencyCode, got {type(self.currency).__name__}"
-            )
+            raise TypeError(f"currency must be CurrencyCode, got {type(self.currency).__name__}")
 
     # ------------------------------------------------------------------
     # Domain queries
@@ -80,8 +77,7 @@ class Money:
         result = self.amount_kurus - other.amount_kurus
         if result < 0:
             raise ValueError(
-                f"Subtraction would result in negative amount: "
-                f"{self.amount_kurus} - {other.amount_kurus} = {result}"
+                f"Subtraction would result in negative amount: {self.amount_kurus} - {other.amount_kurus} = {result}"
             )
         return Money(amount_kurus=result, currency=self.currency)
 
@@ -90,9 +86,7 @@ class Money:
     # ------------------------------------------------------------------
     def _assert_same_currency(self, other: Money) -> None:
         if self.currency != other.currency:
-            raise ValueError(
-                f"Currency mismatch: {self.currency.value} vs {other.currency.value}"
-            )
+            raise ValueError(f"Currency mismatch: {self.currency.value} vs {other.currency.value}")
 
     # ------------------------------------------------------------------
     # Serialization

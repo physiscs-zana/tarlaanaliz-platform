@@ -27,6 +27,7 @@ Bağımlılıklar: Standart kütüphane + domain tipleri.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_impl) taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -64,9 +65,7 @@ class MissionRepository(ABC):
     # Tekil sorgular
     # ------------------------------------------------------------------
     @abstractmethod
-    async def find_by_id(
-        self, mission_id: uuid.UUID
-    ) -> Optional[Mission]:
+    async def find_by_id(self, mission_id: uuid.UUID) -> Optional[Mission]:
         """mission_id ile Mission getir.
 
         Args:
@@ -80,9 +79,7 @@ class MissionRepository(ABC):
     # Liste sorguları
     # ------------------------------------------------------------------
     @abstractmethod
-    async def list_by_field_id(
-        self, field_id: uuid.UUID
-    ) -> List[Mission]:
+    async def list_by_field_id(self, field_id: uuid.UUID) -> List[Mission]:
         """Bir tarlaya ait tüm görevleri getir.
 
         Args:
@@ -110,9 +107,7 @@ class MissionRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_status(
-        self, status: MissionStatus
-    ) -> List[Mission]:
+    async def list_by_status(self, status: MissionStatus) -> List[Mission]:
         """Belirli durumdaki tüm görevleri getir.
 
         Kuyruk yönetimi, SLA takibi ve iş dağıtımı için kullanılır.
@@ -125,9 +120,7 @@ class MissionRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_requested_by_user_id(
-        self, user_id: uuid.UUID
-    ) -> List[Mission]:
+    async def list_by_requested_by_user_id(self, user_id: uuid.UUID) -> List[Mission]:
         """Bir kullanıcının talep ettiği tüm görevleri getir.
 
         Args:
@@ -138,9 +131,7 @@ class MissionRepository(ABC):
         """
 
     @abstractmethod
-    async def list_by_subscription_id(
-        self, subscription_id: uuid.UUID
-    ) -> List[Mission]:
+    async def list_by_subscription_id(self, subscription_id: uuid.UUID) -> List[Mission]:
         """Bir aboneliğe bağlı tüm görevleri getir.
 
         Args:

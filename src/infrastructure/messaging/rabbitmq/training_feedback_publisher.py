@@ -29,6 +29,7 @@ Bağımlılıklar: RabbitMQPublisher, structlog, domain events.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import structlog
@@ -89,9 +90,7 @@ class TrainingFeedbackPublisher:
         """
         routing_key = _EVENT_ROUTING_MAP.get(event.event_type)
         if routing_key is None:
-            raise ValueError(
-                f"Desteklenmeyen training feedback event tipi: {event.event_type}"
-            )
+            raise ValueError(f"Desteklenmeyen training feedback event tipi: {event.event_type}")
 
         body = event.to_dict()
         message_id = f"tf-{body['event_id']}"

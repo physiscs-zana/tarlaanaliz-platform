@@ -28,6 +28,7 @@ Bağımlılıklar: Standart kütüphane + domain tipleri.
 Notlar/SSOT: Port interface core'da; infrastructure yalnızca implementasyon (_impl) taşır.
   v3.2.2'de redundant çiftler kaldırıldı.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -66,9 +67,7 @@ class AuditLogRepository(ABC):
     # Tekil sorgular
     # ------------------------------------------------------------------
     @abstractmethod
-    async def find_by_id(
-        self, audit_log_id: uuid.UUID
-    ) -> Optional[AuditLogEntry]:
+    async def find_by_id(self, audit_log_id: uuid.UUID) -> Optional[AuditLogEntry]:
         """audit_log_id ile AuditLogEntry getir.
 
         Args:
@@ -82,9 +81,7 @@ class AuditLogRepository(ABC):
     # Liste sorguları
     # ------------------------------------------------------------------
     @abstractmethod
-    async def list_by_correlation_id(
-        self, correlation_id: str
-    ) -> List[AuditLogEntry]:
+    async def list_by_correlation_id(self, correlation_id: str) -> List[AuditLogEntry]:
         """Bir correlation_id'ye ait tüm logları getir.
 
         İstek izleme (request tracing) için tüm servislerdeki logları toplar.
