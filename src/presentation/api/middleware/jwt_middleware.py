@@ -9,6 +9,7 @@ import hashlib
 import hmac
 import json
 import logging
+import time
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -115,6 +116,18 @@ class JwtMiddleware(BaseHTTPMiddleware):
         if not hmac.compare_digest(expected_signature, received_signature):
             LOGGER.info("JWT signature validation failed", extra={"event": "jwt_invalid_signature"})
             raise JwtValidationError("Invalid signature")
+
+        # Token expiration check (CRITICAL: was missing — expired tokens were accepted)
+        now = int(time.time())
+        exp = payload.get("exp")
+        if exp is not None and now >= int(exp):
+            LOGGER.info("JWT token expired", extra={"event": "jwt_expired"})
+            raise JwtValidationError("Token expired")
+
+        # iat sanity check — reject tokens issued in the future (clock skew > 60s)
+        iat = payload.get("iat")
+        if iat is not None and int(iat) > now + 60:
+            raise JwtValidationError("Token issued in the future")
 
         return payload
 

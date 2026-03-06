@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Protocol
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -45,7 +45,7 @@ class _InMemoryExpertPortalService:
 
     def submit(self, review_id: str, payload: ReviewSubmitRequest, expert_subject: str) -> ReviewSubmitResponse:
         _ = payload, expert_subject
-        return ReviewSubmitResponse(review_id=review_id, submitted_at=datetime.utcnow())
+        return ReviewSubmitResponse(review_id=review_id, submitted_at=datetime.now(timezone.utc))
 
 
 def get_expert_portal_service() -> ExpertPortalService:

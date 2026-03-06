@@ -44,7 +44,7 @@ class AppSettings:
 @dataclass(slots=True)
 class CorsSettings:
     enabled: bool = field(default_factory=lambda: _env_bool("API_CORS_ENABLED", True))
-    allow_origins: list[str] = field(default_factory=lambda: _env_list("API_CORS_ALLOW_ORIGINS", ["*"]))
+    allow_origins: list[str] = field(default_factory=lambda: _env_list("API_CORS_ALLOW_ORIGINS", ["http://localhost:3000"]))
     allow_methods: list[str] = field(default_factory=lambda: _env_list("API_CORS_ALLOW_METHODS", ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]))
     allow_headers: list[str] = field(default_factory=lambda: _env_list("API_CORS_ALLOW_HEADERS", ["Authorization", "Content-Type", "X-Correlation-Id"]))
     allow_credentials: bool = field(default_factory=lambda: _env_bool("API_CORS_ALLOW_CREDENTIALS", False))
@@ -53,7 +53,7 @@ class CorsSettings:
 @dataclass(slots=True)
 class JwtSettings:
     enabled: bool = field(default_factory=lambda: _env_bool("API_JWT_ENABLED", True))
-    bypass_routes: list[str] = field(default_factory=lambda: _env_list("API_JWT_BYPASS_ROUTES", ["/health", "/docs", "/openapi.json"]))
+    bypass_routes: list[str] = field(default_factory=lambda: _env_list("API_JWT_BYPASS_ROUTES", ["/health", "/docs", "/openapi.json", "/redoc", "/api/v1/auth/phone-pin/login", "/api/v1/auth/phone-pin/refresh", "/api/v1/payments/webhooks/provider"]))
     secret: str = field(default_factory=lambda: os.getenv("API_JWT_SECRET", "dev-only-secret"))
     algorithm: str = field(default_factory=lambda: os.getenv("API_JWT_ALGORITHM", "HS256"))
 

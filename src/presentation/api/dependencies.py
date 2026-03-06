@@ -6,7 +6,7 @@ from __future__ import annotations
 import ipaddress
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Protocol
 from uuid import UUID
@@ -167,7 +167,7 @@ class AuditEvent(BaseModel):
     subject_id: str
     corr_id: str | None = None
     details: dict[str, Any] = Field(default_factory=dict)
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class PaymentService(Protocol):
@@ -334,10 +334,24 @@ def get_current_user(request: Request) -> CurrentUser:
     """Resolve authenticated principal from request state."""
 
     user_state = getattr(request.state, "user", None)
-    if not isinstance(user_state, dict):
+    if user_state is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
 
-    user = CurrentUser.model_validate(user_state)
+    # JWT middleware sets user as AuthenticatedUser dataclass; convert to dict for Pydantic
+    if isinstance(user_state, dict):
+        user_dict = user_state
+    elif hasattr(user_state, "__dataclass_fields__"):
+        from dataclasses import asdict
+        user_dict = asdict(user_state)
+    else:
+        user_dict = {
+            "user_id": getattr(user_state, "user_id", None) or getattr(user_state, "subject", None) or "",
+            "subject": getattr(user_state, "subject", None),
+            "roles": list(getattr(request.state, "roles", [])),
+            "permissions": list(getattr(request.state, "permissions", [])),
+        }
+
+    user = CurrentUser.model_validate(user_dict)
     if not user.user_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
     return user
