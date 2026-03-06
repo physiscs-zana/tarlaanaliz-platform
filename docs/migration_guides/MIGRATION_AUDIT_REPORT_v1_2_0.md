@@ -491,16 +491,143 @@ COPY alembic.ini ./
 
 ---
 
-## BOLUM 12: TOPLAM BULGU ISTATISTIKLERI
+## BOLUM 12: ORM MODEL ve IKILI MIGRATION DIZINI ANALIZI (Yazılım Mimarı)
+
+### BULGU-38 — 11/13 ORM MODEL DOSYASI TODO STUB (CRITICAL)
+
+**Dizin:** `src/infrastructure/persistence/sqlalchemy/models/`
+**Sorun:** 13 ORM model dosyasından sadece 2 tanesi implemente edilmiş. Kalan 11'i `# TODO: Implement this file.` stub'ları.
+
+| Model Dosyası | Durum | Etkilenen KR |
+|---------------|-------|-------------|
+| `subscription_model.py` | **TAMAMLANDI** | KR-027, KR-015-5 |
+| `analysis_job_model.py` | **TAMAMLANDI** | KR-081, KR-018 |
+| `user_model.py` | TODO | KR-050, KR-063 |
+| `field_model.py` | TODO | KR-013, KR-016 |
+| `mission_model.py` | TODO | KR-028, KR-015 |
+| `pilot_model.py` | TODO | KR-015, KR-031 |
+| `expert_model.py` | TODO | KR-019 |
+| `expert_review_model.py` | TODO | KR-019, KR-029 |
+| `payment_intent_model.py` | TODO | KR-033 |
+| `weather_block_model.py` | TODO | KR-015-3A |
+| `analysis_result_model.py` | TODO | KR-017, KR-025 |
+| `audit_log_model.py` | TODO | KR-066, KR-040 |
+| `price_snapshot_model.py` | TODO | KR-022 |
+
+**Etki:** `alembic/versions/` altındaki migration'lar tabloları oluşturuyor, ancak uygulama katmanında bu tablolarla etkileşim kuracak ORM modelleri mevcut değil. Domain entity'ler ile veritabanı arasında köprü yok.
+
+**Not:** `env.py:38-43` satırlarındaki `target_metadata` import'u `Base.metadata` üzerinden çalışıyor. TODO model dosyaları `Base`'e kayıt yapmadığı için `alembic --autogenerate` tüm tabloları "yeni" olarak algılayacaktır.
+
+### BULGU-39 — IKILI MIGRATION DIZINI KARISIKLIGI (MAJOR)
+
+**Sorun:** Projede iki ayrı migration dizini mevcut:
+
+1. **`alembic/versions/`** — 21 migration dosyası, gerçek DDL ifadeleri ile **aktif** (alembic.ini bu dizine işaret ediyor)
+2. **`src/infrastructure/persistence/sqlalchemy/migrations/versions/`** — 3 dosya:
+   - `2026_01_27_add_v2_6_0_tables.py` — **implemente** (analysis_jobs tablosu)
+   - `2026_01_26_add_expert_portal_tables.py` — **TODO stub**
+   - `2026_02_02_add_pricebook_tables.py` — **TODO stub**
+
+**Karışıklık noktaları:**
+- `alembic/versions/20260103_007_analysis_jobs.py` zaten `analysis_jobs` tablosunu oluşturuyor. `src/.../2026_01_27_add_v2_6_0_tables.py` aynı tabloyu farklı sütunlarla oluşturuyor. **Çift tanım çakışması.**
+- `alembic.ini` sadece `alembic/versions/` dizinine işaret ediyor. `src/` altındaki migration'lar **çalıştırılmıyor**.
+- Geliştiriciler hangi dizindeki migration'ların kanonik olduğunu bilemez.
+
+**Sütun farklılıkları (`analysis_jobs` tablosu):**
+
+| Sütun | `alembic/versions/007` | `src/.../add_v2_6_0_tables` |
+|-------|----------------------|---------------------------|
+| PK | `job_id` (UUID) | `id` (UUID) |
+| mission_id | FK → missions | FK yok (sadece UUID) |
+| field_id | FK → fields | **YOK** |
+| crop_type | ENUM | **YOK** |
+| status | PostgreSQL ENUM (7 durum) | String(32) default "queued" |
+| calibration | `requires_calibrated` + `is_calibrated` | `calibration_gate_passed` |
+| schema_version | **YOK** | String(32) |
+| payload URIs | `input_manifest` / `output_manifest` (JSONB) | `input_payload_uri` / `output_payload_uri` (Text) |
+
+**Düzeltme:** Kanonik dizin belirlenmeli ve diğer dizin kaldırılmalı veya deprecated olarak işaretlenmeli.
+
+### BULGU-40 — DOMAIN ENTITY vs MIGRATION UYUMSUZLUKLARI (MAJOR)
+
+**Sorun:** Domain entity'ler (dataclass'lar) ile alembic migration'lar arasında sistematik uyumsuzluklar var.
+
+**Örnek: `payment_intent.py` (domain) vs `kr033` (migration):**
+
+| Alan | Domain Entity | Migration (kr033) | Uyum |
+|------|--------------|-------------------|------|
+| status enum | PAYMENT_PENDING, PAID, REJECTED, EXPIRED, CANCELLED, REFUNDED | Aynı | ✓ |
+| `mark_paid()` | Metot var | DB constraint yok | ⚠ |
+| `attach_receipt()` | Metot var | Sütun var ama state yok | ⚠ |
+| SSOT INTENT/RECEIPT/PENDING_APPROVAL/APPROVED | **YOK** | **YOK** | ✗ (her ikisi de SSOT'a uymuyor) |
+
+**Etki:** Domain ve persistence katmanları birbirinden bağımsız geliştirilmiş; SSOT kanonik kurallarından her ikisi de farklı açılardan sapıyor.
+
+---
+
+## BOLUM 13: SSOT UYUMLULUK SKOR KARTI (SSOT Custodian)
+
+| Katman | Skor | Detay |
+|--------|------|-------|
+| Domain Entity'ler | **85/100** | Çoğu complete; payment_intent tam |
+| Alembic Migration'lar | **40/100** | 21 dosya var, 4'ü RUNTIME FAIL, branch fork, SSOT gap'leri |
+| ORM Modeller | **15/100** | 13'ten 2'si implemente (subscription + analysis_job) |
+| API Route'lar | **60/100** | Route tanımlı ama backing tablolar eksik |
+| Security Middleware | **75/100** | PII filter, mTLS, rate limit OK; RLS/policy eksik |
+| Test Coverage | **50/100** | Payment testleri var; migration/schema testi yok |
+| SDLC Gate'ler | **40/100** | BOUND header enforced; schema doğrulama yok |
+| **GENEL** | **~45/100** | Mimari sağlam ama persistence katmanı eksik |
+
+---
+
+## BOLUM 14: GUNCELENMIS ONCELIKLI DUZELTME PLANI
+
+### P0 — Blocker (Production'a gidemez)
+
+1. **Branch fork düzeltmesi** — `kr015_3a.down_revision = "kr015c_mission_schedule_fields"`
+2. **Çift sütun düzeltmesi** — kr033'te `op.add_column()` yerine `op.create_foreign_key()`
+3. **Hayalet indeks düzeltmeleri** — 012 ve 013'teki 5 runtime fail indeksi
+4. **Kanonik migration dizini kararı** — `alembic/versions/` vs `src/.../migrations/` sorunu çözülmeli
+5. **ORM model implementasyonu** — En azından user, mission, payment_intent modelleri
+
+### P1 — SSOT Uyumsuzluk (Major gap)
+
+6. **`datasets` tablosu + `dataset_state` enum** — KR-072 kanonik state machine
+7. **`layer_registry` tablosu + `layer_type` enum** — KR-064 katman standardı
+8. **Ödeme durum makinesi düzeltmesi** — KR-033 kanonik akışa uyum (domain + migration)
+9. **`weather_blocks` tablosu status düzeltmesi** — SSOT REPORTED/RESOLVED/EXPIRED
+10. **Kalan ORM modelleri** — field, pilot, expert, weather_block, analysis_result, audit_log, price_snapshot
+
+### P2 — Güvenlik ve Performans
+
+11. **GIST spatial indeks** — fields.boundary
+12. **RLS politikaları** — en azından missions, payment_intents, analysis_results
+13. **Ödeme verisi şifreleme** — provider_session_id, provider_payment_id
+14. **Çift indeks temizliği** — Migration 012'deki duplikasyonlar
+15. **JSONB GIN indeksleri** — Tüm JSONB sütunları
+16. **Rollback prosedürü dokümantasyonu** — Her migration için
+
+### P3 — İyileştirme
+
+17. CHECK constraint'ler (pozitif alan, tarih sırası)
+18. FK indeksleri
+19. Partition stratejisi (audit_logs)
+20. Geometri validasyon trigger'ı
+21. CI/CD migration doğrulama pipeline'ı (testcontainers ile)
+22. İdempotency düzeltmeleri (IF NOT EXISTS)
+
+---
+
+## BOLUM 15: TOPLAM BULGU ISTATISTIKLERI
 
 | Severity | Adet | Kategoriler |
 |----------|------|-------------|
-| **CRITICAL** | 7 | Branch fork, eksik datasets tablosu, migration testi yok, CI doğrulaması yetersiz, rollback prosedürü belgelenmemiş |
-| **MAJOR** | 9 | Ödeme state machine, RLS eksik, layer_registry eksik, weather_blocks stale, PostGIS indeks eksik, şifreleme eksik, deployment pipeline eksik, downgrade güvenliği |
+| **CRITICAL** | 9 | Branch fork, eksik datasets tablosu, 11 TODO ORM model, migration testi yok, CI doğrulaması yetersiz, rollback prosedürü belgelenmemiş |
+| **MAJOR** | 11 | Ödeme state machine, RLS eksik, layer_registry eksik, weather_blocks stale, PostGIS indeks eksik, şifreleme eksik, deployment pipeline eksik, downgrade güvenliği, ikili migration dizini, domain-migration uyumsuzlukları |
 | **RUNTIME FAIL** | 5 | Çift sütun tanımlama (2), hayalet sütun indeksleri (3) |
 | **MEDIUM** | 8 | FK indeksler, JSONB GIN indeksler, partition stratejisi, admin doğrulama, CASCADE riskleri, geometri validasyon, alan tutarlılığı, idempotency |
 | **MINOR** | 8 | Stale yorum, tarih sırası, segment UNIQUE, çift atama, CHECK constraints, bitki sezonu, env.py fallback, audit referans |
-| **TOPLAM** | **37** | |
+| **TOPLAM** | **41** | |
 
 ---
 
