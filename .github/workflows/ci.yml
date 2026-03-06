@@ -87,8 +87,8 @@ jobs:
       - name: Run ruff check
         run: ruff check src/ tests/ alembic/ --select E9,F63,F7,F82
 
-      - name: Run ruff format check (focused)
-        run: ruff format --check tests/unit/test_calibration_gate.py
+      - name: Run ruff format check
+        run: ruff format --check src/ tests/
 
   type-check:
     name: Type Check (mypy)
