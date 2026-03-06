@@ -7,7 +7,45 @@ import { useCallback, useState } from 'react';
 import { setAuthToken, getAuthToken, clearAuthStorage } from '@/lib/authStorage';
 import { AUTH_TOKEN_TTL_MS, COOKIE_TOKEN_KEY, COOKIE_ROLE_KEY } from '@/lib/constants';
 
-export type AuthRole = 'farmer' | 'expert' | 'pilot' | 'admin';
+/**
+ * KR-063: SSOT kanonik rol kodları.
+ * Middleware ve layout guard'ları ROLE_GROUP üzerinden çalışır;
+ * detaylı yetki ayrımı (ör. COOP_OWNER vs COOP_VIEWER) bileşen düzeyinde kontrol edilir.
+ */
+export type AuthRole =
+  | 'FARMER_SINGLE'
+  | 'FARMER_MEMBER'
+  | 'COOP_OWNER'
+  | 'COOP_ADMIN'
+  | 'COOP_AGRONOMIST'
+  | 'COOP_VIEWER'
+  | 'PILOT'
+  | 'STATION_OPERATOR'
+  | 'IL_OPERATOR'
+  | 'CENTRAL_ADMIN'
+  | 'BILLING_ADMIN'
+  | 'AI_SERVICE'
+  | 'EXPERT';
+
+/** Middleware ve layout guard'ları bu grupları kullanır. */
+export type RoleGroup = 'farmer' | 'expert' | 'pilot' | 'admin';
+
+/** KR-063: Rol → grup eşlemesi. Middleware ROLE_PREFIXES bu grubu kullanır. */
+export const ROLE_TO_GROUP: Record<AuthRole, RoleGroup> = {
+  FARMER_SINGLE: 'farmer',
+  FARMER_MEMBER: 'farmer',
+  COOP_OWNER: 'farmer',
+  COOP_ADMIN: 'farmer',
+  COOP_AGRONOMIST: 'farmer',
+  COOP_VIEWER: 'farmer',
+  PILOT: 'pilot',
+  STATION_OPERATOR: 'admin',
+  IL_OPERATOR: 'admin',
+  CENTRAL_ADMIN: 'admin',
+  BILLING_ADMIN: 'admin',
+  AI_SERVICE: 'admin',
+  EXPERT: 'expert',
+};
 
 export interface AuthUser {
   id: string;
@@ -65,10 +103,12 @@ export function useAuth() {
     // authStorage.ts kanonik kaynak — TTL'li JSON formatında saklanır
     setAuthToken(data.access_token, AUTH_TOKEN_TTL_MS);
 
-    // Middleware ta_token ve ta_role cookie'lerini okur
+    // Middleware ta_token ve ta_role cookie'lerini okur.
+    // KR-063: Cookie'ye rol grubunu yazıyoruz (middleware ROLE_PREFIXES grup bazlı).
     const maxAgeSec = Math.floor(AUTH_TOKEN_TTL_MS / 1000);
     setCookie(COOKIE_TOKEN_KEY, data.access_token, maxAgeSec);
-    setCookie(COOKIE_ROLE_KEY, data.user.role, maxAgeSec);
+    const roleGroup = ROLE_TO_GROUP[data.user.role] ?? 'farmer';
+    setCookie(COOKIE_ROLE_KEY, roleGroup, maxAgeSec);
 
     setState({ token: data.access_token, user: data.user });
     return data;

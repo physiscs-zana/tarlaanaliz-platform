@@ -9,7 +9,7 @@ interface DekontViewerProps {
 }
 
 export function DekontViewer({ receiptUrl, status, paymentIntentId, requestMeta }: DekontViewerProps) {
-  const showApprovalWarning = status === 'approved' && !paymentIntentId;
+  const showApprovalWarning = status === 'PAID' && !paymentIntentId;
 
   return (
     <section className="rounded-lg border border-slate-200 p-4" data-request-id={requestMeta?.requestId} data-corr-id={requestMeta?.corrId}>

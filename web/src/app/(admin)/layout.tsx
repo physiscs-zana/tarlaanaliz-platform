@@ -38,6 +38,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     redirect("/login");
   }
 
+  // KR-063: admin grubu rolleri — CENTRAL_ADMIN, BILLING_ADMIN, IL_OPERATOR, STATION_OPERATOR
   if (role !== "admin") {
     redirect("/forbidden");
   }

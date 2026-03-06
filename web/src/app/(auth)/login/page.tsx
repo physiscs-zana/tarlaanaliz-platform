@@ -34,7 +34,15 @@ export default function LoginPage() {
       };
       router.replace(roleHome[data.user.role] ?? "/");
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Giriş başarısız");
+      // KR-050 + BÖLÜM 4: Rate limit (HTTP 429) ve lockout durumu için kullanıcı bildirimi
+      const msg = submitError instanceof Error ? submitError.message : "";
+      if (msg.includes("429") || msg.toLowerCase().includes("rate limit")) {
+        setError("Çok fazla deneme yaptınız. Lütfen birkaç dakika bekleyip tekrar deneyin.");
+      } else if (msg.toLowerCase().includes("locked") || msg.toLowerCase().includes("lockout")) {
+        setError("Hesabınız geçici olarak kilitlendi. 30 dakika sonra tekrar deneyin.");
+      } else {
+        setError(msg || "Giriş başarısız");
+      }
     } finally {
       setIsSubmitting(false);
     }
