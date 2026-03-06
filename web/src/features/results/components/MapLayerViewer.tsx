@@ -17,7 +17,8 @@ function ThermalOverlay({ thermalSummary }: ThermalOverlayProps) {
     <div
       style={{
         padding: 12,
-        background: 'linear-gradient(135deg, #dc2626, #f97316)',
+        /* KR-084: 3-stop gradient — Koyu Kırmızı (yüksek stres) → Turuncu (orta) → Açık Sarı (düşük) */
+        background: 'linear-gradient(135deg, #dc2626, #f97316, #fde047)',
         borderRadius: 8,
         color: '#fff',
         fontSize: 14,

@@ -3,8 +3,7 @@
 /* KR-081: Typed response contract-first istemci katmanı. */
 
 import { createCorrelationIds, toCorrelationHeaders } from "./correlation";
-
-const DEFAULT_TIMEOUT_MS = 10_000;
+import { API_TIMEOUT_MS } from "./constants";
 
 export interface ApiRequestOptions extends Omit<RequestInit, "body" | "headers"> {
   readonly body?: unknown;
@@ -47,7 +46,7 @@ function normalizeBody(body: unknown): BodyInit | undefined {
 }
 
 export async function apiRequest<TData>(url: string, options: ApiRequestOptions = {}): Promise<ApiResponse<TData>> {
-  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timeoutMs = options.timeoutMs ?? API_TIMEOUT_MS;
   const timeoutController = new AbortController();
   const finalController = new AbortController();
 

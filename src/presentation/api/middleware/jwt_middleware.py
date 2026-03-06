@@ -117,7 +117,7 @@ class JwtMiddleware(BaseHTTPMiddleware):
             LOGGER.info("JWT signature validation failed", extra={"event": "jwt_invalid_signature"})
             raise JwtValidationError("Invalid signature")
 
-        # Token expiration check (CRITICAL: was missing — expired tokens were accepted)
+        # KR-050: Token expiration check (CRITICAL: was missing — expired tokens were accepted)
         now = int(time.time())
         exp = payload.get("exp")
         if exp is not None and now >= int(exp):
@@ -128,6 +128,7 @@ class JwtMiddleware(BaseHTTPMiddleware):
         iat = payload.get("iat")
         if iat is not None and int(iat) > now + 60:
             raise JwtValidationError("Token issued in the future")
+
 
         return payload
 

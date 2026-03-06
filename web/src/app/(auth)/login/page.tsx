@@ -1,22 +1,18 @@
 /* BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated. */
 /* KR-081: login payload contract-first üretilir. */
 /* KR-071: corr/request metadata login isteğiyle taşınır. */
+/* KR-033: Auth artefact lifecycle — useAuth kanonik kaynak; cookie + localStorage birlikte yazılır. */
 
 "use client";
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { apiRequest } from "@/lib/apiClient";
-import type { LoginResponse } from "@/hooks/useAuth";
-
-interface LoginPayload {
-  readonly phone: string;
-  readonly pin: string;
-}
+import { useAuth } from "@/hooks/useAuth";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -27,16 +23,26 @@ export default function LoginPage() {
     setIsSubmitting(true);
     setError(null);
 
-    const payload: LoginPayload = { phone: phone.trim(), pin: pin.trim() };
-
     try {
-      await apiRequest<LoginResponse>("/api/auth/login", {
-        method: "POST",
-        body: payload,
-      });
-      router.replace("/");
+      const data = await login({ phone: phone.trim(), pin: pin.trim() });
+      // useAuth.login() cookie + localStorage yazımını halleder.
+      const roleHome: Record<string, string> = {
+        admin: "/analytics",
+        expert: "/queue",
+        farmer: "/fields",
+        pilot: "/pilot/missions",
+      };
+      router.replace(roleHome[data.user.role] ?? "/");
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Giriş başarısız");
+      // KR-050 + BÖLÜM 4: Rate limit (HTTP 429) ve lockout durumu için kullanıcı bildirimi
+      const msg = submitError instanceof Error ? submitError.message : "";
+      if (msg.includes("429") || msg.toLowerCase().includes("rate limit")) {
+        setError("Çok fazla deneme yaptınız. Lütfen birkaç dakika bekleyip tekrar deneyin.");
+      } else if (msg.toLowerCase().includes("locked") || msg.toLowerCase().includes("lockout")) {
+        setError("Hesabınız geçici olarak kilitlendi. 30 dakika sonra tekrar deneyin.");
+      } else {
+        setError(msg || "Giriş başarısız");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -70,7 +76,9 @@ export default function LoginPage() {
             name="pin"
             type="password"
             inputMode="numeric"
-            pattern="[0-9]{4,6}"
+            pattern="[0-9]{6}"
+            maxLength={6}
+            minLength={6}
             autoComplete="current-password"
             required
             value={pin}

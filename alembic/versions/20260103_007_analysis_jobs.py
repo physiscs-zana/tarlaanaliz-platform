@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """Analysis jobs schema.
 
 KR-017 (YZ Izolasyonu) ve KR-081.1 (Job Schema) geregi analysis_jobs

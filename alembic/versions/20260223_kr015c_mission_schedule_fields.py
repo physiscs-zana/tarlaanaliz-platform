@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """KR-015: missions tablosuna sezonluk zamanlama penceresi ve atama meta alanları.
 
 Amaç: Önceki PR'da Mission entity'sine eklenen schedule_window ve assignment

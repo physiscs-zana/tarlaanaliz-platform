@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """Pilots and capacity schema.
 
 KR-015-1 (Pilot Kapasite) ve KR-031 (Hakedis) geregi pilots ve

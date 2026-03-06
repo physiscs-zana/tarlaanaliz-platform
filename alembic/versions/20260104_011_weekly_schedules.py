@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """Weekly schedules schema.
 
 KR-015-4 (Planlama Motoru) ciktilarinin saklanacagi weekly_schedules

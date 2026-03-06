@@ -13,12 +13,16 @@ interface AdminLayoutProps {
 
 const navItems = [
   { href: "/analytics", label: "Analytics" },
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/audit", label: "Audit" },
+  { href: "/audit-viewer", label: "Audit Viewer" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/price-management", label: "Price Mgmt" },
   { href: "/admin/sla", label: "SLA" },
   { href: "/users", label: "Users" },
   { href: "/admin/payments", label: "Payments" },
   { href: "/experts", label: "Experts" },
+  { href: "/expert-management", label: "Expert Mgmt" },
   { href: "/pilots", label: "Pilots" },
   { href: "/calibration", label: "Calibration" },
   { href: "/qc", label: "QC" },
@@ -34,6 +38,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     redirect("/login");
   }
 
+  // KR-063: admin grubu rolleri — CENTRAL_ADMIN, BILLING_ADMIN, IL_OPERATOR, STATION_OPERATOR
   if (role !== "admin") {
     redirect("/forbidden");
   }

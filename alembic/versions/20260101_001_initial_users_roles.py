@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """Initial users and roles schema.
 
 KR-063 (RBAC Yetki Matrisi) ve KR-050 (Auth Model - Telefon+PIN) geregi

@@ -1,7 +1,75 @@
-/*
-PATH: web/src/lib/websocket/expertNotificationClient.ts
-DESC: WebSocket expert bildirim istemcisi.
-TODO: Implement this file.
-*/
+// BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+// KR-019: Bildirim kanallari: SMS + web portal ici gercek zamanli bildirim (WebSocket); e-posta kanal degildir.
 
-export {};
+export interface ExpertNotification {
+  readonly reviewId: string;
+  readonly type: 'new_review' | 'escalation' | 'sla_warning';
+  readonly message: string;
+  readonly createdAt: string;
+}
+
+type NotificationHandler = (notification: ExpertNotification) => void;
+
+export class ExpertNotificationClient {
+  private ws: WebSocket | null = null;
+  private handlers: Set<NotificationHandler> = new Set();
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor(private readonly wsUrl: string, private readonly token: string) {}
+
+  connect(): void {
+    if (typeof window === 'undefined') return;
+
+    try {
+      this.ws = new WebSocket(`${this.wsUrl}?token=${encodeURIComponent(this.token)}`);
+
+      this.ws.onmessage = (event) => {
+        try {
+          const notification = JSON.parse(event.data as string) as ExpertNotification;
+          for (const handler of this.handlers) {
+            handler(notification);
+          }
+        } catch {
+          // Malformed message — ignore
+        }
+      };
+
+      this.ws.onopen = () => {
+        this.reconnectAttempts = 0;
+      };
+
+      this.ws.onclose = () => {
+        this.scheduleReconnect();
+      };
+
+      this.ws.onerror = () => {
+        this.ws?.close();
+      };
+    } catch {
+      this.scheduleReconnect();
+    }
+  }
+
+  private scheduleReconnect(): void {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) return;
+    this.reconnectAttempts++;
+    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+    this.reconnectTimer = setTimeout(() => this.connect(), delay);
+  }
+
+  subscribe(handler: NotificationHandler): () => void {
+    this.handlers.add(handler);
+    return () => {
+      this.handlers.delete(handler);
+    };
+  }
+
+  disconnect(): void {
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    this.ws?.close();
+    this.ws = null;
+    this.handlers.clear();
+  }
+}

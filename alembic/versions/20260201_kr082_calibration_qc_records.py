@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """KR-018/KR-082 Radyometrik Kalibrasyon Hard Gate tabloları.
 
 Amaç: calibration_records ve qc_reports tablolarını oluşturmak.

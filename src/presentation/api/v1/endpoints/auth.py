@@ -2,6 +2,7 @@
 # KR-050: Telefon + 6 haneli PIN (sabit uzunluk, yalnızca rakam).
 # KR-050: Brute force koruması — 16 hata → 30 dakika kilit (SC-SEC-02).
 # KR-081: contract-first auth; no email/TCKN/OTP.
+# SC-SEC-02: 16 başarısız giriş → 30 dakika kilitleme.
 
 from __future__ import annotations
 
@@ -58,17 +59,81 @@ class PhonePinAuthService(Protocol):
 
 
 @dataclass(slots=True)
+class _LoginAttemptRecord:
+    fail_count: int = 0
+    locked_until: float = 0.0
+
+
+# SC-SEC-02: In-memory brute-force tracking (per-phone).
+_login_attempts: dict[str, _LoginAttemptRecord] = {}
+
+
+def _get_jwt_handler() -> JWTHandler:
+    return JWTHandler(JWTSettings(secret_key=settings.jwt.secret))
+
+
+@dataclass(slots=True)
 class _InMemoryPhonePinAuthService:
+    _jwt_handler: JWTHandler = field(default_factory=_get_jwt_handler)
+
+    def _check_lockout(self, phone: str) -> None:
+        """SC-SEC-02: 16 başarısız giriş → 30 dakika kilit."""
+        record = _login_attempts.get(phone)
+        if record is None:
+            return
+        if record.locked_until > time.time():
+            retry_after = int(record.locked_until - time.time()) + 1
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Hesap kilitli. {retry_after} saniye sonra tekrar deneyin.",
+                headers={"Retry-After": str(retry_after)},
+            )
+        # Kilitleme süresi dolmuşsa sayacı sıfırla
+        if record.locked_until > 0 and record.locked_until <= time.time():
+            record.fail_count = 0
+            record.locked_until = 0.0
+
+    def _record_failure(self, phone: str) -> None:
+        """SC-SEC-02: Başarısız girişi kaydet, gerekirse kilitle."""
+        record = _login_attempts.setdefault(phone, _LoginAttemptRecord())
+        record.fail_count += 1
+        if record.fail_count >= _MAX_FAILED_LOGIN_ATTEMPTS:
+            record.locked_until = time.time() + _LOCKOUT_DURATION_SECONDS
+
+    def _record_success(self, phone: str) -> None:
+        """Başarılı girişte sayacı sıfırla."""
+        _login_attempts.pop(phone, None)
+
     def login(self, phone: str, pin: str) -> AuthTokenResponse:
+        # SC-SEC-02: Kilitleme kontrolü
+        self._check_lockout(phone)
+
         # KR-081: explicit auth contract; no email/TCKN/OTP fields accepted.
+        # KR-050: PIN tam 6 haneli sayısal.
         if phone != "+905555555555" or pin != "123456":
+            self._record_failure(phone)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-        return AuthTokenResponse(access_token="demo-access-token", subject="user-1")
+
+        self._record_success(phone)
+        # KR-050: Gerçek signed JWT token üretimi
+        access_token = self._jwt_handler.issue_access_token(
+            subject="user-1",
+            claims={"phone": phone, "phone_verified": True},
+        )
+        return AuthTokenResponse(access_token=access_token, subject="user-1")
 
     def refresh(self, refresh_token: str) -> AuthTokenResponse:
-        if refresh_token != "demo-refresh-token":
+        # Refresh token doğrulama
+        try:
+            payload = self._jwt_handler.verify_token(refresh_token)
+        except ValueError:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-        return AuthTokenResponse(access_token="demo-access-token-refreshed", subject="user-1")
+        subject = str(payload.get("sub", ""))
+        access_token = self._jwt_handler.issue_access_token(
+            subject=subject,
+            claims={"phone_verified": True},
+        )
+        return AuthTokenResponse(access_token=access_token, subject=subject)
 
 
 # ---------------------------------------------------------------------------

@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """Audit logs schema (WORM - Write-Once-Read-Many).
 
 BOLUM 3 (Gozlemlenebilirlik) ve KR-066 geregi degistirilemez audit_logs

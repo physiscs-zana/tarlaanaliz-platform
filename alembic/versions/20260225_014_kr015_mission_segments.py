@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """KR-015 (optional): mission_segments table (scaffold)
 
 Rename file with real timestamp prefix per your convention.

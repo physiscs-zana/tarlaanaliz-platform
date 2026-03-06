@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """Weather Block status basitleştirme — KR-015-3A.
 
 KR-015-3A: Pilot sahada tek yetkili; admin doğrulama akışı kaldırıldı.

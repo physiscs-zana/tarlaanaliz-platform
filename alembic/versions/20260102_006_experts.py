@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 """Experts and specializations schema.
 
 KR-019 (Expert Portal) geregi experts tablosunu ve uzmanlik

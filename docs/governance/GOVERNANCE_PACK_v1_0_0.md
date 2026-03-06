@@ -1,3 +1,5 @@
+BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+
 # TarlaAnaliz Governance Pack v1.0.0 (2026-02-15)
 
 Bu doküman **“tek gerçek kaynak (SSOT)” + “contract-first”** mimarisinde, kodlama başlamadan önce **SDLC (Software Development Life Cycle)** disiplinini kilitlemek için hazırlanmıştır.  
