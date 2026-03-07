@@ -1,11 +1,12 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-015: Weather block query endpoints.
 """Weather block query endpoints."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Protocol
+from typing import Protocol, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
@@ -48,7 +49,7 @@ def get_weather_block_service(request: Request) -> WeatherBlockService:
     if services is not None:
         svc = services.get("weather_block_service")
         if svc is not None:
-            return svc
+            return cast(WeatherBlockService, svc)
     return _InMemoryWeatherBlockService()
 
 

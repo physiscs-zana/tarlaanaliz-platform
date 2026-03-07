@@ -118,7 +118,7 @@ class WorkerDispatchService:
             model_id=model_id,
             model_version=model_version,
             requires_calibrated=True,
-            calibration_record_id=str(uuid.uuid4()),
+            calibration_record_id=uuid.uuid4(),
             available_bands=dataset.available_bands,
             band_class=band_class,
             status=AnalysisJobStatus.PENDING,

@@ -1,11 +1,12 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-063: Expert portal review endpoints.
 """Expert portal review queue and submit endpoints."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Protocol
+from typing import Protocol, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
@@ -51,7 +52,7 @@ def get_expert_portal_service(request: Request) -> ExpertPortalService:
     if services is not None:
         svc = services.get("expert_portal_service")
         if svc is not None:
-            return svc
+            return cast(ExpertPortalService, svc)
     return _InMemoryExpertPortalService()
 
 

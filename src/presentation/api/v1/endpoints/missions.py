@@ -1,11 +1,12 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-015: Mission management endpoints.
 """Mission management endpoints."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from typing import Protocol
+from typing import Protocol, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
@@ -51,7 +52,7 @@ def get_mission_service(request: Request) -> MissionService:
     if services is not None:
         svc = services.get("mission_service")
         if svc is not None:
-            return svc
+            return cast(MissionService, svc)
     return _InMemoryMissionService()
 
 

@@ -1,11 +1,12 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-081: Admin pricing snapshot management.
 """Admin pricing snapshot publish endpoint."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Protocol
+from typing import Protocol, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
@@ -46,7 +47,7 @@ def get_admin_pricing_service(request: Request) -> AdminPricingService:
     if services is not None:
         svc = services.get("admin_pricing_service")
         if svc is not None:
-            return svc
+            return cast(AdminPricingService, svc)
     return _InMemoryAdminPricingService()
 
 

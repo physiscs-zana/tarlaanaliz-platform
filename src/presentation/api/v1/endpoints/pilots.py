@@ -1,10 +1,11 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-015: Pilot management endpoints.
 """Pilot management endpoints."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
@@ -45,7 +46,7 @@ def get_pilot_service(request: Request) -> PilotService:
     if services is not None:
         svc = services.get("pilot_service")
         if svc is not None:
-            return svc
+            return cast(PilotService, svc)
     return _InMemoryPilotService()
 
 

@@ -1,10 +1,11 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-063: Expert management endpoints.
 """Expert management endpoints."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
@@ -46,7 +47,7 @@ def get_expert_service(request: Request) -> ExpertService:
     if services is not None:
         svc = services.get("expert_service")
         if svc is not None:
-            return svc
+            return cast(ExpertService, svc)
     return _InMemoryExpertService()
 
 

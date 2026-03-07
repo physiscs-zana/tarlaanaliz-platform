@@ -1,11 +1,12 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-017: Training feedback endpoints.
 """Training feedback endpoints."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Protocol
+from typing import Protocol, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
@@ -47,7 +48,7 @@ def get_training_feedback_service(request: Request) -> TrainingFeedbackService:
     if services is not None:
         svc = services.get("training_feedback_service")
         if svc is not None:
-            return svc
+            return cast(TrainingFeedbackService, svc)
     return _InMemoryTrainingFeedbackService()
 
 

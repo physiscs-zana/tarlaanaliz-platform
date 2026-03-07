@@ -1,11 +1,12 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-033: Public pricing endpoints.
 """Pricing endpoints for active snapshots."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Protocol
+from typing import Protocol, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
@@ -49,7 +50,7 @@ def get_pricing_service(request: Request) -> PricingService:
     if services is not None:
         svc = services.get("pricing_service")
         if svc is not None:
-            return svc
+            return cast(PricingService, svc)
     return _InMemoryPricingService()
 
 

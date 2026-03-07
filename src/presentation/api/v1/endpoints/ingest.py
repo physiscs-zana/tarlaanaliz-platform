@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from fastapi import APIRouter, Depends, Request, status
 from pydantic import BaseModel, Field
@@ -117,7 +117,7 @@ def get_ingest_service(request: Request) -> IngestService:
     if services is not None:
         svc = services.get("ingest_service")
         if svc is not None:
-            return svc
+            return cast(IngestService, svc)
     return _InMemoryIngestService()
 
 

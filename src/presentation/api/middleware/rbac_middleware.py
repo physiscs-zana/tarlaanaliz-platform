@@ -11,6 +11,8 @@ Bypass routes (auth, health, docs) are skipped.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Awaitable
+
 from typing import Any
 
 import structlog
@@ -121,6 +123,11 @@ _ROUTE_ROLES: list[tuple[str, frozenset[str]]] = [
             }
         ),
     ),
+    # SLA metrics - IL_OPERATOR KPI access (KR-083: PII-free KPI + capacity metrics)
+    (
+        "/api/v1/sla-metrics",
+        frozenset({"IL_OPERATOR", "CENTRAL_ADMIN"}),
+    ),
 ]
 
 _BYPASS_PREFIXES = (
@@ -130,7 +137,6 @@ _BYPASS_PREFIXES = (
     "/openapi.json",
     "/api/v1/auth/",
     "/api/v1/pricing",  # public read-only
-    "/api/v1/sla-metrics",  # monitoring
 )
 
 
@@ -142,7 +148,7 @@ class RBACMiddleware(BaseHTTPMiddleware):
     Returns 403 Forbidden if no match.
     """
 
-    async def dispatch(self, request: Request, call_next: Any) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         path = request.url.path
 
         # Bypass check

@@ -1,10 +1,11 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-017: Analysis results endpoints.
 """Analysis results endpoints (layer list + summary)."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
@@ -52,7 +53,7 @@ def get_results_service(request: Request) -> ResultsService:
     if services is not None:
         svc = services.get("results_service")
         if svc is not None:
-            return svc
+            return cast(ResultsService, svc)
     return _InMemoryResultsService()
 
 

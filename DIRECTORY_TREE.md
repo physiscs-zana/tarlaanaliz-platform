@@ -1,7 +1,7 @@
 # TarlaAnaliz Platform — Dizin Yapısı (Tree)
 
 > **Bu dosyanın konumu:** `tarlaanaliz-platform_/DIRECTORY_TREE.md`
-> **Son güncelleme:** 2026-03-03
+> **Son güncelleme:** 2026-03-08
 
 ```
 tarlaanaliz-platform/
@@ -15,11 +15,13 @@ tarlaanaliz-platform/
 ├── CHANGELOG.md
 ├── CONTRACTS_SHA256.txt
 ├── CONTRACTS_VERSION.md
+├── DEEP_AUDIT_REPORT_v2.md
 ├── DIRECTORY_TREE.md                ← bu dosya
 ├── Dockerfile
 ├── MANIFEST_CANONICAL.md
 ├── PRODUCTION_READINESS_REPORT.md
 ├── README.md
+├── SSOT_COMPATIBILITY_AUDIT_REPORT.md
 ├── alembic.ini
 ├── docker-compose.yml
 ├── pyproject.toml
@@ -60,20 +62,166 @@ tarlaanaliz-platform/
 │       └── 20260302_simplify_weather_block_status.py
 │
 ├── config/
+│   ├── drone_capability_matrix.yaml
 │   ├── drone_registry.yaml
 │   ├── logging.yaml
 │   └── rate_limits/
 │       ├── base_limits.yaml
 │       └── seasonal_config.yaml
 │
-├── contracts/
+├── contracts/                       (git submodule)
+│   ├── .gitignore
+│   ├── CHANGELOG.md
+│   ├── CLAUDE.md
+│   ├── CONTRACTS_VERSION.md
+│   ├── LICENSE
+│   ├── PATCH_NOTES.md
+│   ├── README.md
+│   ├── drone_capability_matrix.yaml
+│   ├── drone_registry.yaml
+│   ├── package.json
+│   ├── pyproject.toml
+│   ├── requirements-dev.txt
+│   ├── update-contracts.ps1
+│   ├── .github/
+│   │   └── workflows/
+│   │       ├── auto_sync.yml
+│   │       └── contract_validation.yml
+│   ├── api/
+│   │   ├── edge_local.v1.yaml
+│   │   ├── platform_internal.v1.yaml
+│   │   ├── platform_public.v1.yaml
+│   │   └── components/
+│   │       ├── parameters.yaml
+│   │       ├── responses.yaml
+│   │       ├── schemas.yaml
+│   │       └── security_schemes.yaml
+│   ├── docs/
+│   │   ├── README.md
+│   │   ├── TARLAANALIZ_SSOT_v1_2_0.txt
+│   │   ├── versioning_policy.md
+│   │   ├── canonical/
+│   │   │   ├── GELISTIRICI_UYGULAMA_PAKETI_v2_4_.docx
+│   │   │   ├── KANONIK_URUN_ISLEYIS_REHBERI_v2_4_.docx
+│   │   │   ├── README.md
+│   │   │   └── SAHA_OPERASYON_SOP_v2_4_.docx
+│   │   ├── checklists/
+│   │   │   └── SDLC_GATES.md
+│   │   ├── examples/
+│   │   │   ├── README.md
+│   │   │   ├── analysis_job.example.json
+│   │   │   ├── analysis_result.example.json
+│   │   │   ├── dataset.example.json
+│   │   │   ├── dataset_manifest.example.json
+│   │   │   ├── field.example.json
+│   │   │   ├── intake_manifest.example.json
+│   │   │   ├── mission.example.json
+│   │   │   ├── payment_intent_creditcard_paid.example.json
+│   │   │   ├── payment_intent_iban_paid.example.json
+│   │   │   ├── payment_intent_iban_pending.example.json
+│   │   │   └── thermal_analysis_result.example.json
+│   │   └── migration_guides/
+│   │       ├── MIGRATION_GUIDE_TEMPLATE.md
+│   │       ├── README.md
+│   │       ├── field_v1_to_v2.md
+│   │       └── payment_intent_v1_to_v2.md
+│   ├── enums/
+│   │   ├── analysis_type.enum.v1.json
+│   │   ├── crop_type.enum.v1.json
+│   │   ├── dataset_status.enum.v1.json
+│   │   ├── drone_type.enum.v1.json
+│   │   ├── mission_status.enum.v1.json
+│   │   ├── payment_method.enum.v1.json
+│   │   ├── payment_status.enum.v1.json
+│   │   ├── payment_status.enum.v2.json
+│   │   ├── payment_target_type.enum.v1.json
+│   │   ├── qc_status.enum.v1.json
+│   │   ├── quarantine_decision.enum.v1.json
+│   │   ├── role.enum.v1.json
+│   │   ├── scan_stage.enum.v1.json
+│   │   ├── threat_type.enum.v1.json
+│   │   ├── user_role.enum.v1.json
+│   │   └── verification_status.enum.v1.json
+│   ├── schemas/
+│   │   ├── core/
+│   │   │   ├── field.v1.schema.json
+│   │   │   ├── mission.v1.schema.json
+│   │   │   ├── user.v1.schema.json
+│   │   │   └── user_pii.v1.schema.json
+│   │   ├── datasets/
+│   │   │   ├── attestation.v1.schema.json
+│   │   │   ├── calibration_certificate.v1.schema.json
+│   │   │   ├── dataset.v1.schema.json
+│   │   │   ├── dataset_manifest.v1.schema.json
+│   │   │   ├── evidence_bundle_ref.v1.schema.json
+│   │   │   ├── qc_report.v1.schema.json
+│   │   │   ├── scan_report.v1.schema.json
+│   │   │   ├── transfer_batch.v1.schema.json
+│   │   │   └── verification_report.v1.schema.json
+│   │   ├── edge/
+│   │   │   ├── calibration_result.v1.schema.json
+│   │   │   ├── dataset_manifest.v1.schema.json
+│   │   │   ├── edge_metadata.v1.schema.json
+│   │   │   ├── intake_manifest.v1.schema.json
+│   │   │   ├── qc_report.v1.schema.json
+│   │   │   ├── quarantine_event.v1.schema.json
+│   │   │   ├── scan_report.v1.schema.json
+│   │   │   ├── transfer_batch.v1.schema.json
+│   │   │   └── verification_report.v1.schema.json
+│   │   ├── events/
+│   │   │   ├── analysis_completed.v1.schema.json
+│   │   │   ├── dataset_analyzed.v1.schema.json
+│   │   │   ├── dataset_calibrated.v1.schema.json
+│   │   │   ├── dataset_dispatched.v1.schema.json
+│   │   │   ├── dataset_ingested.v1.schema.json
+│   │   │   ├── dataset_scanned.v1.schema.json
+│   │   │   ├── dataset_verified.v1.schema.json
+│   │   │   ├── derived_published.v1.schema.json
+│   │   │   ├── field_created.v1.schema.json
+│   │   │   └── mission_assigned.v1.schema.json
+│   │   ├── platform/
+│   │   │   ├── calibrated_dataset_manifest.v1.schema.json
+│   │   │   ├── calibration_result.v1.schema.json
+│   │   │   ├── evidence_bundle_ref.v1.schema.json
+│   │   │   ├── layer_registry.v1.schema.json
+│   │   │   ├── payment_intent.v1.schema.json
+│   │   │   ├── payment_intent.v2.schema.json
+│   │   │   ├── payroll.v1.schema.json
+│   │   │   ├── pricing.v1.schema.json
+│   │   │   ├── qc_report.v1.schema.json
+│   │   │   ├── subscription.v1.schema.json
+│   │   │   └── training_feedback.v1.schema.json
+│   │   ├── shared/
+│   │   │   ├── address.v1.schema.json
+│   │   │   ├── geojson.v1.schema.json
+│   │   │   └── money.v1.schema.json
+│   │   └── worker/
+│   │       ├── analysis_job.v1.schema.json
+│   │       ├── analysis_result.v1.schema.json
+│   │       └── thermal_analysis_result.v1.schema.json
+│   ├── ssot/
+│   │   ├── GOVERNANCE_PACK_v1_0_1.md
+│   │   ├── README.md
+│   │   ├── contracts_ssot.md
+│   │   └── kr_registry.md
+│   ├── tests/
+│   │   ├── test_examples_match_schemas.py
+│   │   ├── test_no_breaking_changes.py
+│   │   └── test_validate_all_schemas.py
+│   └── tools/
+│       ├── breaking_change_detector.py
+│       ├── compute_contracts_sha256.py
+│       ├── generate_types.sh
+│       ├── pin_version.py
+│       ├── read_contracts_version.py
+│       ├── sync_to_repos.py
+│       ├── sync_to_repos.sh
+│       ├── validate.py
+│       └── verify_contracts_datasets_layer.py
 │
 ├── docs/
-│   ├── IS_PLANI_AKIS_DOKUMANI_v1_0_0.docx
 │   ├── README.md
 │   ├── TARLAANALIZ_SSOT_v1_2_0.txt
-│   ├── is_plani_amendments.md
-│   ├── v3_2_2_tree_audit_report.md
 │   ├── adr/
 │   │   └── ADR-001-nine-state-machine.md
 │   ├── api/
@@ -105,6 +253,8 @@ tarlaanaliz-platform/
 │   ├── kr/
 │   │   └── kr_registry.md
 │   ├── migration_guides/
+│   │   ├── MIGRATION_AUDIT_REPORT_v1_2_0.md
+│   │   ├── PLATFORM_DEEP_AUDIT_v1_2_0.md
 │   │   └── README.md
 │   ├── runbooks/
 │   │   ├── expert_onboarding_procedure.md
@@ -192,6 +342,7 @@ tarlaanaliz-platform/
 │   │   │   ├── contract_validator_service.py
 │   │   │   ├── expert_review_service.py
 │   │   │   ├── field_service.py
+│   │   │   ├── intake_manifest_service.py
 │   │   │   ├── mission_lifecycle_manager.py
 │   │   │   ├── mission_service.py
 │   │   │   ├── planning_capacity.py
@@ -202,7 +353,8 @@ tarlaanaliz-platform/
 │   │   │   ├── training_export_service.py
 │   │   │   ├── training_feedback_service.py
 │   │   │   ├── weather_block_service.py
-│   │   │   └── weekly_window_scheduler.py
+│   │   │   ├── weekly_window_scheduler.py
+│   │   │   └── worker_dispatch_service.py
 │   │   └── workers/
 │   │       └── replan_queue_worker.py
 │   │
@@ -216,6 +368,7 @@ tarlaanaliz-platform/
 │   │   │   │   ├── analysis_result.py
 │   │   │   │   ├── audit_log_entry.py
 │   │   │   │   ├── calibration_record.py
+│   │   │   │   ├── dataset.py
 │   │   │   │   ├── expert.py
 │   │   │   │   ├── expert_review.py
 │   │   │   │   ├── feedback_record.py
@@ -262,10 +415,14 @@ tarlaanaliz-platform/
 │   │   │       ├── __init__.py
 │   │   │       ├── ai_confidence.py
 │   │   │       ├── assignment_policy.py
+│   │   │       ├── av_scan_mode.py
 │   │   │       ├── calibration_manifest.py
 │   │   │       ├── confidence_score.py
+│   │   │       ├── coverage_ratio_threshold.py
 │   │   │       ├── crop_ops_profile.py
+│   │   │       ├── crop_scan_interval.py
 │   │   │       ├── crop_type.py
+│   │   │       ├── dataset_status.py
 │   │   │       ├── drone_model.py
 │   │   │       ├── expert_specialization.py
 │   │   │       ├── geometry.py
@@ -284,6 +441,7 @@ tarlaanaliz-platform/
 │   │   │       ├── sla_metrics.py
 │   │   │       ├── sla_threshold.py
 │   │   │       ├── specialization.py
+│   │   │       ├── spectral_tier.py
 │   │   │       ├── subscription_plan.py
 │   │   │       ├── training_grade.py
 │   │   │       └── weather_block_status.py
@@ -292,6 +450,7 @@ tarlaanaliz-platform/
 │   │       ├── external/
 │   │       │   ├── __init__.py
 │   │       │   ├── ai_worker_feedback.py
+│   │       │   ├── av_scanner_port.py
 │   │       │   ├── ddos_protection.py
 │   │       │   ├── parcel_geometry_provider.py
 │   │       │   ├── payment_gateway.py
@@ -305,6 +464,8 @@ tarlaanaliz-platform/
 │   │           ├── analysis_result_repository.py
 │   │           ├── audit_log_repository.py
 │   │           ├── calibration_record_repository.py
+│   │           ├── crop_ops_profile_repository.py
+│   │           ├── dataset_repository.py
 │   │           ├── expert_repository.py
 │   │           ├── expert_review_repository.py
 │   │           ├── feedback_record_repository.py
@@ -323,9 +484,11 @@ tarlaanaliz-platform/
 │   │   ├── __init__.py
 │   │   ├── config/
 │   │   │   ├── __init__.py
+│   │   │   ├── drone_registry.yaml
 │   │   │   └── settings.py
 │   │   ├── contracts/
 │   │   │   ├── __init__.py
+│   │   │   ├── contract_validator_adapter.py
 │   │   │   └── schema_registry.py
 │   │   ├── external/
 │   │   │   ├── __init__.py
@@ -419,6 +582,7 @@ tarlaanaliz-platform/
 │   │   │           ├── audit_log_repository_impl.py
 │   │   │           ├── calibration_record_repository_impl.py
 │   │   │           ├── crop_ops_profile_repository_impl.py
+│   │   │           ├── dataset_repository_impl.py
 │   │   │           ├── expert_repository_impl.py
 │   │   │           ├── expert_review_repository_impl.py
 │   │   │           ├── feedback_record_repository_impl.py
@@ -444,6 +608,7 @@ tarlaanaliz-platform/
 │       │   ├── __init__.py
 │       │   ├── dependencies.py
 │       │   ├── main.py
+│       │   ├── service_factory.py
 │       │   ├── settings.py
 │       │   ├── middleware/
 │       │   │   ├── _shared.py
@@ -453,7 +618,8 @@ tarlaanaliz-platform/
 │       │   │   ├── jwt_middleware.py
 │       │   │   ├── mtls_verifier.py
 │       │   │   ├── pii_filter.py
-│       │   │   └── rate_limit_middleware.py
+│       │   │   ├── rate_limit_middleware.py
+│       │   │   └── rbac_middleware.py
 │       │   └── v1/
 │       │       ├── __init__.py
 │       │       ├── endpoints/
@@ -466,6 +632,7 @@ tarlaanaliz-platform/
 │       │       │   ├── expert_portal.py
 │       │       │   ├── experts.py
 │       │       │   ├── fields.py
+│       │       │   ├── ingest.py
 │       │       │   ├── missions.py
 │       │       │   ├── parcels.py
 │       │       │   ├── payment_webhooks.py
@@ -545,19 +712,26 @@ tarlaanaliz-platform/
 │   │   ├── test_mtls_verification.py
 │   │   ├── test_pii_filter.py
 │   │   ├── test_rate_limit_enforcement.py
+│   │   ├── test_rbac_middleware.py
 │   │   ├── test_rbac_pilot_results_403.py
 │   │   └── test_webhook_replay_protection.py
 │   └── unit/
 │       ├── __init__.py
 │       ├── test_analysis_completed_handler.py
+│       ├── test_analysis_result_v120.py
+│       ├── test_band_compliance_v120.py
 │       ├── test_calibration_gate.py
+│       ├── test_dataset_bands.py
+│       ├── test_drone_model_v120.py
 │       ├── test_payment_intent_dto.py
 │       ├── test_payment_intent_manual_approval.py
+│       ├── test_spectral_tier.py
 │       ├── test_ssot_compliance_script.py
 │       ├── test_weather_block_replan.py
 │       ├── application/
 │       │   ├── commands/
 │       │   │   ├── test_assign_mission.py
+│       │   │   ├── test_contract_validation.py
 │       │   │   └── test_create_field.py
 │       │   └── services/
 │       │       ├── test_application_services.py
@@ -586,7 +760,9 @@ tarlaanaliz-platform/
     ├── README.md
     ├── eslint.config.mjs
     ├── jest.config.js
+    ├── next-env.d.ts
     ├── next.config.mjs
+    ├── package-lock.json
     ├── package.json
     ├── playwright.config.ts
     ├── pnpm-lock.yaml
@@ -596,7 +772,6 @@ tarlaanaliz-platform/
     ├── tailwind.config.ts
     ├── tsconfig.json
     ├── e2e/
-    │   ├── playwright.config.ts
     │   └── tests/
     │       ├── auth.spec.ts
     │       ├── expert_journey.spec.ts
@@ -639,6 +814,11 @@ tarlaanaliz-platform/
         │   │   │   └── page.tsx
         │   │   ├── audit-viewer/
         │   │   │   └── page.tsx
+        │   │   ├── billing/
+        │   │   │   ├── payments/
+        │   │   │   │   └── page.tsx
+        │   │   │   └── refunds/
+        │   │   │       └── page.tsx
         │   │   ├── calibration/
         │   │   │   └── page.tsx
         │   │   ├── dashboard/
@@ -647,6 +827,11 @@ tarlaanaliz-platform/
         │   │   │   └── page.tsx
         │   │   ├── experts/
         │   │   │   └── page.tsx
+        │   │   ├── il/
+        │   │   │   ├── dashboard/
+        │   │   │   │   └── page.tsx
+        │   │   │   └── metrics/
+        │   │   │       └── page.tsx
         │   │   ├── pilots/
         │   │   │   └── page.tsx
         │   │   ├── price-management/
@@ -683,6 +868,15 @@ tarlaanaliz-platform/
         │   ├── (farmer)/
         │   │   ├── layout.tsx
         │   │   ├── loading.tsx
+        │   │   ├── coop/
+        │   │   │   ├── dashboard/
+        │   │   │   │   └── page.tsx
+        │   │   │   ├── fields/
+        │   │   │   │   └── page.tsx
+        │   │   │   ├── invite/
+        │   │   │   │   └── page.tsx
+        │   │   │   └── members/
+        │   │   │       └── page.tsx
         │   │   ├── fields/
         │   │   │   ├── page.tsx
         │   │   │   └── [id]/
@@ -719,9 +913,11 @@ tarlaanaliz-platform/
         │   │   │   └── page.tsx
         │   │   └── weather-block/
         │   │       └── page.tsx
-        │   └── api/
-        │       └── health/
-        │           └── route.ts
+        │   ├── api/
+        │   │   └── health/
+        │   │       └── route.ts
+        │   └── forbidden/
+        │       └── page.tsx
         ├── components/
         │   ├── common/
         │   │   ├── AccessibilityProvider.tsx
@@ -749,6 +945,7 @@ tarlaanaliz-platform/
         │   │   │   └── MissionTimeline.tsx
         │   │   ├── payment/
         │   │   │   ├── DekontViewer.tsx
+        │   │   │   ├── IbanInstructions.tsx
         │   │   │   ├── PaymentStatusBadge.tsx
         │   │   │   └── PaymentUpload.tsx
         │   │   ├── result/

@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import uuid
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Protocol
 
 import structlog
@@ -130,7 +130,7 @@ class IntakeManifestService:
             "signature": signature,
             "captured_at": captured_at,
             "kiosk_cert_cn": kiosk_cert_cn,
-            "accepted_at": datetime.now(datetime.UTC).isoformat(),
+            "accepted_at": datetime.now(UTC).isoformat(),
         }
         dataset.manifest = manifest_data
 
