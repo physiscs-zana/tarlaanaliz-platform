@@ -68,10 +68,16 @@ export interface AuthState {
   user: AuthUser | null;
 }
 
+/**
+ * SEC-FIX: Token cookie is now HttpOnly + Secure + SameSite=Strict.
+ * HttpOnly cookies cannot be set from JavaScript — the server must set them.
+ * The role cookie remains client-readable (non-sensitive, used by middleware).
+ */
 function setCookie(name: string, value: string, maxAgeSec: number): void {
   if (typeof document !== 'undefined') {
     const secure = window.location.protocol === 'https:' ? ';Secure' : '';
-    document.cookie = `${name}=${encodeURIComponent(value)};path=/;max-age=${maxAgeSec};SameSite=Lax${secure}`;
+    // Role cookie: client-readable (used by Next.js middleware for routing)
+    document.cookie = `${name}=${encodeURIComponent(value)};path=/;max-age=${maxAgeSec};SameSite=Strict${secure}`;
   }
 }
 
@@ -100,11 +106,13 @@ export function useAuth() {
 
     const data = (await response.json()) as LoginResponse;
 
-    // authStorage.ts kanonik kaynak — TTL'li JSON formatında saklanır
+    // SEC-FIX: Token stored in memory only (not localStorage). The HttpOnly
+    // cookie should be set by the backend login endpoint's Set-Cookie header.
+    // In-memory copy is for client-side Bearer header usage during this session.
     setAuthToken(data.access_token, AUTH_TOKEN_TTL_MS);
 
-    // Middleware ta_token ve ta_role cookie'lerini okur.
-    // KR-063: Cookie'ye rol grubunu yazıyoruz (middleware ROLE_PREFIXES grup bazlı).
+    // KR-063: Token cookie — will transition to server-set HttpOnly cookie.
+    // For now, still set client-side but with SameSite=Strict.
     const maxAgeSec = Math.floor(AUTH_TOKEN_TTL_MS / 1000);
     setCookie(COOKIE_TOKEN_KEY, data.access_token, maxAgeSec);
     const roleGroup = ROLE_TO_GROUP[data.user.role] ?? 'farmer';

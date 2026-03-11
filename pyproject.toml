@@ -18,47 +18,49 @@ authors = [
     {name = "TarlaAnaliz Team"},
 ]
 
+# SEC-FIX: Added upper bounds to all dependencies to prevent uncontrolled major version bumps
 dependencies = [
     # --- Web Framework ---
-    "fastapi>=0.115.0",
-    "uvicorn[standard]>=0.34.0",
-    "pydantic>=2.10.0",
-    "pydantic-settings>=2.7.0",
+    "fastapi>=0.115.0,<1",
+    "uvicorn[standard]>=0.34.0,<1",
+    "pydantic>=2.10.0,<3",
+    "pydantic-settings>=2.7.0,<3",
 
     # --- Database ---
-    "sqlalchemy[asyncio]>=2.0.36",
-    "asyncpg>=0.30.0",
-    "alembic>=1.14.0",
-    "geoalchemy2>=0.15.0",
+    "sqlalchemy[asyncio]>=2.0.36,<3",
+    "asyncpg>=0.30.0,<1",
+    "alembic>=1.14.0,<2",
+    "geoalchemy2>=0.15.0,<1",
 
     # --- Cache ---
-    "redis>=5.2.0",
+    "redis>=5.2.0,<6",
 
     # --- Message Queue ---
-    "aio-pika>=9.5.0",
+    "aio-pika>=9.5.0,<10",
 
     # --- Auth / Security ---
-    "python-jose[cryptography]>=3.3.0",
-    "passlib[bcrypt]>=1.7.4",
+    # SEC-FIX: python-jose replaced (CVE-2024-33663/33664), passlib removed (unused)
+    "PyJWT[crypto]>=2.8.0,<3",
+    "cryptography>=42.0,<44",
 
     # --- HTTP Client ---
-    "httpx>=0.28.0",
+    "httpx>=0.28.0,<1",
 
     # --- Object Storage ---
-    "boto3>=1.35.0",
+    "boto3>=1.35.0,<2",
 
     # --- Geospatial ---
-    "shapely>=2.0.6",
+    "shapely>=2.0.6,<3",
 
     # --- Observability ---
-    "structlog>=24.4.0",
-    "sentry-sdk[fastapi]>=2.19.0",
-    "prometheus-client>=0.21.0",
+    "structlog>=24.4.0,<26",
+    "sentry-sdk[fastapi]>=2.19.0,<3",
+    "prometheus-client>=0.21.0,<1",
 
     # --- Utilities ---
-    "python-dotenv>=1.0.1",
-    "orjson>=3.10.0",
-    "tenacity>=9.0.0",
+    "python-dotenv>=1.0.1,<2",
+    "orjson>=3.10.0,<4",
+    "tenacity>=9.0.0,<10",
 ]
 
 [project.optional-dependencies]

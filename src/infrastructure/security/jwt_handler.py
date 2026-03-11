@@ -1,5 +1,6 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # KR-050: JWT HS256 token üretimi ve doğrulaması (telefon+PIN kimlik).
+# SEC-FIX: python-jose (CVE-2024-33663/33664) → PyJWT
 
 """Infrastructure JWT primitives."""
 
@@ -9,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, cast
 
-from jose import JWTError, jwt
+import jwt
 
 
 @dataclass(frozen=True)
@@ -40,7 +41,7 @@ class JWTHandler:
         }
         if claims:
             payload.update(claims)
-        return cast(str, jwt.encode(payload, self._settings.secret_key, algorithm=self._settings.algorithm))
+        return jwt.encode(payload, self._settings.secret_key, algorithm=self._settings.algorithm)
 
     def verify_token(self, token: str) -> dict[str, Any]:
         try:
@@ -50,8 +51,9 @@ class JWTHandler:
                 algorithms=[self._settings.algorithm],
                 audience=self._settings.audience,
                 issuer=self._settings.issuer,
+                options={"require": ["exp", "iss", "aud", "sub"]},
             )
-        except JWTError as exc:
+        except jwt.PyJWTError as exc:
             raise ValueError("Invalid JWT token") from exc
 
         if not payload.get("sub"):

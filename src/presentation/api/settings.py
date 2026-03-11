@@ -86,7 +86,7 @@ class JwtSettings:
             ],
         )
     )
-    secret: str = field(default_factory=lambda: _require_env("API_JWT_SECRET", "CHANGE-ME-IN-PRODUCTION"))
+    secret: str = field(default_factory=lambda: _require_env("API_JWT_SECRET"))
     algorithm: str = field(default_factory=lambda: os.getenv("API_JWT_ALGORITHM", "HS256"))
 
 

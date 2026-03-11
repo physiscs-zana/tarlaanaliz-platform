@@ -160,10 +160,13 @@ class RBACMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
 
-        # JWT bypass (no user) -> pass to next middleware
+        # SEC-FIX: Default-deny — unauthenticated requests are rejected (was default-open)
         user = getattr(request.state, "user", None)
         if user is None:
-            return await call_next(request)
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Authentication required"},
+            )
 
         # User roles
         user_roles = set(getattr(request.state, "roles", []))

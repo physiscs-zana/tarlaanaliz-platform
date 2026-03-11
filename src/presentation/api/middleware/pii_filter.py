@@ -29,6 +29,7 @@ from src.presentation.api.middleware._shared import (
 LOGGER = logging.getLogger("api.middleware.pii_filter")
 
 # PII alan adlari — bu alanlar maskelenir veya kaldirilir
+# SEC-FIX: GPS, pin, pin_hash alanları PII setine eklendi
 PII_FIELDS: frozenset[str] = frozenset(
     {
         "phone",
@@ -44,6 +45,14 @@ PII_FIELDS: frozenset[str] = frozenset(
         "ad_soyad",
         "address",
         "adres",
+        "gps_lat",
+        "gps_lon",
+        "gps_latitude",
+        "gps_longitude",
+        "latitude",
+        "longitude",
+        "pin",
+        "pin_hash",
     }
 )
 

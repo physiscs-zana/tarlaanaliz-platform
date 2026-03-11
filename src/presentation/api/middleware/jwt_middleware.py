@@ -9,6 +9,7 @@ import hashlib
 import hmac
 import json
 import logging
+import os
 import time
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -117,10 +118,12 @@ class JwtMiddleware(BaseHTTPMiddleware):
             LOGGER.info("JWT signature validation failed", extra={"event": "jwt_invalid_signature"})
             raise JwtValidationError("Invalid signature")
 
-        # KR-050: Token expiration check (CRITICAL: was missing — expired tokens were accepted)
+        # SEC-FIX: exp claim is now REQUIRED — tokens without expiration are rejected
         now = int(time.time())
         exp = payload.get("exp")
-        if exp is not None and now >= int(exp):
+        if exp is None:
+            raise JwtValidationError("Token missing required 'exp' claim")
+        if now >= int(exp):
             LOGGER.info("JWT token expired", extra={"event": "jwt_expired"})
             raise JwtValidationError("Token expired")
 
@@ -128,6 +131,22 @@ class JwtMiddleware(BaseHTTPMiddleware):
         iat = payload.get("iat")
         if iat is not None and int(iat) > now + 60:
             raise JwtValidationError("Token issued in the future")
+
+        # SEC-FIX: Validate issuer and audience when configured via env
+        expected_iss = os.getenv("API_JWT_ISSUER")
+        if expected_iss:
+            token_iss = payload.get("iss")
+            if token_iss != expected_iss:
+                raise JwtValidationError("Invalid issuer")
+
+        expected_aud = os.getenv("API_JWT_AUDIENCE")
+        if expected_aud:
+            token_aud = payload.get("aud")
+            if isinstance(token_aud, list):
+                if expected_aud not in token_aud:
+                    raise JwtValidationError("Invalid audience")
+            elif token_aud != expected_aud:
+                raise JwtValidationError("Invalid audience")
 
         return payload
 

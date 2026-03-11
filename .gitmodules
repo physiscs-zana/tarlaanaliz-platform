@@ -1,3 +1,5 @@
+# SEC-FIX (M-08): Note — GitHub org is 'physiscs-zana' here but contract's own
+# package.json references 'tarlaanaliz'. Verify org name consistency before prod.
 [submodule "contracts"]
 	path = contracts
 	url = https://github.com/physiscs-zana/tarlaanaliz-contract

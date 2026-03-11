@@ -189,6 +189,13 @@ class S3StorageIntegration(StorageService):
         http_method: str = "GET",
     ) -> PresignedUrl:
         """Sınırlı süreli erişim URL'i oluştur."""
+        # SEC-FIX: Validate bucket and key to prevent path traversal
+        import re
+        if not re.match(r"^[a-zA-Z0-9._-]+$", bucket):
+            raise ValueError(f"Invalid bucket name: {bucket}")
+        if ".." in key or key.startswith("/") or "\x00" in key:
+            raise ValueError(f"Invalid object key: path traversal or null byte detected")
+
         resolved_bucket = self._resolve_bucket(bucket)
         client_method = "get_object" if http_method.upper() == "GET" else "put_object"
 
