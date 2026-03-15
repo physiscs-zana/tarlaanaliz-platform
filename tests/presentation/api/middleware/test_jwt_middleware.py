@@ -1,4 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-050: JWT middleware tests — token validation, phone_verified gate, bypass routes.
 
 from __future__ import annotations
 
