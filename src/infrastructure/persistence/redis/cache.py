@@ -1,3 +1,5 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-041: Redis client for caching and rate limiting.
 # PATH: src/infrastructure/persistence/redis/cache.py
 # DESC: Redis cache adapter.
 """Async Redis client management with connection pooling.

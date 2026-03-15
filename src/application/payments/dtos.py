@@ -1,4 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-033: Payment DTO definitions for manual approval flow.
 """DTOs for payment application use-cases."""
 
 from __future__ import annotations

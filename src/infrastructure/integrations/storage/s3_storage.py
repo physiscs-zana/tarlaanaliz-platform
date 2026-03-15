@@ -1,3 +1,5 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-072: S3 object storage for dataset blobs.
 # PATH: src/infrastructure/integrations/storage/s3_storage.py
 # DESC: StorageService portunun S3-uyumlu implementasyonu (AWS S3 / MinIO).
 """

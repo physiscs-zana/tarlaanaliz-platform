@@ -1,3 +1,5 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-013: TKGM/MEGSIS WFS adapter for parcel geometry.
 # PATH: src/infrastructure/external/tkgm_megsis_wfs_adapter.py
 # DESC: TKGM/MEGSİS WFS/WMS proxy üzerinden parsel geometrisi sorgulayan adapter (ParcelGeometryProvider impl).
 """

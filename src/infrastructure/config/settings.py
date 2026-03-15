@@ -1,3 +1,5 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-041: Platform configuration loaded from environment.
 # PATH: src/infrastructure/config/settings.py
 # DESC: Platform konfigürasyonunu ENV'den yüklemek.
 """

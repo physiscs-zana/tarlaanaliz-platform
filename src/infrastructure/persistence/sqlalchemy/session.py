@@ -1,3 +1,5 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-041: Request-scoped database session management.
 # PATH: src/infrastructure/persistence/sqlalchemy/session.py
 # DESC: DB engine ve request-scope Session uretimi.
 """Request-scoped async session management.

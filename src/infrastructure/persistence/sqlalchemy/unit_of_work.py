@@ -1,3 +1,5 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-041: Transaction atomicity via Unit of Work pattern.
 # PATH: src/infrastructure/persistence/sqlalchemy/unit_of_work.py
 # DESC: Transaction sinirari ve atomicity (Unit of Work).
 """Unit of Work pattern implementation for transactional consistency.

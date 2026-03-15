@@ -28,7 +28,7 @@ class EncryptionService:
     @staticmethod
     def generate_key() -> bytes:
         """Generate a cryptographically secure 256-bit key."""
-        return AESGCM.generate_key(bit_length=256)
+        return AESGCM.generate_key(256)
 
     def encrypt(self, plaintext: str) -> str:
         """Encrypt plaintext and return base64-encoded nonce+ciphertext."""

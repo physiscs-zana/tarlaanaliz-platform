@@ -1,3 +1,5 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-015: Reassignment handler — mission reassignment via auto_dispatch.
 """KR-015 — Reassignment handler (mission -> REASSIGN_QUEUE + auto_dispatch).
 
 Bu dosya dokümanda "YENİ veya GÜNCELLEME" olarak geçiyor.
