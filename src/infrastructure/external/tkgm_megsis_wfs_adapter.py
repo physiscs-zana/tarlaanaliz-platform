@@ -30,6 +30,21 @@ from src.infrastructure.config.settings import Settings
 
 logger = structlog.get_logger(__name__)
 
+import re
+
+# SEC-FIX: CQL injection prevention — escape single quotes and dangerous chars
+_CQL_UNSAFE_PATTERN = re.compile(r"['\";\\]")
+
+
+def _sanitize_cql(value: str) -> str:
+    """Escape CQL special characters to prevent injection attacks."""
+    if _CQL_UNSAFE_PATTERN.search(value):
+        # Replace single quotes with escaped version, strip other dangerous chars
+        sanitized = value.replace("'", "''")
+        sanitized = sanitized.replace(";", "").replace("\\", "")
+        return sanitized
+    return value
+
 _RETRY_DECORATOR = retry(
     retry=retry_if_exception_type((httpx.TimeoutException, httpx.ConnectError)),
     stop=stop_after_attempt(3),
@@ -103,11 +118,13 @@ class TKGMMegsisWFSAdapter(ParcelGeometryProvider):
                     "typeName": "kadastro:parsel",
                     "outputFormat": "application/json",
                     "CQL_FILTER": (
-                        f"il='{parcel_ref.province}' AND "
-                        f"ilce='{parcel_ref.district}' AND "
-                        f"mahalle='{parcel_ref.village}' AND "
-                        f"ada='{parcel_ref.ada}' AND "
-                        f"parsel='{parcel_ref.parsel}'"
+                        "il='{}' AND ilce='{}' AND mahalle='{}' AND ada='{}' AND parsel='{}'".format(
+                            _sanitize_cql(parcel_ref.province),
+                            _sanitize_cql(parcel_ref.district),
+                            _sanitize_cql(parcel_ref.village),
+                            _sanitize_cql(parcel_ref.ada),
+                            _sanitize_cql(parcel_ref.parsel),
+                        )
                     ),
                 },
             )

@@ -57,8 +57,34 @@ async def create_service_container(
     """
     container = ServiceContainer()
 
+    # Register core application service CLASSES — these require Protocol-based
+    # dependencies (repos, event buses) that are injected at endpoint level,
+    # so we store the class references for lazy instantiation.
+    from src.application.services.field_service import FieldService
+    from src.application.services.mission_service import MissionService
+    from src.application.services.audit_log_service import AuditLogService
+    from src.application.services.expert_review_service import ExpertReviewService
+    from src.application.services.weather_block_service import WeatherBlockService
+    from src.application.services.pricebook_service import PricebookService
+    from src.application.services.subscription_scheduler import SubscriptionScheduler
+    from src.application.services.training_feedback_service import TrainingFeedbackService
+
+    container.register("field_service", FieldService)
+    container.register("mission_service", MissionService)
+    container.register("audit_log_service", AuditLogService)
+    container.register("expert_review_service", ExpertReviewService)
+    container.register("weather_block_service", WeatherBlockService)
+    container.register("pricebook_service", PricebookService)
+    container.register("subscription_scheduler", SubscriptionScheduler)
+    container.register("training_feedback_service", TrainingFeedbackService)
+
+    # Store raw infrastructure dependencies for endpoint-level injection
+    container.register("db_session_factory", db_session_factory)
+    container.register("event_bus", event_bus)
+    container.register("storage", storage)
+
     logger.info(
-        "service_container_initialized",
+        "service_container_created",
         db_available=db_session_factory is not None,
         event_bus_available=event_bus is not None,
         storage_available=storage is not None,

@@ -160,10 +160,13 @@ class RBACMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
 
-        # JWT bypass (no user) -> pass to next middleware
+        # SEC-FIX: Default-deny — unauthenticated requests are rejected (was default-open)
         user = getattr(request.state, "user", None)
         if user is None:
-            return await call_next(request)
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Authentication required"},
+            )
 
         # User roles
         user_roles = set(getattr(request.state, "roles", []))
@@ -188,5 +191,22 @@ class RBACMiddleware(BaseHTTPMiddleware):
                         },
                     )
                 break  # Match found, access granted
+        else:
+            # SEC-FIX: Default-deny — no route matched, reject /api/ requests
+            if path.startswith("/api/"):
+                corr_id = getattr(request.state, "corr_id", "")
+                logger.warning(
+                    "rbac_denied_no_route_match",
+                    path=path,
+                    user_roles=sorted(user_roles),
+                    corr_id=corr_id,
+                )
+                return JSONResponse(
+                    status_code=403,
+                    content={
+                        "detail": "Forbidden - route not authorized",
+                        "corr_id": corr_id,
+                    },
+                )
 
         return await call_next(request)

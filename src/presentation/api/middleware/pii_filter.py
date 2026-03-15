@@ -29,6 +29,7 @@ from src.presentation.api.middleware._shared import (
 LOGGER = logging.getLogger("api.middleware.pii_filter")
 
 # PII alan adlari — bu alanlar maskelenir veya kaldirilir
+# SEC-FIX: GPS, pin, pin_hash alanları PII setine eklendi
 PII_FIELDS: frozenset[str] = frozenset(
     {
         "phone",
@@ -44,6 +45,14 @@ PII_FIELDS: frozenset[str] = frozenset(
         "ad_soyad",
         "address",
         "adres",
+        "gps_lat",
+        "gps_lon",
+        "gps_latitude",
+        "gps_longitude",
+        "latitude",
+        "longitude",
+        "pin",
+        "pin_hash",
     }
 )
 
@@ -82,6 +91,8 @@ def _redact_dict(data: dict[str, Any]) -> dict[str, Any]:
                 redacted[key] = _mask_value(value)
             else:
                 redacted[key] = "***"
+        elif isinstance(value, str) and _PHONE_PATTERN.search(value):
+            redacted[key] = _PHONE_PATTERN.sub("05XX XXX XX XX", value)
         elif isinstance(value, dict):
             redacted[key] = _redact_dict(value)
         elif isinstance(value, list):

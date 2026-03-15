@@ -295,14 +295,9 @@ class RabbitMQEventBus(EventBus):
                 )
                 return
 
-            # DomainEvent reconstruct (basit: body dict'i olarak geçir)
-            event = DomainEvent()  # base event
-            # Handler'lara body dict'ini DomainEvent olarak sararak gönder
-            # Not: handler'lar body dict'ini doğrudan kullanabilir
-
             for sub_id, handler in handlers:
                 try:
-                    await handler(event)
+                    await handler(body)
                     logger.debug(
                         "event_bus_handler_invoked",
                         event_type=event_type,

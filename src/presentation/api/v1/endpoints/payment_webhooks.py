@@ -49,8 +49,15 @@ class _InMemoryPaymentWebhookService:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 
         # HMAC signature verification (KR-033: webhook integrity)
+        # SEC-FIX: webhook_secret boşsa HMAC doğrulama atlanamaz — servis hazır değil
         webhook_secret = os.getenv("PAYMENT_WEBHOOK_SECRET", "")
-        if webhook_secret and raw_body:
+        if not webhook_secret:
+            LOGGER.error("PAYMENT_WEBHOOK_SECRET not configured — rejecting webhook")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Webhook verification not configured",
+            )
+        if raw_body:
             expected = hmac.new(
                 webhook_secret.encode("utf-8"),
                 raw_body,

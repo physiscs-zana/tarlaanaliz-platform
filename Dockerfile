@@ -6,6 +6,8 @@
 # ---------------------------------------------------------------------------
 # Stage 1: Builder — bagimlilik kurulumu
 # ---------------------------------------------------------------------------
+# SEC-FIX: pin to specific version tag; for production, add @sha256:<digest>
+# e.g. python:3.12.8-slim@sha256:<digest>
 FROM python:3.12-slim AS builder
 
 WORKDIR /build
@@ -24,6 +26,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 # ---------------------------------------------------------------------------
 # Stage 2: Runtime — minimal production image
 # ---------------------------------------------------------------------------
+# SEC-FIX: same digest pin as builder stage
 FROM python:3.12-slim AS runtime
 
 # Guvenlik: non-root kullanici [KR-040]

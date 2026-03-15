@@ -112,7 +112,21 @@ class _InMemoryPhonePinAuthService:
 
         # KR-081: explicit auth contract; no email/TCKN/OTP fields accepted.
         # KR-050: PIN tam 6 haneli sayısal.
-        if phone != "+905555555555" or pin != "123456":
+        # SEC-FIX: Hardcoded credentials kaldırıldı. Gerçek kullanıcı doğrulaması
+        # veritabanı üzerinden yapılmalıdır. Bu stub, user_repo entegrasyonuna kadar
+        # sadece env-tabanlı test credentials ile çalışır.
+        import os
+
+        _test_phone = os.getenv("AUTH_TEST_PHONE")
+        _test_pin = os.getenv("AUTH_TEST_PIN")
+        if not _test_phone or not _test_pin:
+            LOGGER.error("AUTH_TEST_PHONE/AUTH_TEST_PIN env vars not set — login disabled until user_repo is integrated")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Authentication service not configured",
+            )
+
+        if phone != _test_phone or pin != _test_pin:
             self._record_failure(phone)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 

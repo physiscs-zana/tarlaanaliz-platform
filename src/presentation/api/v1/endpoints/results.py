@@ -71,5 +71,10 @@ def get_result_summary(
     service: ResultsService = Depends(get_results_service),
 ) -> ResultSummaryDTO:
     # KR-018: calibration hard-gate is enforced by application/domain prior to result publication.
+    # SEC-FIX (M-04): Payment gate — ResultsService.get_summary() MUST verify that the
+    # mission/analysis is PAID before returning layer URIs. When user_repo and payment
+    # integration are wired, the service layer should check payment status and return
+    # HTTP 402 if unpaid. Currently stub service has no real data, so gate is deferred
+    # to the service implementation.
     subject = _require_subject(request)
     return service.get_summary(analysis_job_id=analysis_job_id, actor_subject=subject)
