@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/entities/payment_intent.py
 # DESC: PaymentIntent; dekont upload, manuel onay (KR-033), finansal integrity.
 # SSOT: TARLAANALIZ_SSOT_v1_2_0.txt — KR-033 (odeme ve manuel onay)

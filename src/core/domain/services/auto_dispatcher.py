@@ -46,10 +46,7 @@ class AutoDispatcher:
             pilots_by_territory.setdefault(p.territory_id, []).append(p)
 
         # Track remaining daily capacity per pilot
-        pilot_remaining: dict[str, int] = {
-            p.id: getattr(p, "daily_capacity_donum", 100)
-            for p in pilots
-        }
+        pilot_remaining: dict[str, int] = {p.id: getattr(p, "daily_capacity_donum", 100) for p in pilots}
 
         for m in missions:
             cand = pilots_by_territory.get(m.territory_id, [])
@@ -60,6 +57,7 @@ class AutoDispatcher:
             scheduled_weekday = -1
             try:
                 from datetime import date as _date
+
                 d = _date.fromisoformat(m.scheduled_date)
                 scheduled_weekday = d.weekday()
             except (ValueError, TypeError):

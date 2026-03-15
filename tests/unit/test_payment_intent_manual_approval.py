@@ -48,7 +48,7 @@ def test_kr033_manual_approval_moves_status_to_paid_and_sets_admin() -> None:
     intent = _intent()
     admin_id = uuid.uuid4()
 
-    intent.mark_paid(approved_by_admin_user_id=admin_id)
+    intent.mark_paid(approved_by_admin_user_id=admin_id, admin_note="Manual payment approval")
 
     assert intent.status == PaymentStatus.PAID
     assert intent.approved_by_admin_user_id == admin_id
@@ -59,4 +59,4 @@ def test_kr033_approval_not_allowed_from_rejected() -> None:
     intent.reject("invalid receipt")
 
     with pytest.raises(ValueError, match="PAYMENT_PENDING"):
-        intent.mark_paid(approved_by_admin_user_id=uuid.uuid4())
+        intent.mark_paid(approved_by_admin_user_id=uuid.uuid4(), admin_note="Test approval")

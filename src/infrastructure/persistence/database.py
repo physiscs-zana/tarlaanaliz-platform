@@ -1,3 +1,5 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-041: Async database engine with connection pooling.
 # PATH: src/infrastructure/persistence/database.py
 # DESC: Async database engine factory with connection pooling.
 """Database engine management for async SQLAlchemy (asyncpg).

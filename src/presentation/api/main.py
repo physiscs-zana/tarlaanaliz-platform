@@ -148,6 +148,7 @@ def _register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(Exception)
     async def handle_uncaught_exception(request: Request, exc: Exception) -> JSONResponse:
         import structlog as _sl
+
         _sl.get_logger("unhandled_exception").error(
             "unhandled_exception",
             exc_type=type(exc).__name__,
@@ -195,8 +196,10 @@ def create_app() -> FastAPI:
         overall = "ok"
         try:
             from src.infrastructure.persistence.database import get_engine
+
             engine = await get_engine()
             from sqlalchemy import text as sa_text
+
             async with engine.connect() as conn:
                 await conn.execute(sa_text("SELECT 1"))
             checks["database"] = "ok"
@@ -205,8 +208,9 @@ def create_app() -> FastAPI:
             overall = "degraded"
         try:
             from src.infrastructure.persistence.redis.cache import get_redis_client
+
             redis_client = await get_redis_client()
-            await redis_client.ping()
+            await redis_client.ping()  # type: ignore[misc]
             checks["redis"] = "ok"
         except Exception:
             checks["redis"] = "unhealthy"

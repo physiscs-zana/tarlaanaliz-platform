@@ -1,3 +1,5 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-050: Distributed rate limiter for brute-force protection.
 # PATH: src/infrastructure/persistence/redis/rate_limiter.py
 # DESC: Redis-backed distributed rate limiter.
 """Distributed sliding-window rate limiter using Redis sorted sets.

@@ -1,3 +1,5 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-070: RabbitMQ message consumer with retry and DLQ.
 # PATH: src/infrastructure/messaging/rabbitmq/consumer.py
 # DESC: RabbitMQ consumer adapter.
 """

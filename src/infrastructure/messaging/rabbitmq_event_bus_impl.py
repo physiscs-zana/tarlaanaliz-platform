@@ -1,3 +1,5 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-081: EventBus RabbitMQ implementation.
 # PATH: src/infrastructure/messaging/rabbitmq_event_bus_impl.py
 # DESC: EventBus portunun RabbitMQ implementasyonu.
 """
@@ -297,7 +299,7 @@ class RabbitMQEventBus(EventBus):
 
             for sub_id, handler in handlers:
                 try:
-                    await handler(body)
+                    await handler(body)  # type: ignore[arg-type]
                     logger.debug(
                         "event_bus_handler_invoked",
                         event_type=event_type,

@@ -46,7 +46,7 @@ def _intent() -> PaymentIntent:
 
 def test_kr033_mark_paid_only_from_pending() -> None:
     intent = _intent()
-    intent.mark_paid(approved_by_admin_user_id=uuid.uuid4())
+    intent.mark_paid(approved_by_admin_user_id=uuid.uuid4(), admin_note="Test approval")
 
     assert intent.status == PaymentStatus.PAID
 
@@ -60,7 +60,7 @@ def test_kr033_attach_receipt_updates_proof_reference() -> None:
 
     assert intent.receipt_blob_id == "blob://receipt-1"
 
-    intent.mark_paid(approved_by_admin_user_id=uuid.uuid4())
+    intent.mark_paid(approved_by_admin_user_id=uuid.uuid4(), admin_note="Test approval")
     intent.attach_receipt(receipt_blob_id="blob://receipt-2")
 
     assert intent.receipt_blob_id == "blob://receipt-2"

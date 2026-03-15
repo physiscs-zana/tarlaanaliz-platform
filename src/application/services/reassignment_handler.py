@@ -1,3 +1,5 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-015: Reassignment handler — mission reassignment via auto_dispatch.
 """KR-015 — Reassignment handler (mission -> REASSIGN_QUEUE + auto_dispatch).
 
 Bu dosya dokümanda "YENİ veya GÜNCELLEME" olarak geçiyor.
@@ -23,6 +25,8 @@ class PilotLike(Protocol):
     id: str
     territory_id: str
     reliability_score: float
+    work_days: list[int]
+    daily_capacity_donum: int
 
 
 class MissionRepo(Protocol):
