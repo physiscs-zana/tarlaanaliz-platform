@@ -76,7 +76,10 @@ class PaymentService:
 
     async def approve_intent(self, payload: ApprovePaymentInput) -> PaymentOperationResult:
         intent = await self._get_intent(payload.payment_intent_id)
-        intent.mark_paid(approved_by_admin_user_id=uuid.UUID(payload.approved_by_admin_user_id))
+        intent.mark_paid(
+            approved_by_admin_user_id=uuid.UUID(payload.approved_by_admin_user_id),
+            admin_note=payload.admin_note or "Manual approval",
+        )
         await self.payment_intent_repository.save(intent)
         await self.audit_port.record(
             event="PAYMENT_APPROVED",

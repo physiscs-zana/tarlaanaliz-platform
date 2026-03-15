@@ -23,13 +23,17 @@ from typing import Any, Dict, List, Union
 _KR025_BLOCKED_PATTERN = re.compile(
     r"\b("
     r"pesticide|pestisit|herbicide|herbisit|fungicide|fungisit|insecticide|insektisit"
-    r"|ilaclama|ilac[_\s]?onerisi|sprey|spreyleme|puskurtme"
-    r"|gubreleme|fertiliz|fertilization"
+    r"|ilac[_\s]?onerisi|sprey[_\s]?plan|spreyleme[_\s]?plan|puskurtme[_\s]?plan"
+    r"|gubreleme[_\s]?plan|gubreleme[_\s]?oner"
+    r"|fertiliz(ation|er)[_\s]?(plan|recommend|advice)"
     r"|doz[_\s]?oner|uygulama[_\s]?kara|application[_\s]?decision"
     r"|prescription|recete"
     r")\b",
     re.IGNORECASE,
 )
+
+# KR-025: Known safe disclaimer phrases that must NOT trigger the blocker
+_KR025_DISCLAIMER = "ilaclama karari vermez"
 
 
 @dataclass
@@ -82,8 +86,9 @@ class AnalysisResult:
     # ------------------------------------------------------------------
     def _enforce_kr025(self) -> None:
         """KR-025: Reject content containing pesticide/herbicide/fungicide recommendations."""
-        # Check summary
-        if _KR025_BLOCKED_PATTERN.search(self.summary):
+        # Check summary (exclude known disclaimer text)
+        summary_check = self.summary.replace(_KR025_DISCLAIMER, "")
+        if _KR025_BLOCKED_PATTERN.search(summary_check):
             raise ValueError(
                 "KR-025 VIOLATION: summary contains blocked pesticide/herbicide/fungicide "
                 "recommendation keywords. System must NOT make spraying/fertilization decisions."
@@ -103,8 +108,14 @@ class AnalysisResult:
             for key, value in data.items():
                 # Block known recommendation-type keys
                 lower_key = key.lower()
-                if lower_key in ("recommendations", "prescription", "prescriptions",
-                                 "pesticide_advice", "spray_plan", "ilaclama_plani"):
+                if lower_key in (
+                    "recommendations",
+                    "prescription",
+                    "prescriptions",
+                    "pesticide_advice",
+                    "spray_plan",
+                    "ilaclama_plani",
+                ):
                     raise ValueError(
                         f"KR-025 VIOLATION: findings contains blocked key '{key}'. "
                         f"System must NOT include recommendation/prescription fields."

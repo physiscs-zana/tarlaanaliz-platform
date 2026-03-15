@@ -39,6 +39,7 @@ class ApprovePaymentInput:
 
     payment_intent_id: str
     approved_by_admin_user_id: str
+    admin_note: str = ""
 
 
 @dataclass(frozen=True, slots=True)

@@ -23,6 +23,8 @@ class PilotLike(Protocol):
     id: str
     territory_id: str
     reliability_score: float
+    work_days: list[int]
+    daily_capacity_donum: int
 
 
 class MissionRepo(Protocol):

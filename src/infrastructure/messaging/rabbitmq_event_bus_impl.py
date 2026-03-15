@@ -297,7 +297,7 @@ class RabbitMQEventBus(EventBus):
 
             for sub_id, handler in handlers:
                 try:
-                    await handler(body)
+                    await handler(body)  # type: ignore[arg-type]
                     logger.debug(
                         "event_bus_handler_invoked",
                         event_type=event_type,

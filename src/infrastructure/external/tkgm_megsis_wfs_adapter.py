@@ -45,6 +45,7 @@ def _sanitize_cql(value: str) -> str:
         return sanitized
     return value
 
+
 _RETRY_DECORATOR = retry(
     retry=retry_if_exception_type((httpx.TimeoutException, httpx.ConnectError)),
     stop=stop_after_attempt(3),

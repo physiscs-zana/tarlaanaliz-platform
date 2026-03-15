@@ -43,7 +43,9 @@ def test_jwt_verify_rejects_invalid_audience() -> None:
 
     # SEC-FIX: PyJWT doesn't allow overriding aud via claims like jose did.
     # Create a token with a different handler that has a different audience.
-    wrong_handler = JWTHandler(JWTSettings(secret_key="secret", access_token_ttl_minutes=5, audience="different-audience"))
+    wrong_handler = JWTHandler(
+        JWTSettings(secret_key="secret", access_token_ttl_minutes=5, audience="different-audience")
+    )
     token = wrong_handler.issue_access_token(subject="user-1")
 
     with pytest.raises(ValueError, match="Invalid JWT token"):

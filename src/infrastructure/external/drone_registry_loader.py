@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import structlog
-import yaml  # type: ignore[import-untyped]
+import yaml
 
 from src.core.domain.value_objects.drone_model import DroneModel, DroneModelError
 

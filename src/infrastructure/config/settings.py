@@ -119,9 +119,10 @@ class Settings(BaseSettings):
         if not val or val == "CHANGE-ME-IN-PRODUCTION":
             raise ValueError(
                 "TARLA_JWT_SECRET_KEY must be set to a strong random value. "
-                "Generate with: python -c \"import secrets; print(secrets.token_urlsafe(64))\""
+                'Generate with: python -c "import secrets; print(secrets.token_urlsafe(64))"'
             )
         return val
+
     jwt_access_token_expire_minutes: int = 30
     jwt_refresh_token_expire_days: int = 7
 

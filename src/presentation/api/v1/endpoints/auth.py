@@ -120,7 +120,9 @@ class _InMemoryPhonePinAuthService:
         _test_phone = os.getenv("AUTH_TEST_PHONE")
         _test_pin = os.getenv("AUTH_TEST_PIN")
         if not _test_phone or not _test_pin:
-            LOGGER.error("AUTH_TEST_PHONE/AUTH_TEST_PIN env vars not set — login disabled until user_repo is integrated")
+            LOGGER.error(
+                "AUTH_TEST_PHONE/AUTH_TEST_PIN env vars not set — login disabled until user_repo is integrated"
+            )
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Authentication service not configured",
