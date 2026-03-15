@@ -6,6 +6,7 @@ import base64
 import hashlib
 import hmac
 import json
+import time
 
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
@@ -16,6 +17,11 @@ from src.presentation.api.settings import settings
 
 def _make_hs256_token(payload: dict[str, object]) -> str:
     header = {"alg": "HS256", "typ": "JWT"}
+    # Ensure exp and iat are always present (SEC-FIX: exp is required)
+    if "exp" not in payload:
+        payload["exp"] = int(time.time()) + 3600
+    if "iat" not in payload:
+        payload["iat"] = int(time.time())
 
     def _enc(data: dict[str, object]) -> str:
         encoded = base64.urlsafe_b64encode(json.dumps(data, separators=(",", ":")).encode("utf-8"))

@@ -210,7 +210,7 @@ def create_app() -> FastAPI:
             from src.infrastructure.persistence.redis.cache import get_redis_client
 
             redis_client = await get_redis_client()
-            await redis_client.ping()  # type: ignore[misc]
+            await redis_client.ping()  # type: ignore[misc,unused-ignore]
             checks["redis"] = "ok"
         except Exception:
             checks["redis"] = "unhealthy"
