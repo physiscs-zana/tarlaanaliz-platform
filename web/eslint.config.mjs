@@ -4,7 +4,7 @@ import js from "@eslint/js";
 
 export default [
   {
-    ignores: [".next/**", "dist/**", "coverage/**", "**/*.{ts,tsx}", "jest.config.js"],
+    ignores: [".next/**", "dist/**", "coverage/**", "jest.config.js"],
   },
   js.configs.recommended,
   {

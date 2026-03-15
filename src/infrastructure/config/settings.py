@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"  # noqa: S104
     api_port: int = 8000
     api_workers: int = 1
-    cors_origins: str = "*"
+    cors_origins: str = ""
     api_prefix: str = "/api/v1"
 
     # ------------------------------------------------------------------
@@ -96,8 +96,8 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------------
     rabbitmq_host: str = "localhost"
     rabbitmq_port: int = 5672
-    rabbitmq_user: str = "guest"
-    rabbitmq_password: SecretStr = SecretStr("guest")
+    rabbitmq_user: str = "tarlaanaliz"
+    rabbitmq_password: SecretStr = SecretStr("")
     rabbitmq_vhost: str = "/"
 
     @property
@@ -109,8 +109,19 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------------
     # JWT / Auth
     # ------------------------------------------------------------------
-    jwt_secret_key: SecretStr = SecretStr("CHANGE-ME-IN-PRODUCTION")
+    jwt_secret_key: SecretStr = SecretStr("")
     jwt_algorithm: str = "HS256"
+
+    @property
+    def jwt_secret_key_value(self) -> str:
+        """Fail-fast if JWT secret is empty or default."""
+        val = self.jwt_secret_key.get_secret_value()
+        if not val or val == "CHANGE-ME-IN-PRODUCTION":
+            raise ValueError(
+                "TARLA_JWT_SECRET_KEY must be set to a strong random value. "
+                "Generate with: python -c \"import secrets; print(secrets.token_urlsafe(64))\""
+            )
+        return val
     jwt_access_token_expire_minutes: int = 30
     jwt_refresh_token_expire_days: int = 7
 

@@ -17,6 +17,7 @@ import hashlib
 import json
 import logging
 import math
+import os
 from typing import Any, Callable, cast
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -82,13 +83,16 @@ def _snap_to_grid(value: float) -> float:
     return math.floor(value / _GRID_PRECISION_DEG) * _GRID_PRECISION_DEG
 
 
+_GRID_PEPPER = os.getenv("TARLA_GRID_ANONYMIZER_PEPPER", "tarlaanaliz-grid-default-pepper-2026")
+
+
 def _pseudonymize_field_id(field_id: str) -> str:
     """FieldID'yi pseudonymous FieldRef'e donusturur.
 
     Deterministik hash; ayni FieldID her zaman ayni ref uretir.
     IL_OPERATOR icin yeterli; tam PII vault disinda.
     """
-    digest = hashlib.sha256(field_id.encode("utf-8")).hexdigest()[:12]
+    digest = hashlib.sha256(f"{_GRID_PEPPER}:{field_id}".encode("utf-8")).hexdigest()[:12]
     return f"FR-{digest.upper()}"
 
 

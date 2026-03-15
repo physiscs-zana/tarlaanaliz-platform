@@ -23,7 +23,10 @@ export class ExpertNotificationClient {
     if (typeof window === 'undefined') return;
 
     try {
-      this.ws = new WebSocket(`${this.wsUrl}?token=${encodeURIComponent(this.token)}`);
+      // SEC-FIX: Token is no longer passed as a URL query parameter (visible in
+      // server logs, browser history, Referer headers). Instead, it is sent as
+      // the first message after the WebSocket connection opens.
+      this.ws = new WebSocket(this.wsUrl);
 
       this.ws.onmessage = (event) => {
         try {
@@ -38,6 +41,8 @@ export class ExpertNotificationClient {
 
       this.ws.onopen = () => {
         this.reconnectAttempts = 0;
+        // Send auth token as first message so server can authenticate the connection
+        this.ws?.send(JSON.stringify({ type: 'auth', token: this.token }));
       };
 
       this.ws.onclose = () => {

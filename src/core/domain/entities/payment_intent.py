@@ -118,6 +118,9 @@ class PaymentIntent:
         """
         if self.status != PaymentStatus.PAYMENT_PENDING:
             raise ValueError(f"Can only mark_paid from PAYMENT_PENDING, current: {self.status.value}")
+        # KR-033: admin_note is mandatory for manual approval
+        if approved_by_admin_user_id is not None and (not admin_note or not admin_note.strip()):
+            raise ValueError("KR-033: admin_note is required for manual payment approval")
         self.status = PaymentStatus.PAID
         self.paid_at = paid_at or datetime.now(timezone.utc)
         if approved_by_admin_user_id is not None:

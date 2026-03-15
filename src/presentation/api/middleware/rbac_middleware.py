@@ -191,5 +191,22 @@ class RBACMiddleware(BaseHTTPMiddleware):
                         },
                     )
                 break  # Match found, access granted
+        else:
+            # SEC-FIX: Default-deny — no route matched, reject /api/ requests
+            if path.startswith("/api/"):
+                corr_id = getattr(request.state, "corr_id", "")
+                logger.warning(
+                    "rbac_denied_no_route_match",
+                    path=path,
+                    user_roles=sorted(user_roles),
+                    corr_id=corr_id,
+                )
+                return JSONResponse(
+                    status_code=403,
+                    content={
+                        "detail": "Forbidden - route not authorized",
+                        "corr_id": corr_id,
+                    },
+                )
 
         return await call_next(request)

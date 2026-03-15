@@ -24,6 +24,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
+  // SEC-FIX: Basic JWT format validation — a valid JWT has exactly 3
+  // dot-separated base64url segments (header.payload.signature).
+  const jwtParts = token.split(".");
+  const base64urlRegex = /^[A-Za-z0-9_-]+$/;
+  if (
+    jwtParts.length !== 3 ||
+    !jwtParts.every((part) => part.length > 0 && base64urlRegex.test(part))
+  ) {
+    const response = NextResponse.redirect(new URL("/login", request.url));
+    response.cookies.delete(COOKIE_TOKEN_KEY);
+    response.cookies.delete(COOKIE_ROLE_KEY);
+    return response;
+  }
+
   const allowedPrefixes = ROLE_PREFIXES[role] ?? [];
   const isAllowed = allowedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 

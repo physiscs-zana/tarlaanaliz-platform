@@ -78,6 +78,29 @@ class Field:
             raise ValueError("parsel is required")
         if self.area_m2 is None or self.area_m2 <= 0:
             raise ValueError("area_m2 must be positive")
+        # KR-013: GeoJSON geometry validation
+        if self.geometry is not None:
+            self._validate_geometry(self.geometry)
+
+    @staticmethod
+    def _validate_geometry(geo: Dict[str, Any]) -> None:
+        """Validate GeoJSON structure for field boundary."""
+        if not isinstance(geo, dict):
+            raise ValueError("geometry must be a GeoJSON dict")
+        geo_type = geo.get("type")
+        if geo_type not in ("Polygon", "MultiPolygon"):
+            raise ValueError(f"geometry.type must be Polygon or MultiPolygon, got: {geo_type}")
+        coords = geo.get("coordinates")
+        if not coords or not isinstance(coords, list):
+            raise ValueError("geometry.coordinates is required and must be a list")
+        if geo_type == "Polygon":
+            if not coords or not isinstance(coords[0], list):
+                raise ValueError("Polygon coordinates must be a list of rings")
+            ring = coords[0]
+            if len(ring) < 4:
+                raise ValueError("Polygon ring must have at least 4 coordinate pairs")
+            if ring[0] != ring[-1]:
+                raise ValueError("Polygon ring must be closed (first == last coordinate)")
 
     # ------------------------------------------------------------------
     # Internal helpers

@@ -91,6 +91,8 @@ def _redact_dict(data: dict[str, Any]) -> dict[str, Any]:
                 redacted[key] = _mask_value(value)
             else:
                 redacted[key] = "***"
+        elif isinstance(value, str) and _PHONE_PATTERN.search(value):
+            redacted[key] = _PHONE_PATTERN.sub("05XX XXX XX XX", value)
         elif isinstance(value, dict):
             redacted[key] = _redact_dict(value)
         elif isinstance(value, list):

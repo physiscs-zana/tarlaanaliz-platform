@@ -19,10 +19,21 @@ class QueryPatternAnalyzer:
     """Detect obvious malicious query fragments."""
 
     _SUSPICIOUS_PATTERNS = (
-        re.compile(r"(?i)\bunion\s+select\b"),
-        re.compile(r"(?i)\bdrop\s+table\b"),
-        re.compile(r"(?i)--"),
+        re.compile(r"(?i)\bunion\s+(all\s+)?select\b"),
+        re.compile(r"(?i)\bdrop\s+(table|database)\b"),
+        re.compile(r"--"),
         re.compile(r"(?i)\bor\s+1\s*=\s*1\b"),
+        re.compile(r"(?i)\bor\s+['\"]?\w+['\"]?\s*=\s*['\"]?\w+['\"]?"),
+        re.compile(r"(?i);\s*(delete|update|insert|drop|alter|create|truncate|exec)\b"),
+        re.compile(r"(?i)\bexec\s+(xp_|sp_)\w+"),
+        re.compile(r"(?i)\bwaitfor\s+delay\b"),
+        re.compile(r"(?i)\bbenchmark\s*\("),
+        re.compile(r"(?i)\binto\s+(out|dump)file\b"),
+        re.compile(r"(?i)\bload_file\s*\("),
+        re.compile(r"(?i)\bchar\s*\(\s*\d+"),
+        re.compile(r"(?i)\bconvert\s*\(\s*\w+\s+using\b"),
+        re.compile(r"(?i)\binformation_schema\b"),
+        re.compile(r"0x[0-9a-fA-F]{8,}"),
     )
 
     def scan(self, query: str) -> QueryScanResult:

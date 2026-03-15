@@ -69,15 +69,14 @@ export interface AuthState {
 }
 
 /**
- * SEC-FIX: Token cookie is now HttpOnly + Secure + SameSite=Strict.
- * HttpOnly cookies cannot be set from JavaScript — the server must set them.
- * The role cookie remains client-readable (non-sensitive, used by middleware).
+ * SEC-FIX: Token cookie is now Secure + SameSite=Strict.
+ * TODO: HttpOnly cannot be set from client-side JS. Token cookies should be
+ * migrated to server-set Set-Cookie headers (backend login endpoint) so that
+ * HttpOnly can be applied and the token is inaccessible to scripts.
  */
 function setCookie(name: string, value: string, maxAgeSec: number): void {
   if (typeof document !== 'undefined') {
-    const secure = window.location.protocol === 'https:' ? ';Secure' : '';
-    // Role cookie: client-readable (used by Next.js middleware for routing)
-    document.cookie = `${name}=${encodeURIComponent(value)};path=/;max-age=${maxAgeSec};SameSite=Strict${secure}`;
+    document.cookie = `${name}=${encodeURIComponent(value)};path=/;max-age=${maxAgeSec};Secure;SameSite=Strict`;
   }
 }
 

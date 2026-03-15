@@ -100,10 +100,23 @@ async def _lifespan(_app: FastAPI) -> AsyncIterator[None]:
     service_container = await create_service_container()
     _app.state.services = service_container
 
+    # --- Database & Redis startup ---
+    from src.infrastructure.persistence.database import get_engine, dispose_engine
+    from src.infrastructure.persistence.redis.cache import get_redis_client, close_redis
+
+    await get_engine()
+    logger.info("database_engine_created")
+
+    await get_redis_client()
+    logger.info("redis_client_created")
+
     logger.info("lifespan_started", schemas_registered=len(registry.list_schemas()))
 
     yield
 
+    # --- Shutdown ---
+    await dispose_engine()
+    await close_redis()
     registry.clear()
     logger.info("lifespan_shutdown")
 
@@ -133,7 +146,16 @@ def _register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(Exception)
-    async def handle_uncaught_exception(request: Request, _: Exception) -> JSONResponse:
+    async def handle_uncaught_exception(request: Request, exc: Exception) -> JSONResponse:
+        import structlog as _sl
+        _sl.get_logger("unhandled_exception").error(
+            "unhandled_exception",
+            exc_type=type(exc).__name__,
+            exc_msg=str(exc),
+            path=request.url.path,
+            method=request.method,
+            corr_id=getattr(request.state, "corr_id", None),
+        )
         return JSONResponse(
             status_code=500,
             content={"detail": "Internal server error", "corr_id": getattr(request.state, "corr_id", None)},
@@ -152,28 +174,45 @@ def create_app() -> FastAPI:
     )
 
     # Middleware stack (LIFO order — last added executes first):
-    # 1. Correlation ID (http middleware — outermost)
-    # 2. CORS
-    # 3. mTLS Verifier (KR-071 — before auth for ingest endpoints)
-    # 4. JWT Authentication
-    # 5. RBAC (KR-063 — merkezi rol tabanli erisim kontrolu)
-    # 6. Rate Limiting
-    # 7. Anomaly Detection
-    # 8. PII Filter (KR-066 — after auth, before response)
-    # 9. Grid Anonymizer (KR-083 — after auth, before response)
+    # Execution order (outermost → innermost):
+    # 1. Correlation ID → 2. CORS → 3. Rate Limiting → 4. mTLS →
+    # 5. JWT → 6. RBAC → 7. Anomaly → 8. PII Filter → 9. Grid Anonymizer
+    # SEC-FIX: Rate limiting moved BEFORE auth to block unauthenticated floods
     app.middleware("http")(_corr_id_middleware)
     add_cors_middleware(app)
+    app.add_middleware(RateLimitMiddleware)
     app.add_middleware(MTLSVerifierMiddleware)
     app.add_middleware(JwtMiddleware)
     app.add_middleware(RBACMiddleware)
-    app.add_middleware(RateLimitMiddleware)
     app.add_middleware(AnomalyDetectionMiddleware)
     app.add_middleware(PIIFilterMiddleware)
     app.add_middleware(GridAnonymizerMiddleware)
 
     @app.get("/health", tags=["health"])
     async def health() -> dict[str, str]:
-        return {"status": "ok"}
+        """Liveness probe with dependency checks."""
+        checks: dict[str, str] = {}
+        overall = "ok"
+        try:
+            from src.infrastructure.persistence.database import get_engine
+            engine = await get_engine()
+            from sqlalchemy import text as sa_text
+            async with engine.connect() as conn:
+                await conn.execute(sa_text("SELECT 1"))
+            checks["database"] = "ok"
+        except Exception:
+            checks["database"] = "unhealthy"
+            overall = "degraded"
+        try:
+            from src.infrastructure.persistence.redis.cache import get_redis_client
+            redis_client = await get_redis_client()
+            await redis_client.ping()
+            checks["redis"] = "ok"
+        except Exception:
+            checks["redis"] = "unhealthy"
+            overall = "degraded"
+        checks["status"] = overall
+        return checks
 
     app.include_router(payments_router, prefix="/api/v1")
     app.include_router(admin_payments_router, prefix="/api/v1")

@@ -326,7 +326,31 @@ class RabbitMQConsumer:
                     # Exponential backoff delay
                     delay = min(2**retry_count, 30)
                     await asyncio.sleep(delay)
-                    await message.nack(requeue=True)
+
+                    # Republish with incremented x-retry-count instead of
+                    # bare nack(requeue=True) which preserves old headers
+                    # and causes an infinite retry loop.
+                    import aio_pika
+
+                    updated_headers = dict(message.headers or {})
+                    updated_headers["x-retry-count"] = retry_count + 1
+
+                    republish_msg = aio_pika.Message(
+                        body=message.body,
+                        headers=updated_headers,
+                        message_id=message_id,
+                        content_type=message.content_type,
+                        delivery_mode=message.delivery_mode,
+                    )
+
+                    exchange = await self._channel.get_exchange(
+                        message.exchange or "",
+                    )
+                    await exchange.publish(
+                        republish_msg,
+                        routing_key=message.routing_key or "",
+                    )
+                    await message.ack()
                 else:
                     logger.error(
                         "rabbitmq_consumer_message_rejected",

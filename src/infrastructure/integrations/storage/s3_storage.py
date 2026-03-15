@@ -32,6 +32,7 @@ Notlar/SSOT: Tek referans: tarlaanaliz_platform_tree v3.2.2 FINAL.
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any, Optional, cast
 
 import boto3
@@ -113,7 +114,7 @@ class S3StorageIntegration(StorageService):
             content_type=content_type,
         )
 
-        response = self._client.put_object(**put_kwargs)
+        response = await asyncio.to_thread(self._client.put_object, **put_kwargs)
         etag = response.get("ETag", "").strip('"')
 
         return BlobMetadata(
@@ -141,7 +142,7 @@ class S3StorageIntegration(StorageService):
         logger.info("s3_download", bucket=resolved_bucket, key=key)
 
         try:
-            response = self._client.get_object(Bucket=resolved_bucket, Key=key)
+            response = await asyncio.to_thread(self._client.get_object, Bucket=resolved_bucket, Key=key)
             return cast(bytes, response["Body"].read())
         except ClientError as exc:
             if exc.response["Error"]["Code"] == "NoSuchKey":
@@ -161,7 +162,7 @@ class S3StorageIntegration(StorageService):
         resolved_bucket = self._resolve_bucket(bucket)
 
         try:
-            response = self._client.head_object(Bucket=resolved_bucket, Key=key)
+            response = await asyncio.to_thread(self._client.head_object, Bucket=resolved_bucket, Key=key)
         except ClientError as exc:
             if exc.response["Error"]["Code"] in ("404", "NoSuchKey"):
                 return None
@@ -199,7 +200,7 @@ class S3StorageIntegration(StorageService):
         resolved_bucket = self._resolve_bucket(bucket)
         client_method = "get_object" if http_method.upper() == "GET" else "put_object"
 
-        url = self._client.generate_presigned_url(
+        url = await asyncio.to_thread(self._client.generate_presigned_url,
             ClientMethod=client_method,
             Params={"Bucket": resolved_bucket, "Key": key},
             ExpiresIn=expires_in_seconds or self._default_expire,
@@ -237,7 +238,7 @@ class S3StorageIntegration(StorageService):
         if not exists:
             return False
 
-        self._client.delete_object(Bucket=resolved_bucket, Key=key)
+        await asyncio.to_thread(self._client.delete_object, Bucket=resolved_bucket, Key=key)
         return True
 
     # ------------------------------------------------------------------
@@ -253,7 +254,7 @@ class S3StorageIntegration(StorageService):
         resolved_bucket = self._resolve_bucket(bucket)
 
         try:
-            self._client.head_object(Bucket=resolved_bucket, Key=key)
+            await asyncio.to_thread(self._client.head_object, Bucket=resolved_bucket, Key=key)
             return True
         except ClientError as exc:
             if exc.response["Error"]["Code"] in ("404", "NoSuchKey"):
@@ -266,7 +267,7 @@ class S3StorageIntegration(StorageService):
     async def health_check(self) -> bool:
         """Storage servisinin erişilebilirliğini kontrol et."""
         try:
-            self._client.list_buckets()
+            await asyncio.to_thread(self._client.list_buckets)
             return True
         except Exception:
             logger.warning("s3_health_check_failed")
