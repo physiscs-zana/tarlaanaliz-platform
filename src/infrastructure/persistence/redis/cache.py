@@ -22,7 +22,7 @@ async def get_redis_client(settings: Settings | None = None) -> aioredis.Redis:
     global _client
     if _client is None:
         _settings = settings or get_settings()
-        _client = aioredis.from_url(
+        _client = aioredis.from_url(  # type: ignore[no-untyped-call,unused-ignore]
             _settings.redis_url,
             decode_responses=True,
             max_connections=20,
