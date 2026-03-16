@@ -56,12 +56,13 @@ def upgrade() -> None:
         ["payment_intent_id"],
         unique=False,
     )
-    # Pilot ataması bazlı sorgular
+    # Pilot ataması bazlı sorgular — mission_assignments tablosunda
     op.create_index(
-        "idx_missions_pilot_status",
-        "missions",
-        ["pilot_id", "status"],
+        "idx_mission_assignments_status",
+        "mission_assignments",
+        ["pilot_id", "is_current"],
         unique=False,
+        if_not_exists=True,
     )
 
     # -------------------------------------------------------------------------
@@ -377,7 +378,7 @@ def downgrade() -> None:
     op.drop_index("idx_subscriptions_due", table_name="subscriptions")
 
     # missions
-    op.drop_index("idx_missions_pilot_status", table_name="missions")
+    op.drop_index("idx_mission_assignments_status", table_name="mission_assignments")
     op.drop_index("idx_missions_payment_intent", table_name="missions")
     op.drop_index("idx_missions_subscription", table_name="missions")
     op.drop_index("idx_missions_field_created", table_name="missions")
