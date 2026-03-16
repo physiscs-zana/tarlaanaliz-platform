@@ -55,9 +55,8 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
         ),
     )
-    op.create_index("ix_mission_segments_mission_id", "mission_segments", ["mission_id"])
+    # index already created by index=True on mission_id column above
 
 
 def downgrade() -> None:
-    op.drop_index("ix_mission_segments_mission_id", table_name="mission_segments")
     op.drop_table("mission_segments")
