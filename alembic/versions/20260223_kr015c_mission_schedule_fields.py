@@ -4,10 +4,10 @@
 Amaç: Önceki PR'da Mission entity'sine eklenen schedule_window ve assignment
     meta alanları için DB şemasını günceller.
 Sorumluluk: KR-015-2/3/4/5 (atama kaynağı, nedeni, zamanlama penceresi).
-Bağımlılıklar: kr015b_seasonal_reschedule_tokens.
+Bağımlılıklar: kr015b_reschedule.
 
 Revision ID: kr015c_mission_schedule_fields
-Revises: kr015b_seasonal_reschedule_tokens
+Revises: kr015b_reschedule
 Create Date: 2026-02-23
 """
 
@@ -17,7 +17,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "kr015c_mission_schedule_fields"
-down_revision: Union[str, None] = "kr015b_seasonal_reschedule_tokens"
+down_revision: Union[str, None] = "kr015b_reschedule"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

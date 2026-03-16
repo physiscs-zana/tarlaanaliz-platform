@@ -18,7 +18,7 @@ import sys
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import engine_from_config, pool, text as sa_text
 
 # src/ dizinini sys.path'e ekle (model importları için)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))

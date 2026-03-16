@@ -8,7 +8,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision = "kr015b_seasonal_reschedule_tokens"
+revision = "kr015b_reschedule"
 down_revision = "kr015a_mission_segments"
 branch_labels = None
 depends_on = None
