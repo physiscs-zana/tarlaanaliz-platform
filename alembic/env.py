@@ -44,18 +44,30 @@ except ImportError:
 
 
 def get_url() -> str:
-    """Veritabanı URL'sini ortam değişkeninden al.
+    """Veritabani URL'sini ortam degiskeninden al.
 
-    Öncelik sırası:
-    1. DATABASE_URL ortam değişkeni
-    2. alembic.ini'deki sqlalchemy.url
+    Oncelik sirasi:
+    1. DATABASE_URL ortam degiskeni
+    2. TARLA_ prefix'li ayri env var'lardan olustur
+    3. alembic.ini'deki sqlalchemy.url
     """
     url = os.environ.get("DATABASE_URL")
     if url:
-        # asyncpg URL'lerini senkron sürücüye dönüştür
         if url.startswith("postgresql+asyncpg://"):
             url = url.replace("postgresql+asyncpg://", "postgresql://", 1)
         return url
+
+    # TARLA_ prefix'li env var'lardan URL olustur (docker-compose uyumu)
+    host = os.environ.get("TARLA_DB_HOST") or os.environ.get("DB_HOST")
+    port = os.environ.get("TARLA_DB_PORT") or os.environ.get("DB_PORT")
+    user = os.environ.get("TARLA_DB_USER") or os.environ.get("DB_USER")
+    password = os.environ.get("TARLA_DB_PASSWORD") or os.environ.get("DB_PASSWORD")
+    name = os.environ.get("TARLA_DB_NAME") or os.environ.get("DB_NAME")
+    if host and user and name:
+        pwd = f":{password}" if password else ""
+        p = f":{port}" if port else ""
+        return f"postgresql://{user}{pwd}@{host}{p}/{name}"
+
     return config.get_main_option("sqlalchemy.url", "postgresql://localhost/tarlaanaliz")
 
 
