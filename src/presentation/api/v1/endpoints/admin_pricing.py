@@ -61,6 +61,18 @@ def _require_admin(request: Request) -> str:
     return str(getattr(user, "subject", ""))
 
 
+@router.get("/info")
+def get_pricing_info(request: Request) -> dict[str, object]:
+    """Return basic pricing configuration. IBAN-only payment (KR-033)."""
+    _require_admin(request)
+    return {
+        "payment_method": "IBAN_TRANSFER",
+        "currency": "TRY",
+        "notes": "Odeme yalnizca IBAN havale ile yapilir. Fatura kesilir.",
+        "snapshots": [],
+    }
+
+
 @router.post("/snapshot/publish", response_model=PublishPricingSnapshotResponse, status_code=status.HTTP_201_CREATED)
 def publish_pricing_snapshot(
     request: Request,

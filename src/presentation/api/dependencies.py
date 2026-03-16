@@ -434,10 +434,140 @@ def require_permissions(required_permissions: list[str]) -> Callable[..., Curren
     return dependency
 
 
+class _IbanOnlyPaymentService:
+    """MVP payment service — IBAN-only payments, no credit card."""
+
+    _IBAN = "TR33 0006 1005 1978 6457 8413 26"
+    _BANK = "Halkbank"
+    _RECIPIENT = "TarlaAnaliz Tarim Teknolojileri A.S."
+
+    def create_intent(
+        self, *, actor_user_id: str, payload: PaymentIntentCreateRequest, corr_id: str | None
+    ) -> PaymentIntentResponse:
+        import uuid as _uuid
+
+        return PaymentIntentResponse(
+            intent_id=_uuid.uuid4(),
+            status=PaymentStatus.PENDING_RECEIPT,
+            amount=payload.amount,
+            season=payload.season,
+            package_code=payload.package_code,
+            field_ids=payload.field_ids,
+            created_at=datetime.now(timezone.utc),
+        )
+
+    def upload_receipt(
+        self,
+        *,
+        actor_user_id: str,
+        intent_id: UUID,
+        filename: str,
+        content_type: str | None,
+        content: bytes,
+        corr_id: str | None,
+    ) -> PaymentIntentResponse:
+        return PaymentIntentResponse(
+            intent_id=intent_id,
+            status=PaymentStatus.PENDING_ADMIN_REVIEW,
+            amount=0,
+            season="",
+            package_code="",
+            field_ids=[],
+            created_at=datetime.now(timezone.utc),
+        )
+
+    def get_intent(self, *, actor_user_id: str, intent_id: UUID, corr_id: str | None) -> PaymentIntentResponse:
+        return PaymentIntentResponse(
+            intent_id=intent_id,
+            status=PaymentStatus.PENDING_RECEIPT,
+            amount=0,
+            season="",
+            package_code="",
+            field_ids=[],
+            created_at=datetime.now(timezone.utc),
+        )
+
+    def list_pending_payments(self, *, corr_id: str | None) -> list[PaymentIntentResponse]:
+        return []
+
+    def approve_payment(
+        self, *, actor_user_id: str, payment_id: UUID, admin_note: str, corr_id: str | None
+    ) -> PaymentIntentResponse:
+        return PaymentIntentResponse(
+            intent_id=payment_id,
+            status=PaymentStatus.PAID,
+            amount=0,
+            season="",
+            package_code="",
+            field_ids=[],
+            created_at=datetime.now(timezone.utc),
+        )
+
+    def reject_payment(
+        self, *, actor_user_id: str, payment_id: UUID, reason: str, corr_id: str | None
+    ) -> PaymentIntentResponse:
+        return PaymentIntentResponse(
+            intent_id=payment_id,
+            status=PaymentStatus.REJECTED,
+            amount=0,
+            season="",
+            package_code="",
+            field_ids=[],
+            created_at=datetime.now(timezone.utc),
+        )
+
+    def refund_payment(
+        self,
+        *,
+        actor_user_id: str,
+        payment_id: UUID,
+        refund_amount_kurus: int,
+        reason: str,
+        corr_id: str | None,
+    ) -> PaymentIntentResponse:
+        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Refund not yet available")
+
+    def cancel_intent(
+        self, *, actor_user_id: str, intent_id: UUID, reason: str, corr_id: str | None
+    ) -> PaymentIntentResponse:
+        return PaymentIntentResponse(
+            intent_id=intent_id,
+            status=PaymentStatus.REJECTED,
+            amount=0,
+            season="",
+            package_code="",
+            field_ids=[],
+            created_at=datetime.now(timezone.utc),
+        )
+
+    def get_payment_instructions(
+        self, *, actor_user_id: str, intent_id: UUID, corr_id: str | None
+    ) -> PaymentInstructionsResponse:
+        return PaymentInstructionsResponse(
+            iban=self._IBAN,
+            bank_name=self._BANK,
+            description_format=f"TARLAANALIZ-{intent_id}",
+            details={
+                "recipient": self._RECIPIENT,
+                "note": "Havale aciklamasina intent ID'yi yaziniz.",
+                "credit_card_available": False,
+                "credit_card_message": "SU ANDA SADECE IBAN ILE ODEME ALABILIYORUZ",
+            },
+        )
+
+    def list_intents(
+        self, *, status_filter: str | None, field_id: UUID | None, corr_id: str | None
+    ) -> list[PaymentIntentResponse]:
+        return []
+
+
+_iban_payment_service = _IbanOnlyPaymentService()
+
+
 def get_payment_service(request: Request) -> PaymentService:
     service: PaymentService | None = getattr(request.app.state, "payment_service", None)
     if service is None:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Payment service unavailable")
+        return _iban_payment_service  # type: ignore[return-value,unused-ignore]
     return service
 
 

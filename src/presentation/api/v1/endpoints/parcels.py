@@ -31,10 +31,11 @@ class ParcelLookupService(Protocol):
 @dataclass(slots=True)
 class _InMemoryParcelLookupService:
     def lookup_geometry(self, parcel_ref: str) -> ParcelLookupResponse:
+        # TKGM integration not ready — return placeholder with clear provider tag
         return ParcelLookupResponse(
             parcel_ref=parcel_ref,
-            provider="mock-tkgm",
-            geometry=GeometryDTO(coordinates=[[[29.0, 41.0], [29.1, 41.0], [29.1, 41.1], [29.0, 41.0]]]),
+            provider="TKGM_NOT_CONFIGURED",
+            geometry=GeometryDTO(coordinates=[]),
         )
 
 
