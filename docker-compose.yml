@@ -115,25 +115,27 @@ services:
     env_file:
       - .env
     environment:
-      APP_ENV: dev
-      # SEC-FIX: all credentials reference .env variables
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_USER: ${POSTGRES_USER:-tarlaanaliz_user}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
-      DB_NAME: ${POSTGRES_DB:-tarlaanaliz}
-      # Redis
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-      # RabbitMQ
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_USER: ${RABBITMQ_USER:-tarlaanaliz}
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD required}
-      # MinIO (S3-uyumlu)
-      STORAGE_ENDPOINT: http://minio:9000
-      STORAGE_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
-      STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD required}
+      # --- pydantic-settings reads TARLA_ prefix ---
+      TARLA_ENVIRONMENT: production
+      TARLA_DB_HOST: postgres
+      TARLA_DB_PORT: "5432"
+      TARLA_DB_USER: ${POSTGRES_USER:-tarlaanaliz_user}
+      TARLA_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      TARLA_DB_NAME: ${POSTGRES_DB:-tarlaanaliz}
+      TARLA_REDIS_HOST: redis
+      TARLA_REDIS_PORT: "6379"
+      TARLA_REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      TARLA_RABBITMQ_HOST: rabbitmq
+      TARLA_RABBITMQ_USER: ${RABBITMQ_USER:-tarlaanaliz}
+      TARLA_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD required}
+      TARLA_S3_ENDPOINT_URL: http://minio:9000
+      TARLA_S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      TARLA_S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD required}
+      TARLA_JWT_SECRET_KEY: ${APP_SECRET_KEY:?APP_SECRET_KEY required}
+      TARLA_CORS_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      # --- non-prefixed (for other tools) ---
+      APP_ENV: production
+      API_JWT_SECRET: ${APP_SECRET_KEY:?APP_SECRET_KEY required}
     ports:
       # SEC-FIX: bind to localhost only
       - "127.0.0.1:8000:8000"    # FastAPI backend
