@@ -1,5 +1,9 @@
-# PATH: src/infrastructure/persistence/sqlalchemy/models/__init__.py
-# DESC: Infrastructure adapter/implementation: __init__.py.
-# TODO: Implement this file.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-041: SQLAlchemy ORM model registry.
+"""ORM model registry."""
 
-__all__: list[str] = []
+from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
+from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel
+from src.infrastructure.persistence.sqlalchemy.models.mission_model import MissionModel
+
+__all__ = ["UserModel", "FieldModel", "MissionModel"]

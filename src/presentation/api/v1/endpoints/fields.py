@@ -4,10 +4,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Protocol, cast
-
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/fields", tags=["fields"])
@@ -26,34 +23,6 @@ class FieldResponse(BaseModel):
     area_ha: float
 
 
-class FieldService(Protocol):
-    def create(self, owner_subject: str, payload: FieldCreateRequest) -> FieldResponse: ...
-
-    def list_by_owner(self, owner_subject: str) -> list[FieldResponse]: ...
-
-
-@dataclass(slots=True)
-class _InMemoryFieldService:
-    def create(self, owner_subject: str, payload: FieldCreateRequest) -> FieldResponse:
-        _ = owner_subject
-        return FieldResponse(
-            field_id="fld-1", field_name=payload.field_name, parcel_ref=payload.parcel_ref, area_ha=payload.area_ha
-        )
-
-    def list_by_owner(self, owner_subject: str) -> list[FieldResponse]:
-        _ = owner_subject
-        return []
-
-
-def get_field_service(request: Request) -> FieldService:
-    services = getattr(request.app.state, "services", None)
-    if services is not None:
-        svc = services.get("field_service")
-        if svc is not None:
-            return cast(FieldService, svc)
-    return _InMemoryFieldService()
-
-
 def _require_authenticated_subject(request: Request) -> str:
     user = getattr(request.state, "user", None)
     if user is None:
@@ -61,22 +30,76 @@ def _require_authenticated_subject(request: Request) -> str:
     return str(getattr(user, "subject", ""))
 
 
-@router.post("", response_model=FieldResponse, status_code=status.HTTP_201_CREATED)
-def create_field(
-    request: Request,
-    payload: FieldCreateRequest,
-    service: FieldService = Depends(get_field_service),
-) -> FieldResponse:
-    # KR-081: explicit DTO contract at API surface.
-    subject = _require_authenticated_subject(request)
-    return service.create(owner_subject=subject, payload=payload)
-
-
 class FieldListResponse(BaseModel):
     items: list[FieldResponse]
 
 
-@router.get("", response_model=FieldListResponse)
-def list_fields(request: Request, service: FieldService = Depends(get_field_service)) -> FieldListResponse:
+@router.post("", response_model=FieldResponse, status_code=status.HTTP_201_CREATED)
+async def create_field(request: Request, payload: FieldCreateRequest) -> FieldResponse:
     subject = _require_authenticated_subject(request)
-    return FieldListResponse(items=service.list_by_owner(owner_subject=subject))
+    user_id_str = getattr(getattr(request.state, "user", None), "user_id", None) or subject
+
+    import uuid as _uuid
+    from decimal import Decimal
+    from datetime import datetime, timezone
+    from src.infrastructure.persistence.sqlalchemy.session import get_async_session
+    from src.infrastructure.persistence.sqlalchemy.repositories.field_repository_impl import FieldRepositoryImpl
+    from src.core.domain.entities.field import Field, FieldStatus
+
+    now = datetime.now(timezone.utc)
+    field = Field(
+        field_id=_uuid.uuid4(),
+        user_id=_uuid.UUID(user_id_str) if len(user_id_str) > 8 else _uuid.uuid4(),
+        province=payload.parcel_ref.split("/")[0] if "/" in payload.parcel_ref else "Unknown",
+        district=payload.parcel_ref.split("/")[1] if payload.parcel_ref.count("/") >= 1 else "Unknown",
+        village=payload.parcel_ref.split("/")[2] if payload.parcel_ref.count("/") >= 2 else "Unknown",
+        ada=payload.parcel_ref.split("/")[3] if payload.parcel_ref.count("/") >= 3 else "0",
+        parsel=payload.parcel_ref.split("/")[4] if payload.parcel_ref.count("/") >= 4 else "0",
+        area_m2=Decimal(str(payload.area_ha)) * Decimal("10000"),
+        status=FieldStatus.ACTIVE,
+        created_at=now,
+        updated_at=now,
+    )
+
+    async with get_async_session() as session:
+        repo = FieldRepositoryImpl(session)
+        await repo.save(field)
+        await session.commit()
+
+    return FieldResponse(
+        field_id=str(field.field_id),
+        field_name=payload.field_name,
+        parcel_ref=payload.parcel_ref,
+        area_ha=payload.area_ha,
+    )
+
+
+@router.get("", response_model=FieldListResponse)
+async def list_fields(request: Request) -> FieldListResponse:
+    subject = _require_authenticated_subject(request)
+    user_id_str = getattr(getattr(request.state, "user", None), "user_id", None) or subject
+
+    import uuid as _uuid
+    from src.infrastructure.persistence.sqlalchemy.session import get_async_session
+    from src.infrastructure.persistence.sqlalchemy.repositories.field_repository_impl import FieldRepositoryImpl
+
+    try:
+        user_uuid = _uuid.UUID(user_id_str)
+    except (ValueError, AttributeError):
+        return FieldListResponse(items=[])
+
+    async with get_async_session() as session:
+        repo = FieldRepositoryImpl(session)
+        fields = await repo.list_by_user_id(user_uuid)
+
+    return FieldListResponse(
+        items=[
+            FieldResponse(
+                field_id=str(f.field_id),
+                field_name=f.parcel_ref,
+                parcel_ref=f.parcel_ref,
+                area_ha=float(f.area_m2 / 10000),
+            )
+            for f in fields
+        ]
+    )
