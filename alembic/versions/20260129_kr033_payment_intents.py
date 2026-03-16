@@ -110,30 +110,41 @@ def upgrade() -> None:
     )
 
     # -------------------------------------------------------------------------
-    # missions tablosuna payment_intent_id FK ekle
+    # missions tablosuna payment_intent_id FK ekle (sütun yoksa)
     # -------------------------------------------------------------------------
-    op.add_column(
-        "missions",
-        sa.Column(
-            "payment_intent_id",
-            sa.dialects.postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("payment_intents.payment_intent_id", ondelete="SET NULL"),
-            nullable=True,
-        ),
-    )
+    conn = op.get_bind()
+    has_col = conn.execute(sa.text(
+        "SELECT EXISTS (SELECT 1 FROM information_schema.columns "
+        "WHERE table_name='missions' AND column_name='payment_intent_id')"
+    )).scalar()
+    if not has_col:
+        op.add_column(
+            "missions",
+            sa.Column(
+                "payment_intent_id",
+                sa.dialects.postgresql.UUID(as_uuid=True),
+                sa.ForeignKey("payment_intents.payment_intent_id", ondelete="SET NULL"),
+                nullable=True,
+            ),
+        )
 
     # -------------------------------------------------------------------------
-    # subscriptions tablosuna payment_intent_id FK ekle
+    # subscriptions tablosuna payment_intent_id FK ekle (sütun yoksa)
     # -------------------------------------------------------------------------
-    op.add_column(
-        "subscriptions",
-        sa.Column(
-            "payment_intent_id",
-            sa.dialects.postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("payment_intents.payment_intent_id", ondelete="SET NULL"),
-            nullable=True,
-        ),
-    )
+    has_col2 = conn.execute(sa.text(
+        "SELECT EXISTS (SELECT 1 FROM information_schema.columns "
+        "WHERE table_name='subscriptions' AND column_name='payment_intent_id')"
+    )).scalar()
+    if not has_col2:
+        op.add_column(
+            "subscriptions",
+            sa.Column(
+                "payment_intent_id",
+                sa.dialects.postgresql.UUID(as_uuid=True),
+                sa.ForeignKey("payment_intents.payment_intent_id", ondelete="SET NULL"),
+                nullable=True,
+            ),
+        )
 
 
 def downgrade() -> None:
