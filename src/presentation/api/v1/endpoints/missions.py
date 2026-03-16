@@ -4,11 +4,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import date
-from typing import Protocol, cast
+import uuid as _uuid
+from datetime import date, datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/missions", tags=["missions"])
@@ -17,7 +16,8 @@ router = APIRouter(prefix="/missions", tags=["missions"])
 class MissionCreateRequest(BaseModel):
     field_id: str = Field(min_length=3, max_length=64)
     mission_date: date
-    pilot_id: str | None = Field(default=None, min_length=3, max_length=64)
+    crop_type: str = Field(default="PAMUK", min_length=2, max_length=50)
+    analysis_type: str = Field(default="MULTISPECTRAL", min_length=2, max_length=50)
 
 
 class MissionResponse(BaseModel):
@@ -27,53 +27,74 @@ class MissionResponse(BaseModel):
     status: str
 
 
-class MissionService(Protocol):
-    def create(self, payload: MissionCreateRequest, actor_subject: str) -> MissionResponse: ...
-
-    def list_for_subject(self, actor_subject: str) -> list[MissionResponse]: ...
-
-
-@dataclass(slots=True)
-class _InMemoryMissionService:
-    def create(self, payload: MissionCreateRequest, actor_subject: str) -> MissionResponse:
-        _ = actor_subject
-        # KR-015: planning and capacity rules are enforced in application/domain service layer.
-        return MissionResponse(
-            mission_id="msn-1", field_id=payload.field_id, mission_date=payload.mission_date, status="planned"
-        )
-
-    def list_for_subject(self, actor_subject: str) -> list[MissionResponse]:
-        _ = actor_subject
-        return []
-
-
-def get_mission_service(request: Request) -> MissionService:
-    services = getattr(request.app.state, "services", None)
-    if services is not None:
-        svc = services.get("mission_service")
-        if svc is not None:
-            return cast(MissionService, svc)
-    return _InMemoryMissionService()
-
-
-def _require_authenticated_subject(request: Request) -> str:
+def _require_authenticated(request: Request) -> tuple[str, str | None]:
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    return str(getattr(user, "subject", ""))
+    subject = str(getattr(user, "subject", ""))
+    user_id = getattr(user, "user_id", None)
+    return subject, user_id
 
 
 @router.post("", response_model=MissionResponse, status_code=status.HTTP_201_CREATED)
-def create_mission(
-    request: Request,
-    payload: MissionCreateRequest,
-    service: MissionService = Depends(get_mission_service),
-) -> MissionResponse:
-    subject = _require_authenticated_subject(request)
-    return service.create(payload=payload, actor_subject=subject)
+async def create_mission(request: Request, payload: MissionCreateRequest) -> MissionResponse:
+    subject, user_id_str = _require_authenticated(request)
+
+    from src.infrastructure.persistence.sqlalchemy.session import get_async_session
+    from src.infrastructure.persistence.sqlalchemy.repositories.mission_repository_impl import MissionRepositoryImpl
+
+    mission_id = _uuid.uuid4()
+    user_id = _uuid.UUID(user_id_str) if user_id_str and len(user_id_str) > 8 else _uuid.uuid4()
+    field_id = _uuid.UUID(payload.field_id)
+    planned_at = datetime(
+        payload.mission_date.year, payload.mission_date.month, payload.mission_date.day, tzinfo=timezone.utc
+    )
+
+    async with get_async_session() as session:
+        repo = MissionRepositoryImpl(session)
+        await repo.save(
+            mission_id=mission_id,
+            field_id=field_id,
+            user_id=user_id,
+            crop_type=payload.crop_type,
+            analysis_type=payload.analysis_type,
+            planned_at=planned_at,
+        )
+        await session.commit()
+
+    return MissionResponse(
+        mission_id=str(mission_id),
+        field_id=payload.field_id,
+        mission_date=payload.mission_date,
+        status="PLANNED",
+    )
 
 
 @router.get("", response_model=list[MissionResponse])
-def list_missions(request: Request, service: MissionService = Depends(get_mission_service)) -> list[MissionResponse]:
-    subject = _require_authenticated_subject(request)
-    return service.list_for_subject(actor_subject=subject)
+async def list_missions(request: Request) -> list[MissionResponse]:
+    subject, user_id_str = _require_authenticated(request)
+
+    from src.infrastructure.persistence.sqlalchemy.session import get_async_session
+    from src.infrastructure.persistence.sqlalchemy.repositories.mission_repository_impl import MissionRepositoryImpl
+
+    try:
+        user_id = _uuid.UUID(user_id_str) if user_id_str else None
+    except (ValueError, TypeError):
+        user_id = None
+
+    if not user_id:
+        return []
+
+    async with get_async_session() as session:
+        repo = MissionRepositoryImpl(session)
+        models = await repo.list_by_user_id(user_id)
+
+    return [
+        MissionResponse(
+            mission_id=str(m.mission_id),
+            field_id=str(m.field_id),
+            mission_date=(m.planned_at or m.created_at).date(),
+            status=m.status,
+        )
+        for m in models
+    ]
