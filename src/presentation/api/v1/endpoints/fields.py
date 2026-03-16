@@ -46,15 +46,24 @@ async def create_field(request: Request, payload: FieldCreateRequest) -> FieldRe
     from src.infrastructure.persistence.sqlalchemy.repositories.field_repository_impl import FieldRepositoryImpl
     from src.core.domain.entities.field import Field, FieldStatus
 
+    # H4: Validate parcel_ref format before processing
+    parts = payload.parcel_ref.split("/")
+    if len(parts) != 5 or any(not p.strip() for p in parts):
+        raise HTTPException(
+            status_code=422,
+            detail="parcel_ref must be in format: il/ilce/mahalle/ada/parsel",
+        )
+    province, district, village, ada, parsel = [p.strip() for p in parts]
+
     now = datetime.now(timezone.utc)
     field = Field(
         field_id=_uuid.uuid4(),
         user_id=_uuid.UUID(user_id_str) if len(user_id_str) > 8 else _uuid.uuid4(),
-        province=payload.parcel_ref.split("/")[0] if "/" in payload.parcel_ref else "Unknown",
-        district=payload.parcel_ref.split("/")[1] if payload.parcel_ref.count("/") >= 1 else "Unknown",
-        village=payload.parcel_ref.split("/")[2] if payload.parcel_ref.count("/") >= 2 else "Unknown",
-        ada=payload.parcel_ref.split("/")[3] if payload.parcel_ref.count("/") >= 3 else "0",
-        parsel=payload.parcel_ref.split("/")[4] if payload.parcel_ref.count("/") >= 4 else "0",
+        province=province,
+        district=district,
+        village=village,
+        ada=ada,
+        parsel=parsel,
         area_m2=Decimal(str(payload.area_ha)) * Decimal("10000"),
         status=FieldStatus.ACTIVE,
         created_at=now,
