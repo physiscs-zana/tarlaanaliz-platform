@@ -296,6 +296,9 @@ class PhonePinRegisterRequest(BaseModel):
     pin: str = Field(min_length=6, max_length=6)
     province: str = Field(min_length=2, max_length=100)
     district: str = Field(min_length=2, max_length=100)
+    role: str | None = Field(default=None, max_length=32, description="Optional role code. Defaults to FARMER_SINGLE.")
+    first_name: str = Field(default="", max_length=100)
+    last_name: str = Field(default="", max_length=100)
 
     @field_validator("pin")
     @classmethod
@@ -305,15 +308,49 @@ class PhonePinRegisterRequest(BaseModel):
         return v
 
 
+# Roles that unauthenticated callers may self-register with
+_SELF_REGISTER_ROLES = {"FARMER_SINGLE", "FARMER_MEMBER"}
+
+
 @router.post("/phone-pin/register", response_model=AuthTokenResponse, status_code=status.HTTP_201_CREATED)
-async def phone_pin_register(payload: PhonePinRegisterRequest) -> AuthTokenResponse:
-    """Register a new farmer with phone+PIN (KR-050)."""
+async def phone_pin_register(payload: PhonePinRegisterRequest, request: Request) -> AuthTokenResponse:
+    """Register a new user with phone+PIN (KR-050).
+
+    Role selection rules:
+    - No auth (self-registration): only FARMER_SINGLE, FARMER_MEMBER allowed.
+    - CENTRAL_ADMIN caller: any role from KR-063 allowed.
+    """
     import hashlib
     import uuid as _uuid
     from src.infrastructure.persistence.sqlalchemy.session import get_async_session
     from src.infrastructure.persistence.sqlalchemy.repositories.user_repository_impl import UserRepositoryImpl
     from src.core.domain.entities.user import User, UserRole
     from datetime import datetime, timezone
+
+    # Determine target role
+    target_role = UserRole.FARMER_SINGLE
+    if payload.role is not None:
+        try:
+            target_role = UserRole(payload.role)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid role: {payload.role}. Valid roles: {[r.value for r in UserRole]}",
+            )
+
+        # Check caller permissions for role assignment
+        caller_user = getattr(request.state, "user", None)
+        caller_roles = set(getattr(request.state, "roles", []))
+        is_admin = "admin" in caller_roles or "CENTRAL_ADMIN" in caller_roles
+
+        if is_admin:
+            pass  # Admin can assign any role
+        elif target_role.value not in _SELF_REGISTER_ROLES:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Only CENTRAL_ADMIN can register users with role {target_role.value}. "
+                f"Self-registration allows: {sorted(_SELF_REGISTER_ROLES)}",
+            )
 
     async with get_async_session() as session:
         repo = UserRepositoryImpl(session)
@@ -326,7 +363,7 @@ async def phone_pin_register(payload: PhonePinRegisterRequest) -> AuthTokenRespo
             user_id=_uuid.uuid4(),
             phone_number=payload.phone,
             pin_hash=hashlib.sha256(payload.pin.encode()).hexdigest(),
-            role=UserRole.FARMER_SINGLE,
+            role=target_role,
             province=payload.province,
             created_at=now,
             updated_at=now,
@@ -340,7 +377,7 @@ async def phone_pin_register(payload: PhonePinRegisterRequest) -> AuthTokenRespo
         claims={
             "phone": payload.phone,
             "phone_verified": True,
-            "roles": ["FARMER_SINGLE"],
+            "roles": [target_role.value],
             "user_id": str(user.user_id),
         },
     )

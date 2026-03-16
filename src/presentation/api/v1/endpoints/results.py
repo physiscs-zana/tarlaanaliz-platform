@@ -64,6 +64,13 @@ def _require_subject(request: Request) -> str:
     return str(getattr(user, "subject", ""))
 
 
+@router.get("", response_model=list[ResultSummaryDTO])
+def list_results(request: Request) -> list[ResultSummaryDTO]:
+    """Return all analysis results. Empty until worker pipeline is running."""
+    _require_subject(request)
+    return []
+
+
 @router.get("/{analysis_job_id}/summary", response_model=ResultSummaryDTO)
 def get_result_summary(
     request: Request,
