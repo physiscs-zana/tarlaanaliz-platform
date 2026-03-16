@@ -42,6 +42,7 @@ dependencies = [
     # SEC-FIX: python-jose replaced (CVE-2024-33663/33664), passlib removed (unused)
     "PyJWT[crypto]>=2.8.0,<3",
     "cryptography>=42.0,<44",
+    "bcrypt>=4.0.0,<5",
 
     # --- HTTP Client ---
     "httpx>=0.28.0,<1",
