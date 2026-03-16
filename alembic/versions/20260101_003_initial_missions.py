@@ -123,7 +123,7 @@ def upgrade() -> None:
             "price_snapshot_id",
             postgresql.UUID(as_uuid=True),
             sa.ForeignKey("price_snapshots.price_snapshot_id"),
-            nullable=False,
+            nullable=True,
         ),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
     )

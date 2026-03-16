@@ -4,11 +4,11 @@
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import uuid as _uuid
 from datetime import datetime, timezone
 
+import bcrypt
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
@@ -83,7 +83,7 @@ async def create_expert(request: Request, payload: ExpertCreateRequest) -> Exper
         user = User(
             user_id=_uuid.uuid4(),
             phone_number=payload.phone,
-            pin_hash=hashlib.sha256(payload.pin.encode()).hexdigest(),
+            pin_hash=bcrypt.hashpw(payload.pin.encode(), bcrypt.gensalt()).decode(),
             role=UserRole.EXPERT,
             province=payload.province,
             created_at=now,

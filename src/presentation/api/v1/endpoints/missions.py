@@ -45,7 +45,10 @@ async def create_mission(request: Request, payload: MissionCreateRequest) -> Mis
 
     mission_id = _uuid.uuid4()
     user_id = _uuid.UUID(user_id_str) if user_id_str and len(user_id_str) > 8 else _uuid.uuid4()
-    field_id = _uuid.UUID(payload.field_id)
+    try:
+        field_id = _uuid.UUID(payload.field_id)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="field_id must be a valid UUID")
     planned_at = datetime(
         payload.mission_date.year, payload.mission_date.month, payload.mission_date.day, tzinfo=timezone.utc
     )

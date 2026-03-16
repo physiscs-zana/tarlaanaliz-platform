@@ -56,7 +56,7 @@ class UserRepositoryImpl(UserRepository):
             self._session.add(model)
             # Also insert role
             await self._session.execute(
-                text("INSERT INTO user_roles (user_id, role_code) VALUES (:uid, :role) ON CONFLICT DO NOTHING"),
+                text("INSERT INTO user_roles (user_id, role) VALUES (:uid, :role) ON CONFLICT DO NOTHING"),
                 {"uid": str(user.user_id), "role": user.role.value},
             )
         await self._session.flush()
@@ -78,7 +78,7 @@ class UserRepositoryImpl(UserRepository):
 
     async def _get_primary_role(self, user_id: uuid.UUID) -> UserRole:
         result = await self._session.execute(
-            text("SELECT role_code FROM user_roles WHERE user_id = :uid LIMIT 1"),
+            text("SELECT role FROM user_roles WHERE user_id = :uid LIMIT 1"),
             {"uid": str(user_id)},
         )
         row = result.fetchone()
@@ -91,11 +91,12 @@ class UserRepositoryImpl(UserRepository):
 
     async def list_by_role(self, role: UserRole) -> List[User]:
         result = await self._session.execute(
-            text("SELECT u.* FROM users u JOIN user_roles ur ON u.user_id = ur.user_id WHERE ur.role_code = :role"),
+            select(UserModel)
+            .join(text("user_roles"), text("user_roles.user_id = users.user_id"))
+            .where(text("user_roles.role = :role")),
             {"role": role.value},
         )
-        models = result.fetchall()
-        return [self._to_entity(UserModel(**dict(row._mapping)), role) for row in models]
+        return [self._to_entity(m, role) for m in result.scalars().all()]
 
     async def list_by_province(self, province: str) -> List[User]:
         result = await self._session.execute(select(UserModel).where(UserModel.province == province))

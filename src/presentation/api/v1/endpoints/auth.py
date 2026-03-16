@@ -7,12 +7,14 @@
 from __future__ import annotations
 
 import logging
+import os
 import threading
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
+import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field, field_validator
 
@@ -53,7 +55,7 @@ class AuthRefreshRequest(BaseModel):
 
 
 class PhonePinAuthService(Protocol):
-    def login(self, phone: str, pin: str) -> AuthTokenResponse: ...
+    async def login(self, phone: str, pin: str) -> AuthTokenResponse: ...
 
     def refresh(self, refresh_token: str) -> AuthTokenResponse: ...
 
@@ -106,39 +108,23 @@ class _InMemoryPhonePinAuthService:
         """Başarılı girişte sayacı sıfırla."""
         _login_attempts.pop(phone, None)
 
-    def login(self, phone: str, pin: str) -> AuthTokenResponse:
+    async def login(self, phone: str, pin: str) -> AuthTokenResponse:
         self._check_lockout(phone)
 
         # Try database first
-        import asyncio
         from src.infrastructure.persistence.sqlalchemy.session import get_async_session
         from src.infrastructure.persistence.sqlalchemy.repositories.user_repository_impl import UserRepositoryImpl
 
         user = None
         try:
-
-            async def _find_user() -> Any:
-                async with get_async_session() as session:
-                    repo = UserRepositoryImpl(session)
-                    return await repo.find_by_phone_number(phone)
-
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                # We're in a sync endpoint called from async context
-                import concurrent.futures
-
-                with concurrent.futures.ThreadPoolExecutor() as pool:
-                    user = pool.submit(lambda: asyncio.run(_find_user())).result(timeout=5)
-            else:
-                user = asyncio.run(_find_user())
+            async with get_async_session() as session:
+                repo = UserRepositoryImpl(session)
+                user = await repo.find_by_phone_number(phone)
         except Exception:
             pass  # DB not available, fall back to env credentials
 
         if user is not None:
-            import hashlib
-
-            pin_hash = hashlib.sha256(pin.encode()).hexdigest()
-            if pin_hash != user.pin_hash:
+            if not bcrypt.checkpw(pin.encode(), user.pin_hash.encode()):
                 self._record_failure(phone)
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
             self._record_success(phone)
@@ -153,23 +139,28 @@ class _InMemoryPhonePinAuthService:
             )
             return AuthTokenResponse(access_token=access_token, subject=str(user.user_id))
 
-        # Fallback: env-based test credentials
-        import os
+        # Fallback: env-based test credentials (H1: only in dev/test)
+        env = os.getenv("TARLA_ENVIRONMENT", os.getenv("APP_ENV", "development"))
+        if env in ("development", "test"):
+            _test_phone = os.getenv("AUTH_TEST_PHONE")
+            _test_pin = os.getenv("AUTH_TEST_PIN")
+            if _test_phone and _test_pin:
+                if phone == _test_phone and pin == _test_pin:
+                    self._record_success(phone)
+                    access_token = self._jwt_handler.issue_access_token(
+                        subject="user-1",
+                        claims={
+                            "phone": phone,
+                            "phone_verified": True,
+                            "roles": ["CENTRAL_ADMIN"],
+                            "user_id": "user-1",
+                        },
+                    )
+                    return AuthTokenResponse(access_token=access_token, subject="user-1")
 
-        _test_phone = os.getenv("AUTH_TEST_PHONE")
-        _test_pin = os.getenv("AUTH_TEST_PIN")
-        if not _test_phone or not _test_pin:
-            LOGGER.error("No user found in DB and AUTH_TEST_PHONE/PIN not set")
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-        if phone != _test_phone or pin != _test_pin:
-            self._record_failure(phone)
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-        self._record_success(phone)
-        access_token = self._jwt_handler.issue_access_token(
-            subject="user-1",
-            claims={"phone": phone, "phone_verified": True, "roles": ["CENTRAL_ADMIN"], "user_id": "user-1"},
-        )
-        return AuthTokenResponse(access_token=access_token, subject="user-1")
+        # No match — record failure
+        self._record_failure(phone)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 
     def refresh(self, refresh_token: str) -> AuthTokenResponse:
         # Refresh token doğrulama
@@ -251,7 +242,7 @@ def get_phone_pin_auth_service() -> PhonePinAuthService:
 
 
 @router.post("/phone-pin/login", response_model=AuthTokenResponse)
-def phone_pin_login(
+async def phone_pin_login(
     payload: PhonePinLoginRequest,
     response: Response,
     service: PhonePinAuthService = Depends(get_phone_pin_auth_service),
@@ -266,7 +257,7 @@ def phone_pin_login(
         )
 
     try:
-        result = service.login(phone=payload.phone, pin=payload.pin)
+        result = await service.login(phone=payload.phone, pin=payload.pin)
     except HTTPException as exc:
         if exc.status_code == status.HTTP_401_UNAUTHORIZED:
             # Record failed attempt
@@ -320,7 +311,6 @@ async def phone_pin_register(payload: PhonePinRegisterRequest, request: Request)
     - No auth (self-registration): only FARMER_SINGLE, FARMER_MEMBER allowed.
     - CENTRAL_ADMIN caller: any role from KR-063 allowed.
     """
-    import hashlib
     import uuid as _uuid
     from src.infrastructure.persistence.sqlalchemy.session import get_async_session
     from src.infrastructure.persistence.sqlalchemy.repositories.user_repository_impl import UserRepositoryImpl
@@ -362,7 +352,7 @@ async def phone_pin_register(payload: PhonePinRegisterRequest, request: Request)
         user = User(
             user_id=_uuid.uuid4(),
             phone_number=payload.phone,
-            pin_hash=hashlib.sha256(payload.pin.encode()).hexdigest(),
+            pin_hash=bcrypt.hashpw(payload.pin.encode(), bcrypt.gensalt()).decode(),
             role=target_role,
             province=payload.province,
             created_at=now,
