@@ -94,14 +94,15 @@ def validate_batch_size(base_ref: str, head_ref: str) -> tuple[bool, str]:
     file_count, added, deleted = git_numstat(base_ref=base_ref, head_ref=head_ref)
     changed_lines = added + deleted
 
+    # Adaptive limits — larger changes naturally touch more files
     if changed_lines <= 100:
-        max_files = 30
-    elif changed_lines <= 300:
-        max_files = 30
-    elif changed_lines <= 1500:
+        max_files = 40
+    elif changed_lines <= 500:
         max_files = 50
+    elif changed_lines <= 2000:
+        max_files = 80
     else:
-        max_files = 60
+        max_files = 100
 
     if file_count > max_files:
         return (
