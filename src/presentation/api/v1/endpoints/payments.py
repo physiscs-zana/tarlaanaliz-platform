@@ -40,6 +40,29 @@ router = APIRouter(
 )
 
 
+@router.get("/methods")
+def get_payment_methods() -> dict[str, object]:
+    """Available payment methods — KR-033."""
+    return {
+        "methods": [
+            {
+                "code": "IBAN",
+                "name": "Havale / EFT",
+                "available": True,
+                "iban": "TR33 0006 1005 1978 6457 8413 26",
+                "bank_name": "Halkbank",
+                "recipient": "TarlaAnaliz Tarim Teknolojileri A.S.",
+            },
+            {
+                "code": "CREDIT_CARD",
+                "name": "Kredi Karti",
+                "available": False,
+                "message": "SU ANDA SADECE IBAN ILE ODEME ALABILIYORUZ",
+            },
+        ]
+    }
+
+
 def _observe(request: Request, metrics: MetricsCollector, started: float, status_code: int) -> None:
     corr_id = getattr(request.state, "corr_id", None)
     route = request.url.path
