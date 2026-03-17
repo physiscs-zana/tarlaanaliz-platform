@@ -11,8 +11,8 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import DateTime, ForeignKey, UniqueConstraint, text
+from sqlalchemy.dialects.postgresql import ENUM, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.infrastructure.persistence.sqlalchemy.base import Base
@@ -31,6 +31,25 @@ class UserRoleModel(Base):
         nullable=False,
         index=True,
     )
-    role: Mapped[str] = mapped_column(String(32), nullable=False)
+    role: Mapped[str] = mapped_column(
+        ENUM(
+            "FARMER_SINGLE",
+            "FARMER_MEMBER",
+            "COOP_OWNER",
+            "COOP_ADMIN",
+            "COOP_AGRONOMIST",
+            "COOP_VIEWER",
+            "PILOT",
+            "STATION_OPERATOR",
+            "IL_OPERATOR",
+            "BILLING_ADMIN",
+            "CENTRAL_ADMIN",
+            "AI_SERVICE",
+            "EXPERT",
+            name="user_role",
+            create_type=False,
+        ),
+        nullable=False,
+    )
     granted_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=True)
     granted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
