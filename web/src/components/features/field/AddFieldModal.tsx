@@ -8,6 +8,21 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
+/**
+ * KR-013 + CropType VO: SSOT kanonık bitki turleri.
+ * Backend CropType value object ile ayni liste.
+ */
+const CROP_TYPES = [
+  { code: "PAMUK", label: "Pamuk" },
+  { code: "ANTEP_FISTIGI", label: "Antep Fistigi" },
+  { code: "MISIR", label: "Misir" },
+  { code: "BUGDAY", label: "Bugday" },
+  { code: "AYCICEGI", label: "Aycicegi" },
+  { code: "UZUM", label: "Uzum" },
+  { code: "ZEYTIN", label: "Zeytin" },
+  { code: "KIRMIZI_MERCIMEK", label: "Kirmizi Mercimek" },
+] as const;
+
 /** KR-013: Tarla ekleme payload'u — SSOT zorunlu alanlari. */
 export interface AddFieldPayload {
   readonly province: string;
@@ -48,7 +63,7 @@ export function AddFieldModal({ open, onClose, onSubmit, requestMeta }: AddField
     if (!parcel.trim()) return setError('Parsel zorunludur.');
     const area = Number(areaM2);
     if (!Number.isFinite(area) || area <= 0) return setError('Alan (m²) 0\'dan büyük olmalıdır.');
-    if (!cropType.trim()) return setError('Bitki türü zorunludur.');
+    if (!cropType) return setError('Bitki turu secilmelidir.');
 
     setError(null);
     try {
@@ -59,7 +74,7 @@ export function AddFieldModal({ open, onClose, onSubmit, requestMeta }: AddField
         block: block.trim(),
         parcel: parcel.trim(),
         areaM2: area,
-        cropType: cropType.trim(),
+        cropType,
         ...requestMeta,
       });
       onClose();
@@ -92,7 +107,16 @@ export function AddFieldModal({ open, onClose, onSubmit, requestMeta }: AddField
             onChange={(e) => setAreaM2(e.target.value)}
             hasError={!!error && Number(areaM2) <= 0}
           />
-          <Input placeholder="Bitki Türü (örn. Pamuk)" value={cropType} onChange={(e) => setCropType(e.target.value)} hasError={!!error && !cropType.trim()} />
+          <select
+            value={cropType}
+            onChange={(e) => setCropType(e.target.value)}
+            className={`w-full rounded border px-3 py-2 text-sm ${!!error && !cropType ? 'border-rose-400' : 'border-slate-300'}`}
+          >
+            <option value="">Bitki Turu Secin</option>
+            {CROP_TYPES.map((ct) => (
+              <option key={ct.code} value={ct.code}>{ct.label}</option>
+            ))}
+          </select>
           {error ? <p className="text-sm text-rose-600">{error}</p> : null}
         </div>
         <div className="mt-4 flex justify-end gap-2">
