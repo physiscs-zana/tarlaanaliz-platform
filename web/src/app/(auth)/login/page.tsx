@@ -91,6 +91,9 @@ export default function LoginPage() {
           {isSubmitting ? "Gönderiliyor..." : "Giriş"}
         </button>
       </form>
+      <p className="mt-3 text-center text-sm text-slate-500">
+        Hesabınız yok mu? <a href="/register" className="text-slate-900 underline">Üye olun</a>
+      </p>
     </section>
   );
 }
