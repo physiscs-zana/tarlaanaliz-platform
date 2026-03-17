@@ -130,11 +130,15 @@ async def _corr_id_middleware(request: Request, call_next: Callable[..., Any]) -
 
 
 def _register_exception_handlers(app: FastAPI) -> None:
+    # SEC: corr_id is logged server-side but NEVER returned in response body.
+    # Leaking internal correlation IDs helps attackers correlate requests
+    # and map internal infrastructure.
+
     @app.exception_handler(RequestValidationError)
     async def handle_validation_error(request: Request, _: RequestValidationError) -> JSONResponse:
         return JSONResponse(
             status_code=422,
-            content={"detail": "Validation failed", "corr_id": getattr(request.state, "corr_id", None)},
+            content={"detail": "Validation failed"},
         )
 
     @app.exception_handler(StarletteHTTPException)
@@ -142,7 +146,7 @@ def _register_exception_handlers(app: FastAPI) -> None:
         safe_detail = exc.detail if exc.status_code < 500 else "Internal server error"
         return JSONResponse(
             status_code=exc.status_code,
-            content={"detail": safe_detail, "corr_id": getattr(request.state, "corr_id", None)},
+            content={"detail": safe_detail},
         )
 
     @app.exception_handler(Exception)
@@ -159,7 +163,7 @@ def _register_exception_handlers(app: FastAPI) -> None:
         )
         return JSONResponse(
             status_code=500,
-            content={"detail": "Internal server error", "corr_id": getattr(request.state, "corr_id", None)},
+            content={"detail": "Internal server error"},
         )
 
 

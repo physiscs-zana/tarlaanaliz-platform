@@ -11,11 +11,7 @@ const nextConfig = {
       {
         source: "/:path*",
         headers: [
-          {
-            key: "x-app-name",
-            value: "tarlaanaliz-web",
-          },
-          // SEC-FIX: Security headers added (was completely missing)
+          // SEC: x-app-name removed — leaks application identity to attackers
           {
             key: "X-Content-Type-Options",
             value: "nosniff",
