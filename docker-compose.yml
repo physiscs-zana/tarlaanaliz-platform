@@ -136,6 +136,8 @@ services:
       # --- non-prefixed (for other tools) ---
       APP_ENV: production
       API_JWT_SECRET: ${APP_SECRET_KEY:?APP_SECRET_KEY required}
+      API_CORS_ALLOW_ORIGINS: "https://tarlaanaliz.com,https://www.tarlaanaliz.com"
+      API_CORS_ALLOW_CREDENTIALS: "true"
     ports:
       # SEC-FIX: bind to localhost only
       - "127.0.0.1:8000:8000"    # FastAPI backend

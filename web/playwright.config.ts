@@ -16,11 +16,10 @@ export default defineConfig({
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
-  projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-  ],
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: "node .next/standalone/server.js",
+    command:
+      "cp -r public .next/standalone/public 2>/dev/null; cp -r .next/static .next/standalone/.next/static 2>/dev/null; node .next/standalone/server.js",
     env: { PORT: "3000", HOSTNAME: "127.0.0.1" },
     url: baseURL,
     reuseExistingServer: !process.env.CI,

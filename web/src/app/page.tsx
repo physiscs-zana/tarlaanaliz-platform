@@ -7,9 +7,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { COOKIE_ROLE_KEY } from "@/lib/constants";
 
-/* ------------------------------------------------------------------ */
-/* Authenticated users → role-based redirect                          */
-/* ------------------------------------------------------------------ */
 function tryRoleRedirect() {
   const store = cookies();
   const role = store.get(COOKIE_ROLE_KEY)?.value;
@@ -19,13 +16,15 @@ function tryRoleRedirect() {
   if (role === "pilot") redirect("/pilot/missions");
 }
 
-/* ------------------------------------------------------------------ */
-/* SVG Icons                                                          */
-/* ------------------------------------------------------------------ */
-function IconLeaf({ className = "h-5 w-5" }: { className?: string }) {
+/* -- Icons -- */
+function IconLogo({ className = "h-6 w-6" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75" />
+    <svg className={className} viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="8" fill="#059669" />
+      <path d="M16 6c-2 4-6 6-6 10a6 6 0 0012 0c0-4-4-6-6-10z" fill="#34d399" />
+      <path d="M16 12v8M13 17l3-3 3 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="24" cy="8" r="3" fill="#a7f3d0" opacity="0.7" />
+      <path d="M23 8l1-2 2 1" stroke="#059669" strokeWidth="0.8" strokeLinecap="round" />
     </svg>
   );
 }
@@ -47,9 +46,6 @@ function IconCheck({ className = "h-5 w-5" }: { className?: string }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Landing Page                                                       */
-/* ------------------------------------------------------------------ */
 export default function HomePage() {
   tryRoleRedirect();
 
@@ -59,9 +55,7 @@ export default function HomePage() {
       <nav className="sticky top-0 z-40 border-b border-slate-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600">
-              <IconLeaf className="h-4 w-4 text-white" />
-            </div>
+            <IconLogo className="h-8 w-8" />
             <span className="text-lg font-bold text-slate-900">TarlaAnaliz</span>
           </Link>
           <div className="flex items-center gap-2">
@@ -87,7 +81,7 @@ export default function HomePage() {
               <p className="mt-3 text-base leading-relaxed text-slate-600 sm:text-lg">
                 Tarlanızın <strong>&ldquo;check-up ve tahlilini&rdquo;</strong> drone ile yapıyoruz.
                 Hastalık, zararlı böcek, yabancı ot ve su eksikliğini
-                <strong> insan gözünden bir hafta önce</strong> tespit ediyoruz.
+                <strong> insan gözünden en az bir hafta önce</strong> tespit ediyoruz.
               </p>
               <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-500">
                 <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Erken Uyarı</span>
@@ -117,6 +111,7 @@ export default function HomePage() {
               height={500}
               className="w-full rounded-xl shadow-lg"
               priority
+              unoptimized
             />
           </div>
         </div>
@@ -124,21 +119,23 @@ export default function HomePage() {
 
       {/* ===== Stats ===== */}
       <div className="border-y border-slate-100 bg-slate-50">
-        <div className="mx-auto grid max-w-3xl grid-cols-3 divide-x divide-slate-200 py-5">
-          {[
-            { value: "81", label: "İl Kapsama" },
-            { value: "1 Hafta", label: "Erken Tespit" },
-            { value: "%95", label: "Doğruluk" },
-          ].map((s) => (
-            <div key={s.label} className="text-center">
-              <div className="text-xl font-bold text-emerald-600 sm:text-2xl">{s.value}</div>
-              <div className="text-xs text-slate-500">{s.label}</div>
-            </div>
-          ))}
+        <div className="mx-auto grid max-w-4xl grid-cols-3 divide-x divide-slate-200 py-5">
+          <div className="text-center">
+            <div className="text-xl font-bold text-emerald-600 sm:text-2xl">81</div>
+            <div className="text-xs text-slate-500">İl Kapsama</div>
+          </div>
+          <div className="text-center px-2">
+            <div className="text-xl font-bold text-emerald-600 sm:text-2xl">En Az 1 Hafta</div>
+            <div className="text-xs text-slate-500">Erken Tespit</div>
+          </div>
+          <div className="text-center px-2">
+            <div className="text-lg font-bold text-emerald-600 sm:text-xl">%93&ndash;%99</div>
+            <div className="text-xs text-slate-500">Bitki Türüne Göre Doğruluk</div>
+          </div>
         </div>
       </div>
 
-      {/* ===== Tarlanın Röntgeni — Infographic ===== */}
+      {/* ===== Tarlanın Röntgeni ===== */}
       <section className="py-10 sm:py-14">
         <div className="mx-auto max-w-6xl px-4">
           <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">
@@ -155,6 +152,7 @@ export default function HomePage() {
               width={900}
               height={550}
               className="w-full rounded-xl"
+              unoptimized
             />
             <div className="space-y-2.5">
               {[
@@ -191,35 +189,67 @@ export default function HomePage() {
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <div className="overflow-hidden rounded-xl border border-slate-200">
-              <Image src="/images/tarla-oncesi.png" alt="Tarla — normal havadan görüntü" width={600} height={450} className="w-full" />
+              <Image src="/images/tarla-oncesi.png" alt="Tarla — normal havadan görüntü" width={600} height={450} className="w-full" unoptimized />
               <div className="bg-white px-4 py-2 text-center text-sm font-medium text-slate-700">Normal Görüntü</div>
             </div>
             <div className="overflow-hidden rounded-xl border border-emerald-200">
-              <Image src="/images/tarla-sonrasi.png" alt="Tarla — analiz sonucu (ısı haritası)" width={600} height={450} className="w-full" />
+              <Image src="/images/tarla-sonrasi.png" alt="Tarla — analiz sonucu" width={600} height={450} className="w-full" unoptimized />
               <div className="bg-emerald-50 px-4 py-2 text-center text-sm font-medium text-emerald-700">Analiz Sonucu</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ===== Tasarruf Mesajı ===== */}
-      <section className="py-10 sm:py-14">
-        <div className="mx-auto max-w-4xl px-4">
-          <div className="rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-700 p-6 text-white sm:p-8">
-            <h2 className="text-xl font-bold sm:text-2xl">Tarlanın tamamını ilaçlamayın!</h2>
-            <p className="mt-2 text-sm leading-relaxed text-emerald-100 sm:text-base">
+      {/* ===== Tasarruf — Büyük Bölüm ===== */}
+      <section className="py-12 sm:py-16">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 p-8 text-white sm:p-12">
+            <h2 className="text-center text-3xl font-extrabold sm:text-4xl">
+              Tarlanın tamamını ilaçlamayın!
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-center text-base leading-relaxed text-emerald-100 sm:text-lg">
               Sadece hastalıklı veya otlu bölgeyi ilaçlayın. Su ve gübre kullanımından tasarruf edin.
               Haftalık takiple tarlanızın durumunu yakından izleyin.
             </p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="mt-8 grid gap-5 sm:grid-cols-3">
               {[
-                { title: "Hedefli İlaçlama", desc: "Tarlayı komple değil, sadece sorunlu bölgeyi ilaçlayın" },
-                { title: "Su Tasarrufu", desc: "Nereye ne kadar su gerektiğini bilin" },
-                { title: "Gübre Tasarrufu", desc: "Azot durumunu bölge bölge görün, gereksiz gübrelemeden kaçının" },
+                {
+                  title: "Hedefli İlaçlama",
+                  desc: "Tarlayı komple değil, sadece sorunlu bölgeyi ilaçlayın. İlaç masrafınızı yarıya düşürün.",
+                  icon: (
+                    <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <circle cx="12" cy="12" r="3" />
+                      <line x1="12" y1="2" x2="12" y2="6" />
+                      <line x1="12" y1="18" x2="12" y2="22" />
+                      <line x1="2" y1="12" x2="6" y2="12" />
+                      <line x1="18" y1="12" x2="22" y2="12" />
+                    </svg>
+                  ),
+                },
+                {
+                  title: "Su Tasarrufu",
+                  desc: "Nereye ne kadar su gerektiğini bilin. Kuru bölgeyi sulayın, zaten ıslak bölgeye boşa su harcamayın.",
+                  icon: (
+                    <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" />
+                    </svg>
+                  ),
+                },
+                {
+                  title: "Gübre Tasarrufu",
+                  desc: "Azot durumunu bölge bölge görün. Gereksiz gübrelemeden kaçının, toprağınızı koruyun.",
+                  icon: (
+                    <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75" />
+                    </svg>
+                  ),
+                },
               ].map((item) => (
-                <div key={item.title} className="rounded-xl bg-white/10 p-3.5">
-                  <h3 className="text-sm font-semibold">{item.title}</h3>
-                  <p className="mt-1 text-xs text-emerald-100">{item.desc}</p>
+                <div key={item.title} className="rounded-2xl bg-white/10 p-6 backdrop-blur-sm">
+                  <div className="mb-3 text-emerald-200">{item.icon}</div>
+                  <h3 className="text-lg font-bold">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-emerald-100">{item.desc}</p>
                 </div>
               ))}
             </div>
@@ -227,7 +257,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== 5 Adım İş Akışı ===== */}
+      {/* ===== Nasıl Çalışır? ===== */}
       <section id="nasil-calisir" className="bg-slate-50 py-10 sm:py-14">
         <div className="mx-auto max-w-6xl px-4">
           <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">Uçtan Uca İş Akışı</h2>
@@ -236,11 +266,11 @@ export default function HomePage() {
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {[
-              { step: "1", title: "Tarama Uçuşu", desc: "Drone ile tarla taranır. Özel kamera görüntüleri hafıza kartına kaydedilir.", color: "bg-emerald-600" },
-              { step: "2", title: "Harita Oluşturma", desc: "Görüntüler merkez bilgisayarda işlenir, tarlanın sağlık haritası çıkarılır.", color: "bg-emerald-500" },
-              { step: "3", title: "Analiz", desc: "Hastalık, ot, böcek, su ve azot durumu tek tek incelenir.", color: "bg-amber-500" },
-              { step: "4", title: "Zonlama", desc: "Sorunlu bölgeler işaretlenir. Hedefli müdahale planı oluşturulur.", color: "bg-orange-500" },
-              { step: "5", title: "Rapor", desc: "Harita, erken teşhis, öneriler ve haftalık takip raporunuz hazırlanır.", color: "bg-blue-600" },
+              { step: "1", title: "Tarama Uçuşu", desc: "Drone ile tarla taranır, görüntüler kaydedilir.", color: "bg-emerald-600" },
+              { step: "2", title: "Harita", desc: "Görüntüler işlenir, sağlık haritası çıkarılır.", color: "bg-emerald-500" },
+              { step: "3", title: "Analiz", desc: "Hastalık, ot, böcek, su ve azot tek tek incelenir.", color: "bg-amber-500" },
+              { step: "4", title: "Zonlama", desc: "Sorunlu bölgeler işaretlenir, müdahale planı oluşur.", color: "bg-orange-500" },
+              { step: "5", title: "Rapor", desc: "Harita, teşhis, öneriler ve haftalık takip raporunuz.", color: "bg-blue-600" },
             ].map((item) => (
               <div key={item.step} className="rounded-xl border border-slate-200 bg-white p-4">
                 <div className={`mb-2.5 flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white ${item.color}`}>
@@ -250,120 +280,6 @@ export default function HomePage() {
                 <p className="mt-1 text-xs leading-relaxed text-slate-500">{item.desc}</p>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ===== Ürün Senaryoları ===== */}
-      <section className="py-10 sm:py-14">
-        <div className="mx-auto max-w-6xl px-4">
-          <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">Her Ürün İçin Ayrı Çıktı</h2>
-          <p className="mx-auto mt-1 max-w-lg text-center text-sm text-slate-500">Mısır, pamuk ve diğer bitkilerde aynı platform</p>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 p-5">
-              <h3 className="text-lg font-bold text-slate-900">Mısır</h3>
-              <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
-                <li className="flex gap-2"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />Bitki gelişim farkı — hastalık, mantar var mı?</li>
-                <li className="flex gap-2"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />Yabancı ot kümeleri nerede, ne kadar?</li>
-                <li className="flex gap-2"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />Su stresi / besin eksikliği tespiti</li>
-                <li className="flex gap-2"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />Koçan döneminde riskli alanların işaretlenmesi</li>
-              </ul>
-            </div>
-            <div className="rounded-xl border border-slate-200 p-5">
-              <h3 className="text-lg font-bold text-slate-900">Pamuk</h3>
-              <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
-                <li className="flex gap-2"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />Çıkış ve bitki sıklığı kontrolü (erken dönem)</li>
-                <li className="flex gap-2"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />Susuzluk, sıcak ve besleme stresi alanları</li>
-                <li className="flex gap-2"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />Ot baskısı ve tekrarlayan problem noktaları</li>
-                <li className="flex gap-2"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />Hasada kadar haftalık karşılaştırma</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== Fiyatlandırma ===== */}
-      <section className="bg-slate-50 py-10 sm:py-14">
-        <div className="mx-auto max-w-5xl px-4">
-          <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">Fiyatlandırma</h2>
-          <p className="mx-auto mt-1 text-center text-sm text-slate-500">Dönüm bazlı, bireysel ve kooperatif için iki model</p>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {/* Model A */}
-            <div className="overflow-hidden rounded-xl border-2 border-emerald-500 bg-white">
-              <div className="bg-emerald-600 px-5 py-3 text-white">
-                <h3 className="text-lg font-bold">Sezonluk Abonelik</h3>
-                <p className="text-xs text-emerald-100">3-4 ay, 12-17 tarama + analiz</p>
-              </div>
-              <div className="p-5">
-                <ul className="space-y-1.5 text-sm text-slate-600">
-                  <li>7 veya 10 gün arayla tarama</li>
-                  <li>Liste fiyata göre <strong className="text-emerald-700">%20 tasarruf</strong></li>
-                  <li>Peşin ödeme</li>
-                </ul>
-                <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm">
-                  <div className="text-slate-500">Örnek (1 dönüm, 10 tarama):</div>
-                  <div className="text-lg font-bold text-slate-900">200 TL <span className="text-sm font-normal text-slate-400 line-through">250 TL</span></div>
-                </div>
-              </div>
-            </div>
-            {/* Model B */}
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-              <div className="bg-blue-600 px-5 py-3 text-white">
-                <h3 className="text-lg font-bold">Tek Seferlik Tarama</h3>
-                <p className="text-xs text-blue-100">1 tarama + analiz raporu</p>
-              </div>
-              <div className="p-5">
-                <ul className="space-y-1.5 text-sm text-slate-600">
-                  <li>Denemek veya tek seferlik kontrol için</li>
-                  <li>Kooperatif: toplu planlama + hacim indirimi</li>
-                  <li>Her üyeye ayrı rapor + kooperatif özeti</li>
-                </ul>
-                <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm">
-                  <div className="text-slate-500">Örnek (1 dönüm, 1 tarama):</div>
-                  <div className="text-lg font-bold text-slate-900">50 TL</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <p className="mt-3 text-center text-xs text-slate-400">
-            Fiyatlar &ldquo;örnek&rdquo;tir: bölge, alan, uçuş sıklığı ve hizmet kapsamına göre netleşir.
-          </p>
-        </div>
-      </section>
-
-      {/* ===== 7 Katman Görseli ===== */}
-      <section className="py-10 sm:py-14">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="grid items-center gap-6 lg:grid-cols-2">
-            <Image
-              src="/images/katman-tarla.png"
-              alt="7 analiz katmanı — tarla üzerinde"
-              width={800}
-              height={500}
-              className="w-full rounded-xl"
-            />
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-                Tek Taramada 7 Farklı Analiz
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600 sm:text-base">
-                Hem daha az masraf yapın, hem de ürün veriminiz artsın.
-                Her bölge ayrı ayrı değerlendirilir, sorunlu alanlar harita üzerinde işaretlenir.
-              </p>
-              <ul className="mt-3 space-y-1.5">
-                {[
-                  "Sorunlu alanlar harita üzerinde gösterilir",
-                  "Uzmanlar sonuçları kontrol eder, rapor yazar",
-                  "Rapor telefonunuza bildirim olarak gelir",
-                  "Çiftçi 30 saniyede anlasın diye tasarlandı",
-                ].map((t) => (
-                  <li key={t} className="flex items-start gap-2 text-sm text-slate-700">
-                    <IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                    {t}
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
         </div>
       </section>
@@ -394,21 +310,8 @@ export default function HomePage() {
       </section>
 
       {/* ===== Footer ===== */}
-      <footer className="border-t border-slate-200 bg-white py-6">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 sm:flex-row">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600">
-              <IconLeaf className="h-3.5 w-3.5 text-white" />
-            </div>
-            <span className="font-semibold text-slate-900">TarlaAnaliz</span>
-          </div>
-          <nav className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
-            <Link href="/login" className="hover:text-slate-900">Giriş Yap</Link>
-            <Link href="/register" className="hover:text-slate-900">Üye Ol</Link>
-            <Link href="#nasil-calisir" className="hover:text-slate-900">Nasıl Çalışır?</Link>
-          </nav>
-          <p className="text-xs text-slate-400">&copy; 2026 TarlaAnaliz</p>
-        </div>
+      <footer className="border-t border-slate-100 bg-white py-4">
+        <p className="text-center text-xs text-slate-400">Powered by FBL&amp;Z.A</p>
       </footer>
     </div>
   );
