@@ -1,4 +1,3 @@
-# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # [FIX-7] Restrict crawlers from private/admin/API paths.
 # Public pages (landing, blog, pricing) are allowed; authenticated
 # dashboards and API routes are disallowed.
