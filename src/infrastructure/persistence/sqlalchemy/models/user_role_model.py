@@ -20,9 +20,7 @@ from src.infrastructure.persistence.sqlalchemy.base import Base
 
 class UserRoleModel(Base):
     __tablename__ = "user_roles"
-    __table_args__ = (
-        UniqueConstraint("user_id", "role", name="uq_user_roles_user_role"),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "role", name="uq_user_roles_user_role"),)
 
     user_role_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
@@ -34,9 +32,5 @@ class UserRoleModel(Base):
         index=True,
     )
     role: Mapped[str] = mapped_column(String(32), nullable=False)
-    granted_by: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=True
-    )
-    granted_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=text("now()")
-    )
+    granted_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=True)
+    granted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
