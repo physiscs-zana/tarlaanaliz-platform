@@ -8,16 +8,10 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { apiRequest } from "@/lib/apiClient";
-
-interface RegisterPayload {
-  readonly phone: string;
-  readonly pin: string;
-  readonly firstName: string;
-  readonly lastName: string;
-  readonly province: string;
-  readonly district: string;
-}
+import { getApiBaseUrl, decodeJwtPayload } from "@/lib/api";
+import { setAuthToken } from "@/lib/authStorage";
+import { AUTH_TOKEN_TTL_MS, COOKIE_TOKEN_KEY, COOKIE_ROLE_KEY } from "@/lib/constants";
+import { ROLE_TO_GROUP, type AuthRole } from "@/hooks/useAuth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -53,21 +47,45 @@ export default function RegisterPage() {
 
     setIsSubmitting(true);
 
-    const payload: RegisterPayload = {
-      phone: phone.trim(),
-      pin,
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      province: province.trim(),
-      district: district.trim(),
-    };
-
     try {
-      await apiRequest("/api/auth/register", {
+      const baseUrl = getApiBaseUrl();
+      const response = await fetch(`${baseUrl}/auth/phone-pin/register`, {
         method: "POST",
-        body: payload,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: phone.trim(),
+          pin,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          province: province.trim(),
+          district: district.trim(),
+        }),
       });
-      router.replace("/");
+
+      if (response.status === 409) {
+        setError("Bu telefon numarası zaten kayıtlı.");
+        return;
+      }
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        setError((body as { detail?: string }).detail || "Kayıt başarısız");
+        return;
+      }
+
+      const data = (await response.json()) as { access_token: string; subject: string };
+
+      // Set auth state so user is immediately logged in after registration
+      setAuthToken(data.access_token, AUTH_TOKEN_TTL_MS);
+      const maxAgeSec = Math.floor(AUTH_TOKEN_TTL_MS / 1000);
+      document.cookie = `${COOKIE_TOKEN_KEY}=${encodeURIComponent(data.access_token)};path=/;max-age=${maxAgeSec};Secure;SameSite=Strict`;
+
+      const claims = decodeJwtPayload(data.access_token);
+      const roles = (claims.roles as string[] | undefined) ?? [];
+      const primaryRole = (roles[0] ?? "FARMER_SINGLE") as AuthRole;
+      const roleGroup = ROLE_TO_GROUP[primaryRole] ?? "farmer";
+      document.cookie = `${COOKIE_ROLE_KEY}=${roleGroup};path=/;max-age=${maxAgeSec};Secure;SameSite=Strict`;
+
+      router.replace("/fields");
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Kayıt başarısız");
     } finally {

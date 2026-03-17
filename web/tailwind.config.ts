@@ -9,9 +9,14 @@ const config: Config = {
       colors: {
         brand: {
           50: "#eef8ff",
+          100: "#d8efff",
           500: "#0ea5e9",
+          600: "#0284c7",
           700: "#0369a1",
         },
+      },
+      fontFamily: {
+        sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "sans-serif"],
       },
     },
   },

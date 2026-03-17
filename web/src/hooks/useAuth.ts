@@ -6,6 +6,7 @@ import { useCallback, useState } from 'react';
 
 import { setAuthToken, getAuthToken, clearAuthStorage } from '@/lib/authStorage';
 import { AUTH_TOKEN_TTL_MS, COOKIE_TOKEN_KEY, COOKIE_ROLE_KEY } from '@/lib/constants';
+import { getApiBaseUrl, decodeJwtPayload } from '@/lib/api';
 
 /**
  * KR-063: SSOT kanonik rol kodları.
@@ -93,31 +94,45 @@ export function useAuth() {
   });
 
   const login = useCallback(async (input: LoginInput) => {
-    const response = await fetch('/api/auth/login', {
+    const baseUrl = getApiBaseUrl();
+    const response = await fetch(`${baseUrl}/auth/phone-pin/login`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ phone: input.phone, pin: input.pin }),
     });
 
+    if (response.status === 429) {
+      throw new Error('429: Rate limit exceeded');
+    }
     if (!response.ok) {
       throw new Error('Login failed');
     }
 
-    const data = (await response.json()) as LoginResponse;
+    const raw = (await response.json()) as {
+      access_token: string;
+      subject: string;
+      phone_verified: boolean;
+    };
 
-    // SEC-FIX: Token stored in memory only (not localStorage). The HttpOnly
-    // cookie should be set by the backend login endpoint's Set-Cookie header.
-    // In-memory copy is for client-side Bearer header usage during this session.
+    // Extract role from JWT claims (backend encodes roles[] in the token)
+    const claims = decodeJwtPayload(raw.access_token);
+    const roles = (claims.roles as string[] | undefined) ?? [];
+    const primaryRole = (roles[0] ?? 'FARMER_SINGLE') as AuthRole;
+
+    const user: AuthUser = {
+      id: raw.subject,
+      role: primaryRole,
+    };
+    const data: LoginResponse = { access_token: raw.access_token, user };
+
     setAuthToken(data.access_token, AUTH_TOKEN_TTL_MS);
 
-    // KR-063: Token cookie — will transition to server-set HttpOnly cookie.
-    // For now, still set client-side but with SameSite=Strict.
     const maxAgeSec = Math.floor(AUTH_TOKEN_TTL_MS / 1000);
     setCookie(COOKIE_TOKEN_KEY, data.access_token, maxAgeSec);
-    const roleGroup = ROLE_TO_GROUP[data.user.role] ?? 'farmer';
+    const roleGroup = ROLE_TO_GROUP[primaryRole] ?? 'farmer';
     setCookie(COOKIE_ROLE_KEY, roleGroup, maxAgeSec);
 
-    setState({ token: data.access_token, user: data.user });
+    setState({ token: data.access_token, user });
     return data;
   }, []);
 
