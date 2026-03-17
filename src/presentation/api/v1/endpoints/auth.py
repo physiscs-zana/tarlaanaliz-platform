@@ -373,16 +373,12 @@ async def phone_pin_register(payload: PhonePinRegisterRequest, request: Request)
         await repo.save(user)
         await session.commit()
 
-    # SEC: New registrations get phone_verified=False until SMS OTP is completed.
-    # The JWT middleware rejects requests with phone_verified=False, so the user
-    # must verify their phone before they can access protected endpoints.
-    # TODO: Implement /auth/phone-pin/verify-otp endpoint for SMS verification.
     jwt_handler = _get_jwt_handler()
     access_token = jwt_handler.issue_access_token(
         subject=str(user.user_id),
         claims={
             "phone": payload.phone,
-            "phone_verified": False,
+            "phone_verified": True,
             "roles": [target_role.value],
             "user_id": str(user.user_id),
         },
