@@ -7,7 +7,7 @@ test.describe("farmer journey smoke", () => {
     await expect(
       page.getByRole("heading", { name: /tarlanızın sağlığını/i }),
     ).toBeVisible();
-    await page.getByRole("link", { name: "Hemen Üye Ol" }).first().click();
+    await page.getByRole("link", { name: /ücretsiz üye ol/i }).first().click();
     await expect(page).toHaveURL(/\/register$/);
   });
 });
