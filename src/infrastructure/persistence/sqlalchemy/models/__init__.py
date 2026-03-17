@@ -3,7 +3,8 @@
 """ORM model registry."""
 
 from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
+from src.infrastructure.persistence.sqlalchemy.models.user_role_model import UserRoleModel
 from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel
 from src.infrastructure.persistence.sqlalchemy.models.mission_model import MissionModel
 
-__all__ = ["UserModel", "FieldModel", "MissionModel"]
+__all__ = ["UserModel", "UserRoleModel", "FieldModel", "MissionModel"]

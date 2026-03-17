@@ -1,5 +1,6 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # KR-050: UserRepository SQLAlchemy implementation.
+# KR-063: Role management via ORM relationship (no raw SQL).
 """UserRepository port implementation using SQLAlchemy async."""
 
 from __future__ import annotations
@@ -7,12 +8,13 @@ from __future__ import annotations
 import uuid
 from typing import List, Optional
 
-from sqlalchemy import delete as sa_delete, select, text
+from sqlalchemy import delete as sa_delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.domain.entities.user import User, UserRole
 from src.core.ports.repositories.user_repository import UserRepository
 from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
+from src.infrastructure.persistence.sqlalchemy.models.user_role_model import UserRoleModel
 
 
 class UserRepositoryImpl(UserRepository):
@@ -33,7 +35,7 @@ class UserRepositoryImpl(UserRepository):
         )
 
     def _to_model(self, entity: User) -> UserModel:
-        return UserModel(
+        model = UserModel(
             user_id=entity.user_id,
             phone=entity.phone_number,
             pin_hash=entity.pin_hash,
@@ -43,6 +45,19 @@ class UserRepositoryImpl(UserRepository):
             is_active=True,
             must_change_pin=entity.must_reset_pin,
         )
+        # KR-063: role assignment through ORM relationship — no raw SQL needed
+        model.roles = [UserRoleModel(user_id=entity.user_id, role=entity.role.value)]
+        return model
+
+    @staticmethod
+    def _primary_role_from_model(model: UserModel) -> UserRole:
+        """Extract primary role from the eagerly loaded roles relationship."""
+        if model.roles:
+            try:
+                return UserRole(model.roles[0].role)
+            except ValueError:
+                pass
+        return UserRole.FARMER_SINGLE
 
     async def save(self, user: User) -> None:
         existing = await self._session.get(UserModel, user.user_id)
@@ -54,18 +69,13 @@ class UserRepositoryImpl(UserRepository):
         else:
             model = self._to_model(user)
             self._session.add(model)
-            # Also insert role
-            await self._session.execute(
-                text("INSERT INTO user_roles (user_id, role) VALUES (:uid, :role) ON CONFLICT DO NOTHING"),
-                {"uid": str(user.user_id), "role": user.role.value},
-            )
         await self._session.flush()
 
     async def find_by_id(self, user_id: uuid.UUID) -> Optional[User]:
         model = await self._session.get(UserModel, user_id)
         if not model:
             return None
-        role = await self._get_primary_role(user_id)
+        role = self._primary_role_from_model(model)
         return self._to_entity(model, role)
 
     async def find_by_phone_number(self, phone_number: str) -> Optional[User]:
@@ -73,28 +83,14 @@ class UserRepositoryImpl(UserRepository):
         model = result.scalar_one_or_none()
         if not model:
             return None
-        role = await self._get_primary_role(model.user_id)
+        role = self._primary_role_from_model(model)
         return self._to_entity(model, role)
-
-    async def _get_primary_role(self, user_id: uuid.UUID) -> UserRole:
-        result = await self._session.execute(
-            text("SELECT role FROM user_roles WHERE user_id = :uid LIMIT 1"),
-            {"uid": str(user_id)},
-        )
-        row = result.fetchone()
-        if row:
-            try:
-                return UserRole(row[0])
-            except ValueError:
-                pass
-        return UserRole.FARMER_SINGLE
 
     async def list_by_role(self, role: UserRole) -> List[User]:
         result = await self._session.execute(
             select(UserModel)
-            .join(text("user_roles"), text("user_roles.user_id = users.user_id"))
-            .where(text("user_roles.role = :role")),
-            {"role": role.value},
+            .join(UserRoleModel, UserRoleModel.user_id == UserModel.user_id)
+            .where(UserRoleModel.role == role.value)
         )
         return [self._to_entity(m, role) for m in result.scalars().all()]
 
