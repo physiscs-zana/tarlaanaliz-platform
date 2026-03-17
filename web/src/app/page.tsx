@@ -205,7 +205,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 p-8 text-white sm:p-12">
             <h2 className="text-center text-3xl font-extrabold sm:text-4xl">
-              Tarlanın tamamını ilaçlamayın!
+              Akıllı tasarruf zamanı!
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-center text-base leading-relaxed text-emerald-100 sm:text-lg">
               Sadece hastalıklı veya otlu bölgeyi ilaçlayın. Su ve gübre kullanımından tasarruf edin.
@@ -215,7 +215,7 @@ export default function HomePage() {
               {[
                 {
                   title: "Hedefli İlaçlama",
-                  desc: "Tarlayı komple değil, sadece sorunlu bölgeyi ilaçlayın. İlaç masrafınızı yarıya düşürün.",
+                  desc: "Tarlayı komple değil, sadece sorunlu bölgeyi ilaçlayın. İlaç masrafınızı düşürün.",
                   icon: (
                     <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="10" />
@@ -262,7 +262,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-4">
           <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">Uçtan Uca İş Akışı</h2>
           <p className="mx-auto mt-1 max-w-lg text-center text-sm text-slate-500">
-            Drone &rarr; Harita &rarr; Analiz &rarr; Zonlama &rarr; Rapor
+            Drone &rarr; Harita &rarr; Analiz &rarr; Rapor
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
@@ -310,7 +310,7 @@ export default function HomePage() {
 
       {/* ===== Footer ===== */}
       <footer className="border-t border-slate-100 bg-white py-4">
-        <p className="text-center text-xs text-slate-400">Powered by FBL&amp;Z.A</p>
+        <p className="text-center text-xs font-medium text-slate-600">Powered by BFL&amp;Z.A.</p>
       </footer>
     </div>
   );
