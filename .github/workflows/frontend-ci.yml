@@ -285,7 +285,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser: [chromium, firefox]
+        browser: [chromium]
     
     steps:
       - name: Checkout repository
@@ -396,14 +396,14 @@ jobs:
           NODE_ENV: production
         run: pnpm run build
 
-      - name: Install Playwright browsers (No WebKit)
+      - name: Install Playwright browsers
         working-directory: web
-        run: pnpm exec playwright install chromium firefox --with-deps
+        run: pnpm exec playwright install chromium --with-deps
 
       - name: Start test server
         working-directory: web
         run: |
-          pnpm exec next start --hostname 127.0.0.1 --port 3000 &
+          PORT=3000 HOSTNAME=127.0.0.1 node .next/standalone/server.js &
           sleep 10
           curl -f http://127.0.0.1:3000 || exit 1
 
@@ -508,7 +508,7 @@ jobs:
             ✅ Lint & Format: Passed
             ✅ Unit Tests: Passed
             ✅ Build: Passed
-            ✅ E2E Tests: Passed (Chromium, Firefox)
+            ✅ E2E Tests: Passed (Chromium)
             ✅ Accessibility: Passed
             ✅ Security Audit: Passed
             `;

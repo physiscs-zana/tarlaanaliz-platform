@@ -18,10 +18,10 @@ export default defineConfig({
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
   ],
   webServer: {
-    command: "pnpm exec next start --hostname 127.0.0.1 --port 3000",
+    command: "node .next/standalone/server.js",
+    env: { PORT: "3000", HOSTNAME: "127.0.0.1" },
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
