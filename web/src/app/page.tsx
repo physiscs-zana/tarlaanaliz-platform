@@ -20,7 +20,7 @@ function tryRoleRedirect() {
 }
 
 /* ------------------------------------------------------------------ */
-/* SVG icon components                                                */
+/* SVG Icons                                                          */
 /* ------------------------------------------------------------------ */
 function IconLeaf({ className = "h-5 w-5" }: { className?: string }) {
   return (
@@ -55,7 +55,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* ============ Navbar ============ */}
+      {/* ===== Navbar ===== */}
       <nav className="sticky top-0 z-40 border-b border-slate-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2">
@@ -64,118 +64,114 @@ export default function HomePage() {
             </div>
             <span className="text-lg font-bold text-slate-900">TarlaAnaliz</span>
           </Link>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2">
             <Link href="/login" className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100">
               Giriş Yap
             </Link>
-            <Link href="/register" className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-emerald-700 sm:px-4">
+            <Link href="/register" className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-emerald-700">
               Üye Ol
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* ============ Hero ============ */}
-      <section className="relative overflow-hidden">
-        <div className="mx-auto max-w-6xl px-4 pb-10 pt-8 sm:pb-14 sm:pt-12">
-          <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
-            {/* Text */}
+      {/* ===== Hero ===== */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-emerald-50/60 to-white">
+        <div className="mx-auto max-w-6xl px-4 pb-8 pt-8 sm:pb-12 sm:pt-10">
+          <div className="grid items-center gap-6 lg:grid-cols-2 lg:gap-10">
             <div>
-              <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 sm:text-sm">
-                Drone ile Tarla Tarama
-              </div>
-              <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
-                Tarlanızın sağlığını
-                <span className="block text-emerald-600">havadan görün</span>
+              <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-[2.75rem]">
+                Yeşil görünen tarlada
+                <span className="block text-emerald-600">görünmeyeni yakalıyoruz</span>
               </h1>
-              <p className="mt-4 max-w-lg text-base leading-relaxed text-slate-600 sm:text-lg">
-                TarlaAnaliz, tarlanızı drone ile tarayarak hastalık, zararlı böcek,
-                su eksikliği ve verim kaybını erken tespit eder. Sonuçları uzmanlar
-                inceler, size anlaşılır bir rapor sunar.
+              <p className="mt-3 text-base leading-relaxed text-slate-600 sm:text-lg">
+                Tarlanızın <strong>&ldquo;check-up ve tahlilini&rdquo;</strong> drone ile yapıyoruz.
+                Hastalık, zararlı böcek, yabancı ot ve su eksikliğini
+                <strong> insan gözünden bir hafta önce</strong> tespit ediyoruz.
               </p>
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-500">
+                <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Erken Uyarı</span>
+                <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Hedefli İlaçlama</span>
+                <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Rapor + Harita</span>
+              </div>
+              <div className="mt-5 flex flex-col gap-2.5 sm:flex-row">
                 <Link
                   href="/register"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700 sm:text-base"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700"
                 >
                   Ücretsiz Üye Ol
                   <IconArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
                   href="#nasil-calisir"
-                  className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:text-base"
+                  className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
                   Nasıl Çalışır?
                 </Link>
               </div>
             </div>
-            {/* Hero image */}
-            <div className="relative">
-              <Image
-                src="/images/hero-drone.png"
-                alt="Drone ile tarla tarama — ısı haritası görüntüsü"
-                width={800}
-                height={500}
-                className="w-full rounded-xl shadow-lg"
-                priority
-              />
-            </div>
+            <Image
+              src="/images/hero-drone.png"
+              alt="Drone tarla tarama — ısı haritası"
+              width={800}
+              height={500}
+              className="w-full rounded-xl shadow-lg"
+              priority
+            />
           </div>
         </div>
       </section>
 
-      {/* ============ Stats ============ */}
-      <section className="border-y border-slate-100 bg-slate-50">
-        <div className="mx-auto grid max-w-4xl grid-cols-3 divide-x divide-slate-200 px-4 py-6 sm:py-8">
+      {/* ===== Stats ===== */}
+      <div className="border-y border-slate-100 bg-slate-50">
+        <div className="mx-auto grid max-w-3xl grid-cols-3 divide-x divide-slate-200 py-5">
           {[
             { value: "81", label: "İl Kapsama" },
-            { value: "7/24", label: "Destek" },
-            { value: "%95", label: "Tespit Doğruluğu" },
-          ].map((stat) => (
-            <div key={stat.label} className="text-center">
-              <div className="text-2xl font-bold text-emerald-600 sm:text-3xl">{stat.value}</div>
-              <div className="mt-0.5 text-xs text-slate-500 sm:text-sm">{stat.label}</div>
+            { value: "1 Hafta", label: "Erken Tespit" },
+            { value: "%95", label: "Doğruluk" },
+          ].map((s) => (
+            <div key={s.label} className="text-center">
+              <div className="text-xl font-bold text-emerald-600 sm:text-2xl">{s.value}</div>
+              <div className="text-xs text-slate-500">{s.label}</div>
             </div>
           ))}
         </div>
-      </section>
+      </div>
 
-      {/* ============ Neler Tespit Edilir? (with infographic) ============ */}
-      <section className="py-12 sm:py-16">
+      {/* ===== Tarlanın Röntgeni — Infographic ===== */}
+      <section className="py-10 sm:py-14">
         <div className="mx-auto max-w-6xl px-4">
           <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">
-            Tarlanızda Neler Tespit Edilir?
+            Tarlanın &ldquo;Röntgeni&rdquo; Nasıl Çekiliyor?
           </h2>
-          <p className="mx-auto mt-2 max-w-xl text-center text-sm text-slate-600 sm:text-base">
-            Drone ile çekilen özel kamera görüntüleri yapay zeka tarafından analiz edilir.
+          <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-slate-600 sm:text-base">
+            Drone özel kameralarla tarlanızı santimetresine kadar tarar. Görüntüler merkezdeki
+            bilgisayarlarda işlenerek 7 farklı katmanda analiz edilir.
           </p>
-
-          <div className="mt-8 grid items-center gap-8 lg:grid-cols-2">
-            {/* Infographic image */}
+          <div className="mt-6 grid items-center gap-6 lg:grid-cols-2">
             <Image
               src="/images/analiz-infografik.png"
-              alt="Drone tarla tarama — 7 farklı analiz katmanı"
+              alt="Drone tarla tarama — 7 analiz katmanı infografik"
               width={900}
               height={550}
               className="w-full rounded-xl"
             />
-            {/* Detection list */}
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {[
-                { title: "Bitki Hastalığı Tespiti", desc: "Yaprak yanıklığı, mantar ve virüs belirtilerini erkenden görür." },
-                { title: "Zararlı Böcek Tespiti", desc: "Böcek zararı olan bölgeleri harita üzerinde işaretler." },
-                { title: "Su Eksikliği", desc: "Hangi bölgelerde sulama yetersiz, hangilerinde fazla — hepsini gösterir." },
-                { title: "Azot Durumu", desc: "Gübreleme ihtiyacını bölge bölge belirler, gereksiz masrafı önler." },
-                { title: "Bitki Canlılığı (NDVI)", desc: "Tarlanızın genel sağlık durumunu renk haritasıyla özetler." },
-                { title: "Yabancı Ot Tespiti", desc: "Ot basan bölgeleri tespit eder, hedefe yönelik ilaçlama yapmanızı sağlar." },
+                { title: "Bitki Hastalığı", desc: "Mantar, virüs gibi belirtileri gözle görmeden tespit eder." },
+                { title: "Zararlı Böcek", desc: "Böcek zararı olan bölgeleri harita üzerinde işaretler." },
+                { title: "Yabancı Ot", desc: "Ot basan bölgeleri gösterir — sadece o bölgeyi ilaçlarsınız." },
+                { title: "Su Eksikliği", desc: "Hangi bölgede sulama yetersiz, hangisinde fazla — hepsini görürsünüz." },
+                { title: "Azot / Gübre Durumu", desc: "Nereye gübre lazım, nereye lazım değil — gereksiz masraftan kurtulun." },
+                { title: "Bitki Canlılığı", desc: "Tarlanın genel sağlık durumunu renk haritasıyla özetler." },
               ].map((item) => (
-                <div key={item.title} className="flex gap-3">
-                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                    <IconCheck className="h-3.5 w-3.5" />
+                <div key={item.title} className="flex gap-2.5">
+                  <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                    <IconCheck className="h-3 w-3" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-900 sm:text-base">{item.title}</h3>
-                    <p className="text-xs text-slate-500 sm:text-sm">{item.desc}</p>
+                    <span className="text-sm font-semibold text-slate-900">{item.title}: </span>
+                    <span className="text-sm text-slate-600">{item.desc}</span>
                   </div>
                 </div>
               ))}
@@ -184,78 +180,165 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ============ Önce / Sonra ============ */}
-      <section className="bg-slate-50 py-12 sm:py-16">
+      {/* ===== Önce / Sonra ===== */}
+      <section className="bg-slate-50 py-10 sm:py-14">
         <div className="mx-auto max-w-6xl px-4">
           <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">
-            Gözle Görünmeyen Sorunları Ortaya Çıkarır
+            Gözle Görünmeyeni Ortaya Çıkarır
           </h2>
-          <p className="mx-auto mt-2 max-w-xl text-center text-sm text-slate-600 sm:text-base">
-            Aynı tarla — solda normal görüntü, sağda drone analiz sonucu.
-            Kırmızı bölgeler sorunlu alanları gösterir.
+          <p className="mx-auto mt-2 max-w-xl text-center text-sm text-slate-600">
+            Solda normal görüntü, sağda analiz sonucu. Kırmızı bölgeler sorunlu alanları gösterir.
           </p>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <div className="overflow-hidden rounded-xl border border-slate-200">
-              <Image
-                src="/images/tarla-oncesi.png"
-                alt="Tarla — normal havadan görüntü (RGB)"
-                width={600}
-                height={450}
-                className="w-full"
-              />
-              <div className="bg-white px-4 py-2.5 text-center text-sm font-medium text-slate-700">
-                Normal Görüntü
-              </div>
+              <Image src="/images/tarla-oncesi.png" alt="Tarla — normal havadan görüntü" width={600} height={450} className="w-full" />
+              <div className="bg-white px-4 py-2 text-center text-sm font-medium text-slate-700">Normal Görüntü</div>
             </div>
             <div className="overflow-hidden rounded-xl border border-emerald-200">
-              <Image
-                src="/images/tarla-sonrasi.png"
-                alt="Tarla — drone analiz sonucu (NDVI ısı haritası)"
-                width={600}
-                height={450}
-                className="w-full"
-              />
-              <div className="bg-emerald-50 px-4 py-2.5 text-center text-sm font-medium text-emerald-700">
-                Analiz Sonucu (Sorunlu Alanlar Kırmızı)
-              </div>
+              <Image src="/images/tarla-sonrasi.png" alt="Tarla — analiz sonucu (ısı haritası)" width={600} height={450} className="w-full" />
+              <div className="bg-emerald-50 px-4 py-2 text-center text-sm font-medium text-emerald-700">Analiz Sonucu</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ============ Nasıl Çalışır? ============ */}
-      <section id="nasil-calisir" className="py-12 sm:py-16">
+      {/* ===== Tasarruf Mesajı ===== */}
+      <section className="py-10 sm:py-14">
+        <div className="mx-auto max-w-4xl px-4">
+          <div className="rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-700 p-6 text-white sm:p-8">
+            <h2 className="text-xl font-bold sm:text-2xl">Tarlanın tamamını ilaçlamayın!</h2>
+            <p className="mt-2 text-sm leading-relaxed text-emerald-100 sm:text-base">
+              Sadece hastalıklı veya otlu bölgeyi ilaçlayın. Su ve gübre kullanımından tasarruf edin.
+              Haftalık takiple tarlanızın durumunu yakından izleyin.
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              {[
+                { title: "Hedefli İlaçlama", desc: "Tarlayı komple değil, sadece sorunlu bölgeyi ilaçlayın" },
+                { title: "Su Tasarrufu", desc: "Nereye ne kadar su gerektiğini bilin" },
+                { title: "Gübre Tasarrufu", desc: "Azot durumunu bölge bölge görün, gereksiz gübrelemeden kaçının" },
+              ].map((item) => (
+                <div key={item.title} className="rounded-xl bg-white/10 p-3.5">
+                  <h3 className="text-sm font-semibold">{item.title}</h3>
+                  <p className="mt-1 text-xs text-emerald-100">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== 5 Adım İş Akışı ===== */}
+      <section id="nasil-calisir" className="bg-slate-50 py-10 sm:py-14">
         <div className="mx-auto max-w-6xl px-4">
-          <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">
-            4 Adımda Tarla Analizi
-          </h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">Uçtan Uca İş Akışı</h2>
+          <p className="mx-auto mt-1 max-w-lg text-center text-sm text-slate-500">
+            Drone &rarr; Harita &rarr; Analiz &rarr; Zonlama &rarr; Rapor
+          </p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {[
-              { step: "1", title: "Üye Olun", desc: "Telefon numaranız ve 6 haneli şifre ile üye olun. E-posta gerekmez." },
-              { step: "2", title: "Tarlanızı Ekleyin", desc: "Haritadan tarlanızın sınırlarını çizin veya ada/parsel numarası girin." },
-              { step: "3", title: "Tarama İsteyin", desc: "Analiz talebinizi oluşturun, ödemeyi yapın. Uygun havada tarlanız taranır." },
-              { step: "4", title: "Raporunuzu Alın", desc: "Yapay zeka ve uzmanlar tarlanızı inceleyip size anlaşılır rapor sunar." },
+              { step: "1", title: "Tarama Uçuşu", desc: "Drone ile tarla taranır. Özel kamera görüntüleri hafıza kartına kaydedilir.", color: "bg-emerald-600" },
+              { step: "2", title: "Harita Oluşturma", desc: "Görüntüler merkez bilgisayarda işlenir, tarlanın sağlık haritası çıkarılır.", color: "bg-emerald-500" },
+              { step: "3", title: "Analiz", desc: "Hastalık, ot, böcek, su ve azot durumu tek tek incelenir.", color: "bg-amber-500" },
+              { step: "4", title: "Zonlama", desc: "Sorunlu bölgeler işaretlenir. Hedefli müdahale planı oluşturulur.", color: "bg-orange-500" },
+              { step: "5", title: "Rapor", desc: "Harita, erken teşhis, öneriler ve haftalık takip raporunuz hazırlanır.", color: "bg-blue-600" },
             ].map((item) => (
-              <div key={item.step} className="rounded-xl border border-slate-200 bg-white p-5">
-                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-base font-bold text-white">
+              <div key={item.step} className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className={`mb-2.5 flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white ${item.color}`}>
                   {item.step}
                 </div>
-                <h3 className="mb-1 text-base font-semibold text-slate-900">{item.title}</h3>
-                <p className="text-sm leading-relaxed text-slate-500">{item.desc}</p>
+                <h3 className="text-sm font-semibold text-slate-900">{item.title}</h3>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">{item.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ============ Katman Görseli + Neden TarlaAnaliz? ============ */}
-      <section className="bg-slate-50 py-12 sm:py-16">
+      {/* ===== Ürün Senaryoları ===== */}
+      <section className="py-10 sm:py-14">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="grid items-center gap-8 lg:grid-cols-2">
+          <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">Her Ürün İçin Ayrı Çıktı</h2>
+          <p className="mx-auto mt-1 max-w-lg text-center text-sm text-slate-500">Mısır, pamuk ve diğer bitkilerde aynı platform</p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 p-5">
+              <h3 className="text-lg font-bold text-slate-900">Mısır</h3>
+              <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
+                <li className="flex gap-2"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />Bitki gelişim farkı — hastalık, mantar var mı?</li>
+                <li className="flex gap-2"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />Yabancı ot kümeleri nerede, ne kadar?</li>
+                <li className="flex gap-2"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />Su stresi / besin eksikliği tespiti</li>
+                <li className="flex gap-2"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />Koçan döneminde riskli alanların işaretlenmesi</li>
+              </ul>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-5">
+              <h3 className="text-lg font-bold text-slate-900">Pamuk</h3>
+              <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
+                <li className="flex gap-2"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />Çıkış ve bitki sıklığı kontrolü (erken dönem)</li>
+                <li className="flex gap-2"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />Susuzluk, sıcak ve besleme stresi alanları</li>
+                <li className="flex gap-2"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />Ot baskısı ve tekrarlayan problem noktaları</li>
+                <li className="flex gap-2"><IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />Hasada kadar haftalık karşılaştırma</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== Fiyatlandırma ===== */}
+      <section className="bg-slate-50 py-10 sm:py-14">
+        <div className="mx-auto max-w-5xl px-4">
+          <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">Fiyatlandırma</h2>
+          <p className="mx-auto mt-1 text-center text-sm text-slate-500">Dönüm bazlı, bireysel ve kooperatif için iki model</p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            {/* Model A */}
+            <div className="overflow-hidden rounded-xl border-2 border-emerald-500 bg-white">
+              <div className="bg-emerald-600 px-5 py-3 text-white">
+                <h3 className="text-lg font-bold">Sezonluk Abonelik</h3>
+                <p className="text-xs text-emerald-100">3-4 ay, 12-17 tarama + analiz</p>
+              </div>
+              <div className="p-5">
+                <ul className="space-y-1.5 text-sm text-slate-600">
+                  <li>7 veya 10 gün arayla tarama</li>
+                  <li>Liste fiyata göre <strong className="text-emerald-700">%20 tasarruf</strong></li>
+                  <li>Peşin ödeme</li>
+                </ul>
+                <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm">
+                  <div className="text-slate-500">Örnek (1 dönüm, 10 tarama):</div>
+                  <div className="text-lg font-bold text-slate-900">200 TL <span className="text-sm font-normal text-slate-400 line-through">250 TL</span></div>
+                </div>
+              </div>
+            </div>
+            {/* Model B */}
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+              <div className="bg-blue-600 px-5 py-3 text-white">
+                <h3 className="text-lg font-bold">Tek Seferlik Tarama</h3>
+                <p className="text-xs text-blue-100">1 tarama + analiz raporu</p>
+              </div>
+              <div className="p-5">
+                <ul className="space-y-1.5 text-sm text-slate-600">
+                  <li>Denemek veya tek seferlik kontrol için</li>
+                  <li>Kooperatif: toplu planlama + hacim indirimi</li>
+                  <li>Her üyeye ayrı rapor + kooperatif özeti</li>
+                </ul>
+                <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm">
+                  <div className="text-slate-500">Örnek (1 dönüm, 1 tarama):</div>
+                  <div className="text-lg font-bold text-slate-900">50 TL</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p className="mt-3 text-center text-xs text-slate-400">
+            Fiyatlar &ldquo;örnek&rdquo;tir: bölge, alan, uçuş sıklığı ve hizmet kapsamına göre netleşir.
+          </p>
+        </div>
+      </section>
+
+      {/* ===== 7 Katman Görseli ===== */}
+      <section className="py-10 sm:py-14">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="grid items-center gap-6 lg:grid-cols-2">
             <Image
-              src="/images/katman-kupu.png"
-              alt="Multispektral analiz katmanları — NDVI, hastalık, zararlı, su eksikliği"
-              width={700}
+              src="/images/katman-tarla.png"
+              alt="7 analiz katmanı — tarla üzerinde"
+              width={800}
               height={500}
               className="w-full rounded-xl"
             />
@@ -263,22 +346,20 @@ export default function HomePage() {
               <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
                 Tek Taramada 7 Farklı Analiz
               </h2>
-              <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
-                Drone özel kameralarla tarlanızı tek seferde tarar.
-                Yapay zeka bu görüntüleri 7 farklı katmanda analiz eder:
-                bitki sağlığı, hastalık, zararlı böcek, su durumu, azot ihtiyacı,
-                yabancı ot ve genel verim tahmini.
+              <p className="mt-2 text-sm leading-relaxed text-slate-600 sm:text-base">
+                Hem daha az masraf yapın, hem de ürün veriminiz artsın.
+                Her bölge ayrı ayrı değerlendirilir, sorunlu alanlar harita üzerinde işaretlenir.
               </p>
-              <ul className="mt-4 space-y-2">
+              <ul className="mt-3 space-y-1.5">
                 {[
-                  "Her bölge ayrı ayrı değerlendirilir",
-                  "Sorunlu alanlar harita üzerinde işaretlenir",
-                  "Uzmanlar sonuçları kontrol edip rapor yazar",
+                  "Sorunlu alanlar harita üzerinde gösterilir",
+                  "Uzmanlar sonuçları kontrol eder, rapor yazar",
                   "Rapor telefonunuza bildirim olarak gelir",
-                ].map((text) => (
-                  <li key={text} className="flex items-start gap-2 text-sm text-slate-700 sm:text-base">
+                  "Çiftçi 30 saniyede anlasın diye tasarlandı",
+                ].map((t) => (
+                  <li key={t} className="flex items-start gap-2 text-sm text-slate-700">
                     <IconCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                    {text}
+                    {t}
                   </li>
                 ))}
               </ul>
@@ -287,26 +368,24 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ============ CTA ============ */}
-      <section className="bg-emerald-600 py-12 sm:py-16">
+      {/* ===== CTA ===== */}
+      <section className="bg-emerald-600 py-10 sm:py-12">
         <div className="mx-auto max-w-3xl px-4 text-center">
-          <h2 className="text-2xl font-bold text-white sm:text-3xl">
-            Tarlanızın durumunu öğrenin
-          </h2>
-          <p className="mt-2 text-sm text-emerald-100 sm:text-base">
-            Ücretsiz üye olun, tarlanızı ekleyin ve drone ile analiz deneyimini yaşayın.
+          <h2 className="text-2xl font-bold text-white sm:text-3xl">Tarlanızın durumunu öğrenin</h2>
+          <p className="mt-2 text-sm text-emerald-100">
+            Ücretsiz üye olun, tarlanızı ekleyin ve drone ile tarla analizi deneyimini yaşayın.
           </p>
-          <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+          <div className="mt-5 flex flex-col items-center gap-2.5 sm:flex-row sm:justify-center">
             <Link
               href="/register"
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 sm:w-auto sm:text-base"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 sm:w-auto"
             >
               Ücretsiz Üye Ol
               <IconArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href="/login"
-              className="inline-flex w-full items-center justify-center rounded-lg border border-emerald-400 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 sm:w-auto sm:text-base"
+              className="inline-flex w-full items-center justify-center rounded-lg border border-emerald-400 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 sm:w-auto"
             >
               Giriş Yap
             </Link>
@@ -314,23 +393,21 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ============ Footer ============ */}
-      <footer className="border-t border-slate-200 bg-white py-8">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600">
-                <IconLeaf className="h-3.5 w-3.5 text-white" />
-              </div>
-              <span className="font-semibold text-slate-900">TarlaAnaliz</span>
+      {/* ===== Footer ===== */}
+      <footer className="border-t border-slate-200 bg-white py-6">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 sm:flex-row">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600">
+              <IconLeaf className="h-3.5 w-3.5 text-white" />
             </div>
-            <nav className="flex flex-wrap items-center justify-center gap-4 text-sm text-slate-500 sm:gap-6">
-              <Link href="/login" className="transition hover:text-slate-900">Giriş Yap</Link>
-              <Link href="/register" className="transition hover:text-slate-900">Üye Ol</Link>
-              <Link href="#nasil-calisir" className="transition hover:text-slate-900">Nasıl Çalışır?</Link>
-            </nav>
-            <p className="text-xs text-slate-400">&copy; 2026 TarlaAnaliz</p>
+            <span className="font-semibold text-slate-900">TarlaAnaliz</span>
           </div>
+          <nav className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
+            <Link href="/login" className="hover:text-slate-900">Giriş Yap</Link>
+            <Link href="/register" className="hover:text-slate-900">Üye Ol</Link>
+            <Link href="#nasil-calisir" className="hover:text-slate-900">Nasıl Çalışır?</Link>
+          </nav>
+          <p className="text-xs text-slate-400">&copy; 2026 TarlaAnaliz</p>
         </div>
       </footer>
     </div>
