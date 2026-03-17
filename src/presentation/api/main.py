@@ -174,20 +174,22 @@ def create_app() -> FastAPI:
         lifespan=_lifespan,
     )
 
-    # Middleware stack (LIFO order — last added executes first):
+    # Middleware stack — Starlette LIFO: last added = outermost (first to run).
     # Execution order (outermost → innermost):
     # 1. Correlation ID → 2. CORS → 3. Rate Limiting → 4. mTLS →
     # 5. JWT → 6. RBAC → 7. Anomaly → 8. PII Filter → 9. Grid Anonymizer
-    # SEC-FIX: Rate limiting moved BEFORE auth to block unauthenticated floods
-    app.middleware("http")(_corr_id_middleware)
-    add_cors_middleware(app)
-    app.add_middleware(RateLimitMiddleware)
-    app.add_middleware(MTLSVerifierMiddleware)
-    app.add_middleware(JwtMiddleware)
-    app.add_middleware(RBACMiddleware)
-    app.add_middleware(AnomalyDetectionMiddleware)
-    app.add_middleware(PIIFilterMiddleware)
-    app.add_middleware(GridAnonymizerMiddleware)
+    #
+    # IMPORTANT: Code order is REVERSED because add_middleware wraps the app,
+    # so innermost middleware must be added FIRST, outermost LAST.
+    app.add_middleware(GridAnonymizerMiddleware)  # 9. innermost
+    app.add_middleware(PIIFilterMiddleware)  # 8.
+    app.add_middleware(AnomalyDetectionMiddleware)  # 7.
+    app.add_middleware(RBACMiddleware)  # 6.
+    app.add_middleware(JwtMiddleware)  # 5.
+    app.add_middleware(MTLSVerifierMiddleware)  # 4.
+    app.add_middleware(RateLimitMiddleware)  # 3. rate limit before auth
+    add_cors_middleware(app)  # 2. CORS must be outermost
+    app.middleware("http")(_corr_id_middleware)  # 1. correlation ID outermost
 
     @app.get("/health", tags=["health"])
     async def health() -> dict[str, str]:
