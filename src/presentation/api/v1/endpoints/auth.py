@@ -116,10 +116,21 @@ class _InMemoryPhonePinAuthService:
         from src.infrastructure.persistence.sqlalchemy.repositories.user_repository_impl import UserRepositoryImpl
 
         user = None
+        all_roles: list[str] = []
         try:
             async with get_async_session() as session:
                 repo = UserRepositoryImpl(session)
                 user = await repo.find_by_phone_number(phone)
+                if user is not None:
+                    # Fetch all roles — find_by_phone_number already eager-loads via selectin
+                    from sqlalchemy import select as sa_select
+                    from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
+                    result = await session.execute(
+                        sa_select(UserModel).where(UserModel.phone == phone)
+                    )
+                    model = result.scalar_one_or_none()
+                    if model and model.roles:
+                        all_roles = [r.role for r in model.roles]
         except Exception:
             pass  # DB not available, fall back to env credentials
 
@@ -128,12 +139,14 @@ class _InMemoryPhonePinAuthService:
                 self._record_failure(phone)
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
             self._record_success(phone)
+            # Include ALL roles in JWT — frontend picks highest-privilege for routing
+            jwt_roles = all_roles if all_roles else [user.role.value]
             access_token = self._jwt_handler.issue_access_token(
                 subject=str(user.user_id),
                 claims={
                     "phone": phone,
                     "phone_verified": True,
-                    "roles": [user.role.value],
+                    "roles": jwt_roles,
                     "user_id": str(user.user_id),
                 },
             )

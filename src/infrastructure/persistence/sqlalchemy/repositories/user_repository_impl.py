@@ -49,15 +49,42 @@ class UserRepositoryImpl(UserRepository):
         model.roles = [UserRoleModel(user_id=entity.user_id, role=entity.role.value)]
         return model
 
+    # Highest-privilege first — matches frontend ROLE_PRIORITY in useAuth.ts
+    _ROLE_PRIORITY: list[str] = [
+        "CENTRAL_ADMIN", "BILLING_ADMIN", "STATION_OPERATOR", "IL_OPERATOR",
+        "EXPERT", "PILOT",
+        "COOP_OWNER", "COOP_ADMIN", "COOP_AGRONOMIST", "COOP_VIEWER",
+        "FARMER_SINGLE", "FARMER_MEMBER", "AI_SERVICE",
+    ]
+
     @staticmethod
     def _primary_role_from_model(model: UserModel) -> UserRole:
-        """Extract primary role from the eagerly loaded roles relationship."""
-        if model.roles:
+        """Extract highest-privilege role from the eagerly loaded roles relationship."""
+        if not model.roles:
+            return UserRole.FARMER_SINGLE
+        role_set = {r.role for r in model.roles}
+        for candidate in UserRepositoryImpl._ROLE_PRIORITY:
+            if candidate in role_set:
+                try:
+                    return UserRole(candidate)
+                except ValueError:
+                    continue
+        # Fallback: first role or default
+        try:
+            return UserRole(model.roles[0].role)
+        except ValueError:
+            return UserRole.FARMER_SINGLE
+
+    @staticmethod
+    def _all_roles_from_model(model: UserModel) -> list[UserRole]:
+        """Extract all roles from the eagerly loaded roles relationship."""
+        roles: list[UserRole] = []
+        for r in model.roles:
             try:
-                return UserRole(model.roles[0].role)
+                roles.append(UserRole(r.role))
             except ValueError:
-                pass
-        return UserRole.FARMER_SINGLE
+                continue
+        return roles or [UserRole.FARMER_SINGLE]
 
     async def save(self, user: User) -> None:
         existing = await self._session.get(UserModel, user.user_id)

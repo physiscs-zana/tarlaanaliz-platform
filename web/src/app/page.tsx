@@ -180,14 +180,14 @@ export default function HomePage() {
 
       {/* ===== Önce / Sonra ===== */}
       <section className="bg-slate-50 py-10 sm:py-14">
-        <div className="mx-auto max-w-6xl px-4">
+        <div className="mx-auto max-w-3xl px-4">
           <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">
             Gözle Görünmeyeni Ortaya Çıkarır
           </h2>
           <p className="mx-auto mt-2 max-w-xl text-center text-sm text-slate-600">
-            Solda normal görüntü, sağda analiz sonucu. Kırmızı bölgeler sorunlu alanları gösterir.
+            Üstte normal görüntü, altta analiz sonucu. Kırmızı bölgeler sorunlu alanları gösterir.
           </p>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <div className="mx-auto mt-6 flex max-w-md flex-col gap-3">
             <div className="overflow-hidden rounded-xl border border-slate-200">
               <Image src="/images/tarla-oncesi.png" alt="Tarla — normal havadan görüntü" width={600} height={450} className="w-full" unoptimized />
               <div className="bg-white px-4 py-2 text-center text-sm font-medium text-slate-700">Normal Görüntü</div>
