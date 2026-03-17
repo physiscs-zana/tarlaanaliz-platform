@@ -335,23 +335,23 @@ async def phone_pin_register(payload: PhonePinRegisterRequest, request: Request)
         try:
             target_role = UserRole(payload.role)
         except ValueError:
+            # SEC: Never leak valid role names in error responses
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid role: {payload.role}. Valid roles: {[r.value for r in UserRole]}",
+                detail="Invalid role",
             )
 
         # Check caller permissions for role assignment
-        caller_user = getattr(request.state, "user", None)
         caller_roles = set(getattr(request.state, "roles", []))
-        is_admin = "admin" in caller_roles or "CENTRAL_ADMIN" in caller_roles
+        is_admin = "CENTRAL_ADMIN" in caller_roles
 
         if is_admin:
             pass  # Admin can assign any role
         elif target_role.value not in _SELF_REGISTER_ROLES:
+            # SEC: Generic message — don't reveal which roles exist or are assignable
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Only CENTRAL_ADMIN can register users with role {target_role.value}. "
-                f"Self-registration allows: {sorted(_SELF_REGISTER_ROLES)}",
+                detail="Insufficient permissions",
             )
 
     async with get_async_session() as session:

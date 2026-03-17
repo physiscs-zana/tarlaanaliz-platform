@@ -86,6 +86,9 @@ class JwtMiddleware(BaseHTTPMiddleware):
 
     @staticmethod
     def _error_response(corr_id: str, status_code: int, detail: str) -> JSONResponse:
+        # SEC: corr_id kept in header for internal tracing (nginx strips it
+        # before reaching external callers via proxy_hide_header).
+        # Never include corr_id in the response *body*.
         response = JSONResponse(status_code=status_code, content={"detail": detail})
         response.headers["X-Correlation-Id"] = corr_id
         return response
