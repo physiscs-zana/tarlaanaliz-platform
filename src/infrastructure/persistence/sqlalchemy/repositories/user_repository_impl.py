@@ -51,10 +51,19 @@ class UserRepositoryImpl(UserRepository):
 
     # Highest-privilege first — matches frontend ROLE_PRIORITY in useAuth.ts
     _ROLE_PRIORITY: list[str] = [
-        "CENTRAL_ADMIN", "BILLING_ADMIN", "STATION_OPERATOR", "IL_OPERATOR",
-        "EXPERT", "PILOT",
-        "COOP_OWNER", "COOP_ADMIN", "COOP_AGRONOMIST", "COOP_VIEWER",
-        "FARMER_SINGLE", "FARMER_MEMBER", "AI_SERVICE",
+        "CENTRAL_ADMIN",
+        "BILLING_ADMIN",
+        "STATION_OPERATOR",
+        "IL_OPERATOR",
+        "EXPERT",
+        "PILOT",
+        "COOP_OWNER",
+        "COOP_ADMIN",
+        "COOP_AGRONOMIST",
+        "COOP_VIEWER",
+        "FARMER_SINGLE",
+        "FARMER_MEMBER",
+        "AI_SERVICE",
     ]
 
     @staticmethod

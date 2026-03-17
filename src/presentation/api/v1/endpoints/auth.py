@@ -125,9 +125,8 @@ class _InMemoryPhonePinAuthService:
                     # Fetch all roles — find_by_phone_number already eager-loads via selectin
                     from sqlalchemy import select as sa_select
                     from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
-                    result = await session.execute(
-                        sa_select(UserModel).where(UserModel.phone == phone)
-                    )
+
+                    result = await session.execute(sa_select(UserModel).where(UserModel.phone == phone))
                     model = result.scalar_one_or_none()
                     if model and model.roles:
                         all_roles = [r.role for r in model.roles]
