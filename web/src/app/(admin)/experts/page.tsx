@@ -1,14 +1,8 @@
 /* BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated. */
+/* Bu sayfa /expert-management ile birlestirildi. */
 
-import type { Metadata } from "next";
-
-export const metadata: Metadata = { title: "Admin Experts" };
+import { redirect } from "next/navigation";
 
 export default function AdminExpertsPage() {
-  return (
-    <section className="space-y-4" aria-label="Admin experts" data-corr-id="pending" data-request-id="pending">
-      <h1 className="text-2xl font-semibold">Expert Yönetimi</h1>
-      <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm">Aktif expert: 26 · Onay bekleyen: 3</div>
-    </section>
-  );
+  redirect("/expert-management");
 }
