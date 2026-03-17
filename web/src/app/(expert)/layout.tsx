@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { COOKIE_TOKEN_KEY, COOKIE_ROLE_KEY } from "@/lib/constants";
+import { LogoutButton } from "@/components/common/LogoutButton";
 
 interface ExpertLayoutProps {
   readonly children: ReactNode;
@@ -43,6 +44,9 @@ export default function ExpertLayout({ children }: ExpertLayoutProps) {
           <Link href="/expert/sla" className="rounded px-2 py-1 text-sm hover:bg-slate-100">
             SLA
           </Link>
+          <div className="ml-auto pl-4">
+            <LogoutButton />
+          </div>
         </nav>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>

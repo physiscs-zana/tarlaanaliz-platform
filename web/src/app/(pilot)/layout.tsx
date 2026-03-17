@@ -6,6 +6,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { COOKIE_TOKEN_KEY, COOKIE_ROLE_KEY } from "@/lib/constants";
+import { LogoutButton } from "@/components/common/LogoutButton";
 
 interface PilotLayoutProps {
   readonly children: ReactNode;
@@ -40,6 +41,9 @@ export default function PilotLayout({ children }: PilotLayoutProps) {
               </Link>
             ))}
           </nav>
+          <div className="mt-4 border-t border-slate-100 pt-3">
+            <LogoutButton />
+          </div>
         </aside>
         <main>{children}</main>
       </div>

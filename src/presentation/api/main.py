@@ -192,10 +192,15 @@ def create_app() -> FastAPI:
     app.middleware("http")(_corr_id_middleware)  # 1. correlation ID outermost
 
     @app.get("/health", tags=["health"])
-    async def health() -> dict[str, str]:
-        """Liveness probe with dependency checks."""
-        checks: dict[str, str] = {}
-        overall = "ok"
+    async def health(request: Request) -> dict[str, str]:
+        """Liveness probe — external callers get minimal 'ok' only.
+
+        [H-2][FIX-6] Never reveal infrastructure state (degraded/unhealthy)
+        to external callers. Internal readiness checks should use
+        /internal/health or a sidecar port instead.
+        """
+        db_ok = True
+        redis_ok = True
         try:
             from src.infrastructure.persistence.database import get_engine
 
@@ -204,21 +209,24 @@ def create_app() -> FastAPI:
 
             async with engine.connect() as conn:
                 await conn.execute(sa_text("SELECT 1"))
-            checks["database"] = "ok"
         except Exception:
-            checks["database"] = "unhealthy"
-            overall = "degraded"
+            db_ok = False
         try:
             from src.infrastructure.persistence.redis.cache import get_redis_client
 
             redis_client = await get_redis_client()
             await redis_client.ping()  # type: ignore[misc,unused-ignore]
-            checks["redis"] = "ok"
         except Exception:
-            checks["redis"] = "unhealthy"
-            overall = "degraded"
-        checks["status"] = overall
-        return checks
+            redis_ok = False
+
+        # [FIX-6] External response: always "ok". Use HTTP status to signal.
+        # 200 = fully healthy, 503 = degraded (load balancer can act on status code
+        # without the body leaking internal topology).
+        from starlette.responses import JSONResponse
+
+        if db_ok and redis_ok:
+            return {"status": "ok"}
+        return JSONResponse(content={"status": "ok"}, status_code=503)
 
     app.include_router(payments_router, prefix="/api/v1")
     app.include_router(admin_payments_router, prefix="/api/v1")

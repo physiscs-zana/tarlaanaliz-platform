@@ -8,7 +8,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, ROLE_TO_GROUP } from "@/hooks/useAuth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,7 +32,8 @@ export default function LoginPage() {
         farmer: "/fields",
         pilot: "/pilot/missions",
       };
-      router.replace(roleHome[data.user.role] ?? "/");
+      const group = ROLE_TO_GROUP[data.user.role] ?? "farmer";
+      router.replace(roleHome[group] ?? "/");
     } catch (submitError) {
       // KR-050 + BÖLÜM 4: Rate limit (HTTP 429) ve lockout durumu için kullanıcı bildirimi
       const msg = submitError instanceof Error ? submitError.message : "";

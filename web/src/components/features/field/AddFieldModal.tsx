@@ -51,17 +51,21 @@ export function AddFieldModal({ open, onClose, onSubmit, requestMeta }: AddField
     if (!cropType.trim()) return setError('Bitki türü zorunludur.');
 
     setError(null);
-    await onSubmit({
-      province: province.trim(),
-      district: district.trim(),
-      village: village.trim(),
-      block: block.trim(),
-      parcel: parcel.trim(),
-      areaM2: area,
-      cropType: cropType.trim(),
-      ...requestMeta,
-    });
-    onClose();
+    try {
+      await onSubmit({
+        province: province.trim(),
+        district: district.trim(),
+        village: village.trim(),
+        block: block.trim(),
+        parcel: parcel.trim(),
+        areaM2: area,
+        cropType: cropType.trim(),
+        ...requestMeta,
+      });
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Tarla eklenemedi');
+    }
   };
 
   return (

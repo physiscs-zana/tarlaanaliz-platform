@@ -10,9 +10,8 @@ export default function FarmerSubscriptionsPage() {
   return (
     <section className="space-y-4" aria-label="Farmer subscriptions" data-corr-id="pending" data-request-id="pending">
       <h1 className="text-2xl font-semibold">Abonelikler</h1>
-      <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
-        <p>Plan: Sezonluk</p>
-        <p>Durum: Aktif</p>
+      <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+        Henüz aktif aboneliğiniz yok.
       </div>
     </section>
   );

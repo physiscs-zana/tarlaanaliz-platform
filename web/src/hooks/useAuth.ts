@@ -114,10 +114,17 @@ export function useAuth() {
       phone_verified: boolean;
     };
 
-    // Extract role from JWT claims (backend encodes roles[] in the token)
+    // Extract roles from JWT claims — pick the highest-privilege role
     const claims = decodeJwtPayload(raw.access_token);
     const roles = (claims.roles as string[] | undefined) ?? [];
-    const primaryRole = (roles[0] ?? 'FARMER_SINGLE') as AuthRole;
+    // Priority: admin roles first, then expert, pilot, farmer
+    const ROLE_PRIORITY: AuthRole[] = [
+      'CENTRAL_ADMIN', 'BILLING_ADMIN', 'STATION_OPERATOR', 'IL_OPERATOR',
+      'EXPERT', 'PILOT',
+      'COOP_OWNER', 'COOP_ADMIN', 'COOP_AGRONOMIST', 'COOP_VIEWER',
+      'FARMER_SINGLE', 'FARMER_MEMBER', 'AI_SERVICE',
+    ];
+    const primaryRole = ROLE_PRIORITY.find((r) => roles.includes(r)) ?? (roles[0] as AuthRole | undefined) ?? 'FARMER_SINGLE';
 
     const user: AuthUser = {
       id: raw.subject,
