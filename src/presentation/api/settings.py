@@ -43,13 +43,25 @@ def _env_list(name: str, default: list[str]) -> list[str]:
     return parsed or default
 
 
+def _docs_url(name: str, default: str) -> str | None:
+    """Return docs URL or None when explicitly disabled or in production."""
+    env = os.getenv("TARLA_ENVIRONMENT", os.getenv("APP_ENV", "development"))
+    explicit = os.getenv(name)
+    if explicit is not None:
+        return None if explicit.strip().lower() in {"", "none", "false", "off"} else explicit
+    # Disable docs in production by default — set API_DOCS_URL=/docs to override
+    if env == "production":
+        return None
+    return default
+
+
 @dataclass(slots=True)
 class AppSettings:
     title: str = field(default_factory=lambda: os.getenv("API_TITLE", "TarlaAnaliz Platform API"))
     version: str = field(default_factory=lambda: os.getenv("API_VERSION", "1.0.0"))
-    docs_url: str | None = field(default_factory=lambda: os.getenv("API_DOCS_URL", "/docs"))
-    redoc_url: str | None = field(default_factory=lambda: os.getenv("API_REDOC_URL", "/redoc"))
-    openapi_url: str | None = field(default_factory=lambda: os.getenv("API_OPENAPI_URL", "/openapi.json"))
+    docs_url: str | None = field(default_factory=lambda: _docs_url("API_DOCS_URL", "/docs"))
+    redoc_url: str | None = field(default_factory=lambda: _docs_url("API_REDOC_URL", "/redoc"))
+    openapi_url: str | None = field(default_factory=lambda: _docs_url("API_OPENAPI_URL", "/openapi.json"))
 
 
 @dataclass(slots=True)
