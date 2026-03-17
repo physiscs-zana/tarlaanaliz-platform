@@ -264,13 +264,12 @@ export default function HomePage() {
           <p className="mx-auto mt-1 max-w-lg text-center text-sm text-slate-500">
             Drone &rarr; Harita &rarr; Analiz &rarr; Zonlama &rarr; Rapor
           </p>
-          <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { step: "1", title: "Tarama Uçuşu", desc: "Drone ile tarla taranır, görüntüler kaydedilir.", color: "bg-emerald-600" },
               { step: "2", title: "Harita", desc: "Görüntüler işlenir, sağlık haritası çıkarılır.", color: "bg-emerald-500" },
               { step: "3", title: "Analiz", desc: "Hastalık, ot, böcek, su ve azot tek tek incelenir.", color: "bg-amber-500" },
-              { step: "4", title: "Zonlama", desc: "Sorunlu bölgeler işaretlenir, müdahale planı oluşur.", color: "bg-orange-500" },
-              { step: "5", title: "Rapor", desc: "Harita, teşhis, öneriler ve haftalık takip raporunuz.", color: "bg-blue-600" },
+              { step: "4", title: "Rapor", desc: "Harita, teşhis ve haftalık takip raporunuz.", color: "bg-blue-600" },
             ].map((item) => (
               <div key={item.step} className="rounded-xl border border-slate-200 bg-white p-4">
                 <div className={`mb-2.5 flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white ${item.color}`}>
