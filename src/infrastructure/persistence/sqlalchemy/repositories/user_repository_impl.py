@@ -54,12 +54,13 @@ class UserRepositoryImpl(UserRepository):
         else:
             model = self._to_model(user)
             self._session.add(model)
-            # Also insert role
+            await self._session.flush()  # user must exist before FK insert
+            # Insert role after user is persisted
             await self._session.execute(
                 text("INSERT INTO user_roles (user_id, role) VALUES (:uid, :role) ON CONFLICT DO NOTHING"),
                 {"uid": str(user.user_id), "role": user.role.value},
             )
-        await self._session.flush()
+            await self._session.flush()
 
     async def find_by_id(self, user_id: uuid.UUID) -> Optional[User]:
         model = await self._session.get(UserModel, user_id)
