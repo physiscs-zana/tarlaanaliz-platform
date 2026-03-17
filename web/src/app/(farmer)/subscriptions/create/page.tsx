@@ -10,35 +10,28 @@ import { FormEvent, useState, useMemo } from "react";
 import { apiRequest } from "@/lib/apiClient";
 
 /** KR-024: Bitki bazli onerilen tarama periyotlari (gun). */
-const CROP_INTERVALS: Record<string, { min: number; max: number }> = {
-  Pamuk: { min: 7, max: 10 },
-  "Antep Fıstığı": { min: 10, max: 15 },
-  Mısır: { min: 15, max: 20 },
-  Buğday: { min: 10, max: 15 },
-  Ayçiçeği: { min: 7, max: 10 },
-  Üzüm: { min: 7, max: 10 },
-  Zeytin: { min: 15, max: 20 },
-  "Kırmızı Mercimek": { min: 10, max: 15 },
-};
-
-interface CreateSubscriptionPayload {
-  readonly fieldId: string;
-  readonly cropType: string;
-  readonly startDate: string;
-  readonly endDate: string;
-  readonly intervalDays: number;
-}
+const CROP_TYPES = [
+  { code: "PAMUK", label: "Pamuk", interval: { min: 7, max: 10 } },
+  { code: "ANTEP_FISTIGI", label: "Antep Fistigi", interval: { min: 10, max: 15 } },
+  { code: "MISIR", label: "Misir", interval: { min: 15, max: 20 } },
+  { code: "BUGDAY", label: "Bugday", interval: { min: 10, max: 15 } },
+  { code: "AYCICEGI", label: "Aycicegi", interval: { min: 7, max: 10 } },
+  { code: "UZUM", label: "Uzum", interval: { min: 7, max: 10 } },
+  { code: "ZEYTIN", label: "Zeytin", interval: { min: 15, max: 20 } },
+  { code: "KIRMIZI_MERCIMEK", label: "Kirmizi Mercimek", interval: { min: 10, max: 15 } },
+] as const;
 
 export default function CreateSubscriptionPage() {
   const [fieldId, setFieldId] = useState("");
-  const [cropType, setCropType] = useState("Pamuk");
+  const [cropType, setCropType] = useState("PAMUK");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [intervalDays, setIntervalDays] = useState(7);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const suggestedInterval = CROP_INTERVALS[cropType];
+  const selectedCrop = CROP_TYPES.find(c => c.code === cropType);
+  const suggestedInterval = selectedCrop?.interval;
   const isIntervalOutOfRange = suggestedInterval && (intervalDays < suggestedInterval.min || intervalDays > suggestedInterval.max);
 
   // KR-027: Toplam analiz sayisi hesaplama
@@ -61,16 +54,17 @@ export default function CreateSubscriptionPage() {
 
     setIsSubmitting(true);
 
-    const payload: CreateSubscriptionPayload = {
-      fieldId: fieldId.trim(),
-      cropType,
-      startDate,
-      endDate,
-      intervalDays,
-    };
-
     try {
-      await apiRequest("/api/subscriptions", { method: "POST", body: payload });
+      await apiRequest("/subscriptions", {
+        method: "POST",
+        body: {
+          field_id: fieldId.trim(),
+          crop_type: cropType,
+          start_date: startDate,
+          end_date: endDate,
+          interval_days: intervalDays,
+        },
+      });
       setError(null);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Abonelik oluşturulamadı");
@@ -92,8 +86,8 @@ export default function CreateSubscriptionPage() {
         <div>
           <label htmlFor="cs-crop" className="mb-1 block text-sm font-medium">Bitki Türü</label>
           <select id="cs-crop" value={cropType} onChange={(e) => setCropType(e.target.value)} className="w-full rounded border border-slate-300 px-3 py-2">
-            {Object.keys(CROP_INTERVALS).map((crop) => (
-              <option key={crop} value={crop}>{crop}</option>
+            {CROP_TYPES.map((crop) => (
+              <option key={crop.code} value={crop.code}>{crop.label}</option>
             ))}
           </select>
         </div>
@@ -114,7 +108,7 @@ export default function CreateSubscriptionPage() {
           <input id="cs-interval" type="number" min={1} max={30} required value={intervalDays} onChange={(e) => setIntervalDays(Number(e.target.value))} className="w-full rounded border border-slate-300 px-3 py-2" />
           {suggestedInterval ? (
             <p className={`mt-1 text-xs ${isIntervalOutOfRange ? 'text-amber-600' : 'text-slate-500'}`}>
-              {cropType} için önerilen periyot: {suggestedInterval.min}–{suggestedInterval.max} gün
+              {selectedCrop?.label} için önerilen periyot: {suggestedInterval.min}–{suggestedInterval.max} gün
               {isIntervalOutOfRange ? ' (Önerilen aralık dışında!)' : ''}
             </p>
           ) : null}

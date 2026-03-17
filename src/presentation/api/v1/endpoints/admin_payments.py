@@ -74,7 +74,23 @@ def list_payment_intents(
     corr_id = getattr(request.state, "corr_id", None)
     response.headers["X-Correlation-Id"] = corr_id or ""
     try:
-        records = payment_service.list_intents(status_filter=status_filter, field_id=field_id, corr_id=corr_id)
+        # Translate frontend PAYMENT_PENDING to internal statuses
+        if status_filter == "PAYMENT_PENDING":
+            records_a = payment_service.list_intents(
+                status_filter="PENDING_RECEIPT", field_id=field_id, corr_id=corr_id
+            )
+            records_b = payment_service.list_intents(
+                status_filter="PENDING_ADMIN_REVIEW", field_id=field_id, corr_id=corr_id
+            )
+            seen: set[str] = set()
+            records = []
+            for r in [*records_a, *records_b]:
+                pid = getattr(r, "payment_id", id(r))
+                if pid not in seen:
+                    seen.add(pid)
+                    records.append(r)
+        else:
+            records = payment_service.list_intents(status_filter=status_filter, field_id=field_id, corr_id=corr_id)
         _observe(request, metrics, started, status.HTTP_200_OK)
         return records
     except HTTPException as exc:

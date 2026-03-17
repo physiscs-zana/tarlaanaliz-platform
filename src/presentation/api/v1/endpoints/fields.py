@@ -11,9 +11,10 @@ router = APIRouter(prefix="/fields", tags=["fields"])
 
 
 class FieldCreateRequest(BaseModel):
-    field_name: str = Field(min_length=2, max_length=120)
+    field_name: str | None = Field(default=None, max_length=120)
     parcel_ref: str = Field(min_length=3, max_length=64)
     area_ha: float = Field(gt=0)
+    crop_type: str | None = Field(default=None, max_length=50)
 
 
 class FieldResponse(BaseModel):
@@ -21,6 +22,7 @@ class FieldResponse(BaseModel):
     field_name: str
     parcel_ref: str
     area_ha: float
+    crop_type: str | None = None
 
 
 def _require_authenticated_subject(request: Request) -> str:
@@ -55,6 +57,9 @@ async def create_field(request: Request, payload: FieldCreateRequest) -> FieldRe
         )
     province, district, village, ada, parsel = [p.strip() for p in parts]
 
+    # Auto-generate field_name from parcel_ref if not provided
+    field_name = payload.field_name or f"{village} {ada}/{parsel}"
+
     now = datetime.now(timezone.utc)
     field = Field(
         field_id=_uuid.uuid4(),
@@ -77,9 +82,10 @@ async def create_field(request: Request, payload: FieldCreateRequest) -> FieldRe
 
     return FieldResponse(
         field_id=str(field.field_id),
-        field_name=payload.field_name,
+        field_name=field_name,
         parcel_ref=payload.parcel_ref,
         area_ha=payload.area_ha,
+        crop_type=payload.crop_type,
     )
 
 
@@ -108,6 +114,7 @@ async def list_fields(request: Request) -> FieldListResponse:
                 field_name=f.parcel_ref,
                 parcel_ref=f.parcel_ref,
                 area_ha=float(f.area_m2 / 10000),
+                crop_type=None,
             )
             for f in fields
         ]

@@ -34,7 +34,7 @@ export function useAdminPayments(): UseAdminPaymentsResult {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiRequest<{ items: PaymentIntent[] }>('/admin/payments/intents?status=PAYMENT_PENDING', { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
+      const res = await apiRequest<{ items: PaymentIntent[] }>('/admin/payments/intents?status=PENDING_ADMIN_REVIEW', { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
       setIntents(res.data?.items ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ödeme listesi alınamadı');
@@ -48,7 +48,7 @@ export function useAdminPayments(): UseAdminPaymentsResult {
   }, []);
 
   const reject = useCallback(async (intentId: string, reason: string, token: string) => {
-    await apiRequest(`/admin/payments/intents/${encodeURIComponent(intentId)}/reject`, { method: 'POST', body: { rejection_reason: reason }, headers: { Authorization: `Bearer ${token}` } });
+    await apiRequest(`/admin/payments/intents/${encodeURIComponent(intentId)}/reject`, { method: 'POST', body: { reason: reason }, headers: { Authorization: `Bearer ${token}` } });
   }, []);
 
   return { intents, loading, error, fetchPending, markPaid, reject };

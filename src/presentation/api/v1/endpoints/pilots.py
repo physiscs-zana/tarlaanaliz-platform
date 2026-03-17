@@ -22,6 +22,11 @@ LOGGER = logging.getLogger("api.pilots")
 router = APIRouter(prefix="/pilots", tags=["pilots"])
 
 
+class PilotCapacityResponse(BaseModel):
+    work_days: list[str]
+    daily_capacity_donum: int
+
+
 class PilotCreateRequest(BaseModel):
     phone: str = Field(min_length=10, max_length=20)
     pin: str = Field(min_length=6, max_length=6, description="6-digit PIN (KR-050)")
@@ -100,4 +105,16 @@ async def create_pilot(request: Request, payload: PilotCreateRequest) -> PilotRe
         display_name=payload.display_name,
         province=payload.province,
         role=UserRole.PILOT.value,
+    )
+
+
+@router.get("/me/capacity", response_model=PilotCapacityResponse)
+async def get_my_capacity(request: Request) -> PilotCapacityResponse:
+    """KR-015: Default work days Mon-Sat, 2750 donum/day."""
+    user = getattr(request.state, "user", None)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    return PilotCapacityResponse(
+        work_days=["Pazartesi", "Sali", "Carsamba", "Persembe", "Cuma", "Cumartesi"],
+        daily_capacity_donum=2750,
     )

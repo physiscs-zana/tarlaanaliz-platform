@@ -18,8 +18,12 @@ router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
 class SubscriptionCreateRequest(BaseModel):
     """KR-027: Yeni abonelik oluşturma isteği."""
 
-    plan_code: str = Field(min_length=2, max_length=32)
+    field_id: str = Field(min_length=3, max_length=64)
+    crop_type: str = Field(min_length=2, max_length=50)
     start_date: date
+    end_date: date
+    interval_days: int = Field(ge=1, le=30)
+    plan_code: str = Field(default="SEASONAL", min_length=2, max_length=32)
 
 
 class SubscriptionResponse(BaseModel):
@@ -29,6 +33,10 @@ class SubscriptionResponse(BaseModel):
     plan_code: str
     start_date: date
     status: str
+    field_id: str | None = None
+    crop_type: str | None = None
+    end_date: date | None = None
+    interval_days: int | None = None
 
 
 class SubscriptionService(Protocol):
@@ -56,6 +64,10 @@ class _InMemorySubscriptionService:
             plan_code=payload.plan_code,
             start_date=payload.start_date,
             status="PENDING_PAYMENT",
+            field_id=payload.field_id,
+            crop_type=payload.crop_type,
+            end_date=payload.end_date,
+            interval_days=payload.interval_days,
         )
 
     def get_by_id(self, subscription_id: str, owner_subject: str) -> SubscriptionResponse:

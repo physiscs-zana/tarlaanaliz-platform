@@ -31,8 +31,9 @@ export function usePilotCapacity(): UsePilotCapacityResult {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiRequest<PilotCapacity>('/pilots', { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
-      setCapacity(res.data ?? DEFAULT_CAPACITY);
+      const res = await apiRequest<{ work_days: string[]; daily_capacity_donum: number }>('/pilots/me/capacity', { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
+      const d = res.data;
+      setCapacity(d ? { workDays: d.work_days, dailyCapacityDonum: d.daily_capacity_donum } : DEFAULT_CAPACITY);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Kapasite bilgisi alınamadı');
     } finally {

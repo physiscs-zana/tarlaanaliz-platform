@@ -79,9 +79,9 @@ export default function FarmerFieldsPage() {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        field_name: `${payload.province} ${payload.district} ${payload.block}/${payload.parcel}`,
         parcel_ref: parcelRef,
         area_ha: areaHa,
+        crop_type: payload.cropType,
       }),
     });
 

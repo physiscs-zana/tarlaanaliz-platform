@@ -6,14 +6,11 @@ import { useCallback, useState } from 'react';
 import { apiRequest } from '@/lib/apiClient';
 
 export interface Field {
-  readonly id: string;
-  readonly province: string;
-  readonly district: string;
-  readonly village: string;
-  readonly block: string;
-  readonly parcel: string;
-  readonly areaM2: number;
-  readonly cropType: string;
+  readonly fieldId: string;
+  readonly fieldName: string;
+  readonly parcelRef: string;
+  readonly areaHa: number;
+  readonly cropType: string | null;
 }
 
 export interface UseFieldsResult {
@@ -32,8 +29,14 @@ export function useFields(): UseFieldsResult {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiRequest<{ items: Field[] }>('/fields', { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
-      setFields(res.data?.items ?? []);
+      const res = await apiRequest<{ items: Array<{ field_id: string; field_name: string; parcel_ref: string; area_ha: number; crop_type: string | null }> }>('/fields', { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
+      setFields((res.data?.items ?? []).map(f => ({
+        fieldId: f.field_id,
+        fieldName: f.field_name,
+        parcelRef: f.parcel_ref,
+        areaHa: f.area_ha,
+        cropType: f.crop_type ?? null,
+      })));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Tarlalar yüklenemedi');
     } finally {

@@ -6,10 +6,10 @@ import { useCallback, useState } from 'react';
 import { apiRequest } from '@/lib/apiClient';
 
 export interface Mission {
-  readonly id: string;
+  readonly missionId: string;
   readonly fieldId: string;
   readonly status: string;
-  readonly scheduledDate: string;
+  readonly missionDate: string;
   readonly pilotId: string | null;
   readonly subscriptionId: string | null;
 }
@@ -30,8 +30,15 @@ export function useMissions(): UseMissionsResult {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiRequest<{ items: Mission[] }>('/missions', { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
-      setMissions(res.data?.items ?? []);
+      const res = await apiRequest<{ items: Array<{ mission_id: string; field_id: string; status: string; mission_date: string; pilot_id: string | null; subscription_id: string | null }> }>('/missions', { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
+      setMissions((res.data?.items ?? []).map(m => ({
+        missionId: m.mission_id,
+        fieldId: m.field_id,
+        status: m.status,
+        missionDate: m.mission_date,
+        pilotId: m.pilot_id ?? null,
+        subscriptionId: m.subscription_id ?? null,
+      })));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Görevler yüklenemedi');
     } finally {
