@@ -3,18 +3,12 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
-  const corrId = request.headers.get("x-corr-id") ?? "n/a";
-  const requestId = request.headers.get("x-request-id") ?? "n/a";
-
+export async function GET(_request: NextRequest) {
+  // [FIX-6] Only return minimal status. Service name, timestamps, and trace IDs
+  // leak deployment topology and timing information to external callers.
+  // Internal monitoring should use a dedicated sidecar or internal-only route.
   return NextResponse.json(
-    {
-      status: "ok",
-      service: "tarlaanaliz-web",
-      corrId,
-      requestId,
-      timestamp: new Date().toISOString(),
-    },
+    { status: "ok" },
     {
       status: 200,
       headers: {

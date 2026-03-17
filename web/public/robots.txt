@@ -1,5 +1,42 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# [FIX-7] Restrict crawlers from private/admin/API paths.
+# Public pages (landing, blog, pricing) are allowed; authenticated
+# dashboards and API routes are disallowed.
+
 User-agent: *
 Allow: /
-
-Sitemap: /sitemap.xml
+Disallow: /api/
+Disallow: /analytics
+Disallow: /dashboard
+Disallow: /audit
+Disallow: /audit-viewer
+Disallow: /pricing
+Disallow: /price-management
+Disallow: /admin/
+Disallow: /users
+Disallow: /experts
+Disallow: /expert-management
+Disallow: /pilots
+Disallow: /calibration
+Disallow: /qc
+Disallow: /api-keys
+Disallow: /queue
+Disallow: /review
+Disallow: /reviews
+Disallow: /expert/
+Disallow: /fields
+Disallow: /missions
+Disallow: /subscriptions
+Disallow: /results
+Disallow: /payments
+Disallow: /profile
+Disallow: /coop/
+Disallow: /pilot/
+Disallow: /planner
+Disallow: /capacity
+Disallow: /weather-block
+Disallow: /login
+Disallow: /register
+Disallow: /forbidden
+Disallow: /il/
+Disallow: /billing/

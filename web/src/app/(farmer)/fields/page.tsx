@@ -1,14 +1,12 @@
 /* BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated. */
 /* KR-013: Tarla kaydi ve yonetimi. */
-/* KR-081: Field listesi contract-first tipli render edilir. */
 
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { getApiBaseUrl } from "@/lib/api";
-import { getAuthToken } from "@/lib/authStorage";
+import { getApiBaseUrl, getTokenFromCookie } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { AddFieldModal, type AddFieldPayload } from "@/components/features/field/AddFieldModal";
 import { FieldList, type FieldSummary } from "@/components/features/field/FieldList";
@@ -27,10 +25,15 @@ export default function FarmerFieldsPage() {
   const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const token = getAuthToken();
+  const getToken = useCallback(() => getTokenFromCookie(), []);
 
   const fetchFields = useCallback(async () => {
-    if (!token) return;
+    const token = getToken();
+    if (!token) {
+      setError("Oturum bulunamadı. Lütfen tekrar giriş yapın.");
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -38,6 +41,10 @@ export default function FarmerFieldsPage() {
       const res = await fetch(`${baseUrl}/fields`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (res.status === 401) {
+        router.push("/login");
+        return;
+      }
       if (!res.ok) throw new Error("Tarlalar yüklenemedi");
       const data = (await res.json()) as { items: ApiField[] };
       setFields(
@@ -52,14 +59,15 @@ export default function FarmerFieldsPage() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [getToken, router]);
 
   useEffect(() => {
     fetchFields();
   }, [fetchFields]);
 
   const handleAddField = async (payload: AddFieldPayload) => {
-    if (!token) return;
+    const token = getToken();
+    if (!token) throw new Error("Oturum bulunamadı");
     const baseUrl = getApiBaseUrl();
     const parcelRef = `${payload.province}/${payload.district}/${payload.village}/${payload.block}/${payload.parcel}`;
     const areaHa = payload.areaM2 / 10000;
@@ -77,9 +85,7 @@ export default function FarmerFieldsPage() {
       }),
     });
 
-    if (res.status === 409) {
-      throw new Error("Bu ada/parsel zaten kayıtlı.");
-    }
+    if (res.status === 409) throw new Error("Bu ada/parsel zaten kayıtlı.");
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       throw new Error((body as { detail?: string }).detail || "Tarla eklenemedi");
@@ -96,25 +102,16 @@ export default function FarmerFieldsPage() {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
-          {error}
-        </div>
+        <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</div>
       )}
 
       {loading ? (
         <div className="py-12 text-center text-sm text-slate-500">Yükleniyor...</div>
       ) : (
-        <FieldList
-          fields={fields}
-          onSelectField={(id) => router.push(`/fields/${id}`)}
-        />
+        <FieldList fields={fields} onSelectField={(id) => router.push(`/fields/${id}`)} />
       )}
 
-      <AddFieldModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSubmit={handleAddField}
-      />
+      <AddFieldModal open={modalOpen} onClose={() => setModalOpen(false)} onSubmit={handleAddField} />
     </section>
   );
 }

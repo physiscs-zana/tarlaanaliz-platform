@@ -10,6 +10,15 @@ export function getApiBaseUrl(): string {
 }
 
 /**
+ * Read auth token from cookie (survives page refresh, unlike in-memory store).
+ */
+export function getTokenFromCookie(): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/(?:^|;\s*)ta_token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+/**
  * Decode a JWT payload without verification (client-side claim extraction only).
  * The backend is the authority — this is just for reading claims like roles/user_id.
  */
