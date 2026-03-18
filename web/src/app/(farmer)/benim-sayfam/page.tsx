@@ -9,12 +9,12 @@ export default function BenimSayfamPage() {
         <p className="mt-1 text-sm text-slate-600">TarlaAnaliz platformuna hosgeldiniz. Asagidaki adimlari takip ederek tarlanizi analiz ettirebilirsiniz.</p>
       </div>
       <div className="rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-white p-5">
-        <h2 className="text-lg font-semibold text-emerald-800">Nasil Calisir?</h2>
+        <h2 className="text-lg font-semibold text-emerald-800">Nas&#305;l &#199;al&#305;&#351;&#305;r?</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-4">
           {[
             { step: "1", title: "Tarla Ekle", desc: "Il, ilce, ada/parsel ve bitki turunu girin.", href: "/fields" },
-            { step: "2", title: "Odeme Yap", desc: "Analiz ucretini odeyin.", href: "/payments" },
-            { step: "3", title: "Analiz Talebi", desc: "Tarlaniz icin drone analiz talebi olusturun.", href: "/fields" },
+            { step: "2", title: "Analiz Talebi", desc: "Tarlaniz icin drone analiz talebi olusturun.", href: "/fields" },
+            { step: "3", title: "Odeme Yap", desc: "Analiz ucretini odeyin.", href: "/payments" },
             { step: "4", title: "Sonuclari Gor", desc: "Hastalik, zararli, ot ve su haritalarini inceleyin.", href: "/results" },
           ].map((item) => (
             <a key={item.step} href={item.href} className="rounded-lg border border-slate-200 bg-white p-3 hover:shadow-sm transition">

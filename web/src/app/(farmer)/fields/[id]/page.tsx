@@ -36,6 +36,7 @@ export default function FieldDetailPage() {
   const [cropPrices, setCropPrices] = useState<CropPrice[]>([]);
   const [planType, setPlanType] = useState<"single" | "seasonal">("single");
   const [seasonWeeks, setSeasonWeeks] = useState(12);
+  const [scanInterval, setScanInterval] = useState(10);
   const [requestSent, setRequestSent] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -89,13 +90,16 @@ export default function FieldDetailPage() {
   const ada = parts[3] || "";
   const parsel = parts[4] || "";
 
-  // Price calculation
+  // Price calculation — per 10m² precision (1 ha = 10000 m², 1 unit = 10 m²)
   const cropPrice = cropPrices.find((c) => c.code === field.crop_type);
   const areaHa = field.area_ha;
-  const intervalDays = cropPrice?.interval_days ?? 10;
-  const totalScans = planType === "single" ? 1 : Math.max(1, Math.floor((seasonWeeks * 7) / intervalDays));
+  const areaM2 = areaHa * 10000;
+  const totalScans = planType === "single" ? 1 : Math.max(1, Math.floor((seasonWeeks * 7) / scanInterval));
   const pricePerHa = planType === "single" ? (cropPrice?.single_price ?? 250) : (cropPrice?.seasonal_price ?? 120);
-  const totalPrice = Math.round(areaHa * pricePerHa * (planType === "seasonal" ? totalScans : 1));
+  // Calculate per 10m² then round to nearest lira
+  const pricePerM2 = pricePerHa / 10000;
+  const unitArea = Math.ceil(areaM2 / 10) * 10; // round up to nearest 10 m²
+  const totalPrice = Math.round(unitArea * pricePerM2 * (planType === "seasonal" ? totalScans : 1));
 
   const handleRequest = async () => {
     const token = getTokenFromCookie();
@@ -131,7 +135,7 @@ export default function FieldDetailPage() {
             crop_type: field.crop_type || "PAMUK",
             start_date: startDate.toISOString().split("T")[0],
             end_date: endDate.toISOString().split("T")[0],
-            interval_days: intervalDays,
+            interval_days: scanInterval,
             plan_code: "SEASONAL",
           }),
         });
@@ -202,16 +206,28 @@ export default function FieldDetailPage() {
               className={`flex-1 rounded-lg border-2 p-3 text-center transition ${planType === "seasonal" ? "border-emerald-600 bg-emerald-50" : "border-slate-200 bg-white"}`}
             >
               <p className="font-semibold text-slate-900">Sezonluk Paket</p>
-              <p className="text-xs text-slate-500">Duzzenli tarama + analiz</p>
+              <p className="text-xs text-slate-500">D&uuml;zenli Tarama + Analiz</p>
             </button>
           </div>
 
-          {/* Sezonluk sure secimi */}
+          {/* Sezonluk ayarlar */}
           {planType === "seasonal" && (
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Sezon Suresi (hafta)</label>
-              <input type="number" min={4} max={52} value={seasonWeeks} onChange={(e) => setSeasonWeeks(Number(e.target.value))} className="w-32 rounded border border-slate-300 px-3 py-2 text-sm" />
-              <p className="mt-1 text-xs text-slate-400">Her {intervalDays} gunde bir tarama yapilir. Toplam {totalScans} tarama.</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600">Tarama Sikligi (kac gunde bir)</label>
+                <select value={scanInterval} onChange={(e) => setScanInterval(Number(e.target.value))} className="w-full rounded border border-slate-300 px-3 py-2 text-sm">
+                  <option value={7}>Her 7 gunde bir (haftalik)</option>
+                  <option value={10}>Her 10 gunde bir</option>
+                  <option value={14}>Her 14 gunde bir (iki haftada bir)</option>
+                  <option value={21}>Her 21 gunde bir (uc haftada bir)</option>
+                  <option value={30}>Her 30 gunde bir (aylik)</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600">Sezon Suresi (hafta)</label>
+                <input type="number" min={4} max={52} value={seasonWeeks} onChange={(e) => setSeasonWeeks(Number(e.target.value))} className="w-full rounded border border-slate-300 px-3 py-2 text-sm" />
+              </div>
+              <p className="sm:col-span-2 text-xs text-slate-400">Her {scanInterval} gunde bir tarama yapilir. Toplam {totalScans} tarama.</p>
             </div>
           )}
 
@@ -220,11 +236,11 @@ export default function FieldDetailPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600">
-                  {areaHa.toFixed(2)} ha × {pricePerHa} TL/ha
+                  {(unitArea / 10000).toFixed(2)} ha ({unitArea.toLocaleString("tr-TR")} m&sup2;) &times; {pricePerHa} TL/ha
                   {planType === "seasonal" ? ` × ${totalScans} tarama` : ""}
                 </p>
                 <p className="text-xs text-slate-400">
-                  {field.crop_type ? (CROP_LABELS[field.crop_type] ?? field.crop_type) : ""} — {planType === "single" ? "tek seferlik" : "sezonluk"} fiyat
+                  {field.crop_type ? (CROP_LABELS[field.crop_type] ?? field.crop_type) : ""} &mdash; {planType === "single" ? "tek seferlik" : "sezonluk"} fiyat
                 </p>
               </div>
               <div className="text-right">
