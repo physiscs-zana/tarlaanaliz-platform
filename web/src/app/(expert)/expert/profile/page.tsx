@@ -66,8 +66,27 @@ export default function ExpertProfilePage() {
       <h1 className="text-2xl font-semibold">Uzman Profili</h1>
       <div className="rounded-lg border border-slate-200 bg-white p-5 space-y-3">
         <div><span className="text-sm text-slate-500">Telefon</span><p className="text-base font-medium text-slate-900">{maskPhone(phone)}</p></div>
-        <div><span className="text-sm text-slate-500">Rol</span><p className="text-base font-medium text-slate-900">{roles.map((r) => r.replace(/_/g, " ")).join(", ")}</p></div>
+        <div><span className="text-sm text-slate-500">Rol</span><p className="text-base font-medium text-slate-900">Uzman</p></div>
         <div><span className="text-sm text-slate-500">Kullanici ID</span><p className="font-mono text-xs text-slate-400">{userId}</p></div>
+      </div>
+
+      {/* KR-019: Uzmanlik alanlari */}
+      <div className="rounded-lg border border-slate-200 bg-white p-5 space-y-3">
+        <h2 className="text-lg font-semibold">Uzmanlik Alanlari</h2>
+        <p className="text-xs text-slate-500">Inceleme kuyrugunuzda asagidaki bitki ve durum kombinasyonlari onceliklendirilir.</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {[
+            { crop: "Pamuk", conditions: ["Hastalik", "Zararli Bocek", "Yabanci Ot"] },
+            { crop: "Misir", conditions: ["Su Stresi", "Azot Stresi", "Hastalik"] },
+            { crop: "Bugday", conditions: ["Mantar", "Hastalik", "Azot Stresi"] },
+            { crop: "Antep Fistigi", conditions: ["Zararli Bocek", "Mantar"] },
+          ].map((item) => (
+            <div key={item.crop} className="rounded border border-slate-100 p-3">
+              <p className="text-sm font-medium text-slate-900">{item.crop}</p>
+              <p className="text-xs text-slate-500">{item.conditions.join(", ")}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white p-5">

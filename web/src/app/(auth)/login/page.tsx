@@ -42,7 +42,7 @@ export default function LoginPage() {
       } else if (msg.toLowerCase().includes("locked") || msg.toLowerCase().includes("lockout")) {
         setError("Hesabınız geçici olarak kilitlendi. 30 dakika sonra tekrar deneyin.");
       } else {
-        setError(msg || "Giriş başarısız");
+        setError("Telefon numarası veya PIN hatalı. Lütfen kontrol edip tekrar deneyin.");
       }
     } finally {
       setIsSubmitting(false);
@@ -87,7 +87,11 @@ export default function LoginPage() {
             className="w-full rounded border border-slate-300 px-3 py-2"
           />
         </div>
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {error ? (
+          <div className="rounded-md border border-red-300 bg-red-50 p-3 text-sm font-medium text-red-700">
+            {error}
+          </div>
+        ) : null}
         <button type="submit" disabled={isSubmitting} className="w-full rounded bg-slate-900 px-3 py-2 text-white">
           {isSubmitting ? "Gönderiliyor..." : "Giriş"}
         </button>
