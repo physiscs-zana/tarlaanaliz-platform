@@ -43,9 +43,11 @@ def _make_jwt(secret: str = "test-only-insecure-key-do-not-use-in-prod", **extra
         **extra_claims,
     }
     payload = base64.urlsafe_b64encode(json.dumps(payload_dict).encode()).rstrip(b"=").decode()
-    signature = base64.urlsafe_b64encode(
-        hmac.new(secret.encode(), f"{header}.{payload}".encode(), hashlib.sha256).digest()
-    ).rstrip(b"=").decode()
+    signature = (
+        base64.urlsafe_b64encode(hmac.new(secret.encode(), f"{header}.{payload}".encode(), hashlib.sha256).digest())
+        .rstrip(b"=")
+        .decode()
+    )
     return f"{header}.{payload}.{signature}"
 
 
@@ -137,12 +139,15 @@ class TestChangePin:
         mock_ctx.__aenter__.return_value = mock_session
         mock_ctx.__aexit__.return_value = False
 
-        with patch(
-            "src.infrastructure.persistence.sqlalchemy.session.get_async_session",
-            return_value=mock_ctx,
-        ), patch(
-            "src.infrastructure.persistence.sqlalchemy.repositories.user_repository_impl.UserRepositoryImpl",
-            return_value=mock_repo,
+        with (
+            patch(
+                "src.infrastructure.persistence.sqlalchemy.session.get_async_session",
+                return_value=mock_ctx,
+            ),
+            patch(
+                "src.infrastructure.persistence.sqlalchemy.repositories.user_repository_impl.UserRepositoryImpl",
+                return_value=mock_repo,
+            ),
         ):
             response = client.post(
                 "/api/v1/auth/phone-pin/change-pin",
@@ -173,12 +178,15 @@ class TestChangePin:
         mock_ctx.__aenter__.return_value = mock_session
         mock_ctx.__aexit__.return_value = False
 
-        with patch(
-            "src.infrastructure.persistence.sqlalchemy.session.get_async_session",
-            return_value=mock_ctx,
-        ), patch(
-            "src.infrastructure.persistence.sqlalchemy.repositories.user_repository_impl.UserRepositoryImpl",
-            return_value=mock_repo,
+        with (
+            patch(
+                "src.infrastructure.persistence.sqlalchemy.session.get_async_session",
+                return_value=mock_ctx,
+            ),
+            patch(
+                "src.infrastructure.persistence.sqlalchemy.repositories.user_repository_impl.UserRepositoryImpl",
+                return_value=mock_repo,
+            ),
         ):
             response = client.post(
                 "/api/v1/auth/phone-pin/change-pin",

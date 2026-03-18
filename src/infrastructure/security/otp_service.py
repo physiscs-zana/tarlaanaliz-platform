@@ -1,5 +1,6 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
-# SEC: OTP service infrastructure — prepared but NOT ACTIVE until SMS provider is configured.
+# KR-050: OTP service infrastructure — prepared but NOT ACTIVE until SMS provider is configured.
+# SEC: Phone verification via SMS OTP.
 """OTP (One-Time Password) service for phone verification.
 
 This module provides the infrastructure for SMS-based OTP verification.
@@ -21,6 +22,7 @@ import logging
 import os
 import secrets
 import time
+from typing import Any, cast
 
 LOGGER = logging.getLogger("security.otp")
 
@@ -53,11 +55,12 @@ async def request_otp(phone: str) -> dict[str, str]:
     - Max 3 verification attempts per OTP
     """
     from src.infrastructure.persistence.redis.cache import get_redis_client
+
     client = await get_redis_client()
 
     # Check daily limit
     daily_key = f"{_OTP_DAILY_PREFIX}{phone}:{int(time.time()) // 86400}"
-    daily_count = await client.get(daily_key)
+    daily_count: Any = await client.get(daily_key)
     if daily_count and int(daily_count) >= _OTP_DAILY_LIMIT:
         return {"status": "error", "message": "Gunluk OTP limiti asildi. Yarin tekrar deneyin."}
 
@@ -67,16 +70,22 @@ async def request_otp(phone: str) -> dict[str, str]:
 
     # Store in Redis
     otp_key = f"{_OTP_PREFIX}{phone}"
-    await client.hset(otp_key, mapping={
-        "otp_hash": otp_hash,
-        "attempts": "0",
-        "created_at": str(time.time()),
-    })
-    await client.expire(otp_key, _OTP_TTL_SECONDS)
+    await cast(
+        Any,
+        client.hset(
+            otp_key,
+            mapping={
+                "otp_hash": otp_hash,
+                "attempts": "0",
+                "created_at": str(time.time()),
+            },
+        ),
+    )
+    await cast(Any, client.expire(otp_key, _OTP_TTL_SECONDS))
 
     # Increment daily counter
-    await client.incr(daily_key)
-    await client.expire(daily_key, 86400)
+    await cast(Any, client.incr(daily_key))
+    await cast(Any, client.expire(daily_key, 86400))
 
     # Send SMS (placeholder — requires SMS provider)
     sms_provider = os.getenv("SMS_PROVIDER", "")
@@ -96,21 +105,22 @@ async def request_otp(phone: str) -> dict[str, str]:
 async def verify_otp(phone: str, otp: str) -> dict[str, str]:
     """Verify OTP and return a registration token if valid."""
     from src.infrastructure.persistence.redis.cache import get_redis_client
+
     client = await get_redis_client()
 
     otp_key = f"{_OTP_PREFIX}{phone}"
-    record = await client.hgetall(otp_key)
+    record: dict[str, str] = await cast(Any, client.hgetall(otp_key))
 
     if not record:
         return {"status": "error", "message": "Dogrulama kodu bulunamadi veya suresi doldu."}
 
     attempts = int(record.get("attempts", "0"))
     if attempts >= _OTP_MAX_ATTEMPTS:
-        await client.delete(otp_key)
+        await cast(Any, client.delete(otp_key))
         return {"status": "error", "message": "Cok fazla hatali deneme. Yeni kod isteyin."}
 
     # Increment attempts
-    await client.hincrby(otp_key, "attempts", 1)
+    await cast(Any, client.hincrby(otp_key, "attempts", 1))
 
     # Verify
     otp_hash = _hash_otp(otp, phone)
@@ -119,12 +129,12 @@ async def verify_otp(phone: str, otp: str) -> dict[str, str]:
         return {"status": "error", "message": f"Hatali kod. {remaining} deneme hakkiniz kaldi."}
 
     # OTP valid — clean up and issue registration token
-    await client.delete(otp_key)
+    await cast(Any, client.delete(otp_key))
 
     # Generate registration token
     reg_token = secrets.token_urlsafe(32)
     reg_key = f"{_REG_TOKEN_PREFIX}{reg_token}"
-    await client.setex(reg_key, _REG_TOKEN_TTL, phone)
+    await cast(Any, client.setex(reg_key, _REG_TOKEN_TTL, phone))
 
     LOGGER.info("otp_verified", extra={"phone_tail": phone[-4:]})
     return {"status": "ok", "registration_token": reg_token}
@@ -133,21 +143,18 @@ async def verify_otp(phone: str, otp: str) -> dict[str, str]:
 async def validate_registration_token(token: str) -> str | None:
     """Validate registration token and return the associated phone number."""
     from src.infrastructure.persistence.redis.cache import get_redis_client
+
     client = await get_redis_client()
 
     reg_key = f"{_REG_TOKEN_PREFIX}{token}"
-    phone = await client.get(reg_key)
+    phone: str | None = cast(str | None, await cast(Any, client.get(reg_key)))
     if phone:
-        await client.delete(reg_key)  # One-time use
+        await cast(Any, client.delete(reg_key))  # One-time use
     return phone
 
 
 async def _send_sms(phone: str, otp: str, provider: str) -> None:
     """Send SMS via configured provider. Placeholder for real implementation."""
-    # TODO: Implement actual SMS sending when provider is chosen
-    # Supported providers: netgsm, twilio, vonage
-    LOGGER.info("sms_send_placeholder", extra={
-        "phone_tail": phone[-4:],
-        "provider": provider,
-        "message": f"TarlaAnaliz dogrulama kodunuz: {otp}",
-    })
+    raise NotImplementedError(
+        f"SMS provider '{provider}' not implemented. Configure netgsm/twilio/vonage in SMS_PROVIDER env var."
+    )

@@ -66,6 +66,7 @@ class JwtMiddleware(BaseHTTPMiddleware):
         token_uid = f"{claims.get('sub', '')}:{claims.get('iat', '')}"
         try:
             from src.infrastructure.security.token_blacklist import is_token_blacklisted
+
             if await is_token_blacklisted(token_uid):
                 METRICS_HOOK.increment("auth_blacklisted_total")
                 return self._error_response(corr_id, 401, "Unauthorized")
