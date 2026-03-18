@@ -49,6 +49,8 @@ async def list_users(request: Request) -> list[AdminUserResponse]:
         result = await session.execute(select(UserModel).options(selectinload(UserModel.roles)))
         models = result.scalars().unique().all()
 
+    # Hide admin accounts from the user list (CENTRAL_ADMIN, BILLING_ADMIN)
+    _HIDDEN_ROLES = {"CENTRAL_ADMIN", "BILLING_ADMIN"}
     return [
         AdminUserResponse(
             user_id=str(m.user_id),
@@ -60,6 +62,7 @@ async def list_users(request: Request) -> list[AdminUserResponse]:
             active=m.is_active,
         )
         for m in models
+        if not any(r.role in _HIDDEN_ROLES for r in m.roles)
     ]
 
 
