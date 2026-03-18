@@ -5,7 +5,8 @@
 
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { getApiBaseUrl, getTokenFromCookie } from "@/lib/api";
 
 /* ------- Canonical lists (SSOT) ------- */
 
@@ -74,57 +75,7 @@ const CROP_COLORS: Record<CropCode, string> = {
   KIRMIZI_MERCIMEK: "bg-red-50 text-red-700",
 };
 
-/* ------- Mock data ------- */
-const INITIAL_EXPERTS: Expert[] = [
-  {
-    id: "e1", name: "Dr. Ayse K.", phone: "0532***4567", reviewCount: 142, slaRate: "%98", status: "Aktif",
-    competencies: [
-      { crop: "PAMUK", layer: "DISEASE" },
-      { crop: "PAMUK", layer: "PEST" },
-      { crop: "MISIR", layer: "DISEASE" },
-    ],
-  },
-  {
-    id: "e2", name: "Mehmet T.", phone: "0541***8901", reviewCount: 89, slaRate: "%95", status: "Aktif",
-    competencies: [
-      { crop: "BUGDAY", layer: "PEST" },
-      { crop: "BUGDAY", layer: "WEED" },
-      { crop: "AYCICEGI", layer: "PEST" },
-    ],
-  },
-  {
-    id: "e3", name: "Fatma S.", phone: "0505***2345", reviewCount: 67, slaRate: "%97", status: "Aktif",
-    competencies: [
-      { crop: "PAMUK", layer: "WEED" },
-      { crop: "MISIR", layer: "WEED" },
-      { crop: "AYCICEGI", layer: "WEED" },
-      { crop: "BUGDAY", layer: "WEED" },
-    ],
-  },
-  {
-    id: "e4", name: "Ali R.", phone: "0544***6789", reviewCount: 34, slaRate: "%92", status: "Onay Bekliyor",
-    competencies: [
-      { crop: "PAMUK", layer: "WATER_STRESS" },
-      { crop: "MISIR", layer: "WATER_STRESS" },
-    ],
-  },
-  {
-    id: "e5", name: "Zeynep D.", phone: "0533***1122", reviewCount: 51, slaRate: "%96", status: "Aktif",
-    competencies: [
-      { crop: "BUGDAY", layer: "N_STRESS" },
-      { crop: "MISIR", layer: "N_STRESS" },
-      { crop: "PAMUK", layer: "N_STRESS" },
-    ],
-  },
-  {
-    id: "e6", name: "Hasan B.", phone: "0542***3344", reviewCount: 23, slaRate: "%94", status: "Aktif",
-    competencies: [
-      { crop: "ZEYTIN", layer: "DISEASE" },
-      { crop: "UZUM", layer: "DISEASE" },
-      { crop: "ANTEP_FISTIGI", layer: "PEST" },
-    ],
-  },
-];
+/* Mock data removed — experts fetched from backend via GET /api/v1/experts */
 
 /* ------- Components ------- */
 function StatusBadge({ status }: { status: Expert["status"] }) {
@@ -152,9 +103,26 @@ function CompetencyTags({ competencies }: { competencies: Competency[] }) {
   );
 }
 
+/** Parse expertise_tags like ["PAMUK:DISEASE", "BUGDAY:PEST"] into Competency[] */
+function parseExpertiseTags(tags: string[]): Competency[] {
+  return tags
+    .map((tag) => {
+      const [crop, layer] = tag.split(":");
+      if (crop && layer) return { crop: crop as CropCode, layer: layer as LayerCode };
+      return null;
+    })
+    .filter((c): c is Competency => c !== null);
+}
+
+/** Convert Competency[] to expertise_tags for API */
+function toExpertiseTags(competencies: Competency[]): string[] {
+  return competencies.map((c) => `${c.crop}:${c.layer}`);
+}
+
 /* ------- Main ------- */
 export default function ExpertManagementPage() {
-  const [experts, setExperts] = useState<Expert[]>(INITIAL_EXPERTS);
+  const [experts, setExperts] = useState<Expert[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [filterCrop, setFilterCrop] = useState<CropCode | "ALL">("ALL");
   const [filterLayer, setFilterLayer] = useState<LayerCode | "ALL">("ALL");
@@ -162,8 +130,38 @@ export default function ExpertManagementPage() {
   /* Add form state */
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [newProvince, setNewProvince] = useState("");
+  const [addError, setAddError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
   const [selectedCrops, setSelectedCrops] = useState<Set<CropCode>>(new Set());
   const [selectedLayers, setSelectedLayers] = useState<Set<LayerCode>>(new Set());
+
+  /* Fetch experts from backend */
+  const fetchExperts = useCallback(async () => {
+    const token = getTokenFromCookie();
+    if (!token) return;
+    setLoading(true);
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/experts`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as Array<{ user_id: string; phone: string; display_name: string; province: string; expertise_tags: string[]; active: boolean }>;
+      setExperts(data.map((e) => ({
+        id: e.user_id,
+        name: e.display_name || e.phone,
+        phone: e.phone,
+        competencies: parseExpertiseTags(e.expertise_tags),
+        reviewCount: 0,
+        slaRate: "—",
+        status: e.active ? "Aktif" as const : "Pasif" as const,
+      })));
+    } catch { /* ignore */ } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchExperts(); }, [fetchExperts]);
 
   /* Filter */
   const filtered = experts.filter((e) => {
@@ -189,34 +187,54 @@ export default function ExpertManagementPage() {
     });
   };
 
-  const handleAdd = () => {
-    if (!newName.trim() || !newPhone.trim()) return;
-    if (selectedCrops.size === 0 || selectedLayers.size === 0) return;
+  const handleAdd = async () => {
+    if (!newName.trim() || !newPhone.trim() || !newPin.trim() || !newProvince.trim()) {
+      setAddError("Tum alanlar zorunludur.");
+      return;
+    }
+    if (!/^\d{6}$/.test(newPin)) {
+      setAddError("PIN 6 haneli rakam olmalidir.");
+      return;
+    }
+    if (selectedCrops.size === 0 || selectedLayers.size === 0) {
+      setAddError("En az bir bitki turu ve bir analiz katmani secilmelidir.");
+      return;
+    }
     const competencies: Competency[] = [];
     selectedCrops.forEach((crop) => {
       selectedLayers.forEach((layer) => {
         competencies.push({ crop, layer });
       });
     });
-    const expert: Expert = {
-      id: `e-${Date.now()}`,
-      name: newName.trim(),
-      phone: newPhone.trim(),
-      competencies,
-      reviewCount: 0,
-      slaRate: "—",
-      status: "Onay Bekliyor",
-    };
-    setExperts((prev) => [...prev, expert]);
-    setNewName("");
-    setNewPhone("");
-    setSelectedCrops(new Set());
-    setSelectedLayers(new Set());
-    setShowAddForm(false);
-  };
 
-  const handleDelete = (id: string) => setExperts((prev) => prev.filter((e) => e.id !== id));
-  const handleApprove = (id: string) => setExperts((prev) => prev.map((e) => (e.id === id ? { ...e, status: "Aktif" as const } : e)));
+    setAdding(true);
+    setAddError(null);
+    try {
+      const token = getTokenFromCookie();
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/experts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          phone: newPhone.trim(),
+          pin: newPin,
+          display_name: newName.trim(),
+          province: newProvince.trim(),
+          expertise_tags: toExpertiseTags(competencies),
+        }),
+      });
+      if (res.status === 409) { setAddError("Bu telefon numarasi zaten kayitli."); return; }
+      if (!res.ok) { setAddError("Uzman eklenemedi."); return; }
+      setNewName(""); setNewPhone(""); setNewPin(""); setNewProvince("");
+      setSelectedCrops(new Set()); setSelectedLayers(new Set());
+      setShowAddForm(false);
+      await fetchExperts();
+    } catch {
+      setAddError("Baglanti hatasi.");
+    } finally {
+      setAdding(false);
+    }
+  };
 
   const activeCount = experts.filter((e) => e.status === "Aktif").length;
   const pendingCount = experts.filter((e) => e.status === "Onay Bekliyor").length;
@@ -242,10 +260,13 @@ export default function ExpertManagementPage() {
       {/* Add form */}
       {showAddForm && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 space-y-4">
-          <h2 className="text-sm font-semibold text-slate-900">Yeni Uzman Ekle</h2>
+          <h2 className="text-sm font-semibold text-slate-900">Yeni Uzman Hesabi Olustur</h2>
+          <p className="text-xs text-slate-500">Uzmana bu telefon ve PIN bilgilerini ileteceksiniz. Uzman bu bilgilerle giris yapacak.</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <input placeholder="Ad Soyad" value={newName} onChange={(e) => setNewName(e.target.value)} className="rounded border border-slate-300 px-3 py-2 text-sm" />
-            <input placeholder="Telefon" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} className="rounded border border-slate-300 px-3 py-2 text-sm" />
+            <input placeholder="Telefon (ornek: 05XX...)" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} className="rounded border border-slate-300 px-3 py-2 text-sm" />
+            <input placeholder="6 Haneli PIN" type="password" inputMode="numeric" maxLength={6} value={newPin} onChange={(e) => setNewPin(e.target.value)} className="rounded border border-slate-300 px-3 py-2 text-sm" />
+            <input placeholder="Il (ornek: Diyarbakir)" value={newProvince} onChange={(e) => setNewProvince(e.target.value)} className="rounded border border-slate-300 px-3 py-2 text-sm" />
           </div>
 
           {/* Bitki turleri — coklu secim */}
@@ -288,12 +309,13 @@ export default function ExpertManagementPage() {
             </p>
           )}
 
+          {addError && <p className="text-sm text-rose-600">{addError}</p>}
           <button
             onClick={handleAdd}
-            disabled={!newName.trim() || !newPhone.trim() || selectedCrops.size === 0 || selectedLayers.size === 0}
+            disabled={adding || !newName.trim() || !newPhone.trim() || !newPin.trim() || !newProvince.trim() || selectedCrops.size === 0 || selectedLayers.size === 0}
             className="rounded bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
           >
-            Uzman Ekle
+            {adding ? "Olusturuluyor..." : "Uzman Hesabi Olustur"}
           </button>
         </div>
       )}
@@ -368,9 +390,13 @@ export default function ExpertManagementPage() {
         </table>
       </div>
 
-      {filtered.length === 0 && (
+      {loading && (
+        <div className="py-12 text-center text-sm text-slate-500">Yukleniyor...</div>
+      )}
+
+      {!loading && filtered.length === 0 && (
         <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
-          Bu filtreye uyan uzman bulunmuyor.
+          {experts.length === 0 ? "Henuz uzman eklenmemis. Yukaridaki butonla ilk uzmani ekleyin." : "Bu filtreye uyan uzman bulunmuyor."}
         </div>
       )}
     </section>

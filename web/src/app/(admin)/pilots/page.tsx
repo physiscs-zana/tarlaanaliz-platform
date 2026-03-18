@@ -1,146 +1,178 @@
 /* BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated. */
 /* KR-015: Pilot kapasite planlama, onay ve atama yonetimi. */
-/* KR-015: Gunluk kapasite 2500-3000 donum, calisma gunleri Pzt-Cmt. */
+/* KR-050: Telefon + 6 haneli PIN ile hesap olusturma. */
 
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { getApiBaseUrl, getTokenFromCookie } from "@/lib/api";
 
 /* ------- Types ------- */
 interface Pilot {
-  id: string;
-  name: string;
+  userId: string;
   phone: string;
+  displayName: string;
   province: string;
-  droneModel: string;
-  dailyCapacity: number;
-  activeMissions: number;
-  status: "Aktif" | "Onay Bekliyor" | "Pasif";
+  role: string;
+  active: boolean;
 }
 
-const INITIAL_PILOTS: Pilot[] = [
-  { id: "p1", name: "Ahmet D.", phone: "0535***1234", province: "Diyarbakir", droneModel: "DJI M3M", dailyCapacity: 3000, activeMissions: 2, status: "Aktif" },
-  { id: "p2", name: "Burak K.", phone: "0542***5678", province: "Sanliurfa", droneModel: "WingtraOne", dailyCapacity: 2500, activeMissions: 1, status: "Aktif" },
-  { id: "p3", name: "Cem Y.", phone: "0533***9012", province: "Adana", droneModel: "DJI M3M", dailyCapacity: 3000, activeMissions: 0, status: "Aktif" },
-  { id: "p4", name: "Deniz A.", phone: "0544***3456", province: "Konya", droneModel: "DJI Mavic 3M", dailyCapacity: 2500, activeMissions: 0, status: "Onay Bekliyor" },
-  { id: "p5", name: "Emre S.", phone: "0506***7890", province: "Ankara", droneModel: "MicaSense RedEdge", dailyCapacity: 2800, activeMissions: 0, status: "Onay Bekliyor" },
-];
-
-function StatusBadge({ status }: { status: Pilot["status"] }) {
-  const cls =
-    status === "Aktif"
-      ? "bg-emerald-50 text-emerald-700"
-      : status === "Onay Bekliyor"
-        ? "bg-amber-50 text-amber-700"
-        : "bg-slate-100 text-slate-500";
-  return <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{status}</span>;
+function StatusBadge({ active }: { active: boolean }) {
+  return (
+    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+      {active ? "Aktif" : "Pasif"}
+    </span>
+  );
 }
 
 export default function AdminPilotsPage() {
-  const [pilots, setPilots] = useState<Pilot[]>(INITIAL_PILOTS);
+  const [pilots, setPilots] = useState<Pilot[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
 
-  const handleApprove = (id: string) => {
-    setPilots((prev) => prev.map((p) => (p.id === id ? { ...p, status: "Aktif" as const } : p)));
+  /* Add form state */
+  const [newName, setNewName] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [newProvince, setNewProvince] = useState("");
+  const [addError, setAddError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+
+  const fetchPilots = useCallback(async () => {
+    const token = getTokenFromCookie();
+    if (!token) return;
+    setLoading(true);
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/pilots`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Pilot listesi alinamadi");
+      const data = (await res.json()) as Array<{ user_id: string; phone: string; display_name: string; province: string; role: string; active: boolean }>;
+      setPilots(data.map((p) => ({
+        userId: p.user_id,
+        phone: p.phone,
+        displayName: p.display_name,
+        province: p.province,
+        role: p.role,
+        active: p.active,
+      })));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Hata olustu");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchPilots(); }, [fetchPilots]);
+
+  const handleAdd = async () => {
+    if (!newName.trim() || !newPhone.trim() || !newPin.trim() || !newProvince.trim()) {
+      setAddError("Tum alanlar zorunludur.");
+      return;
+    }
+    if (!/^\d{6}$/.test(newPin)) {
+      setAddError("PIN 6 haneli rakam olmalidir.");
+      return;
+    }
+    setAdding(true);
+    setAddError(null);
+    try {
+      const token = getTokenFromCookie();
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/pilots`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          phone: newPhone.trim(),
+          pin: newPin,
+          display_name: newName.trim(),
+          province: newProvince.trim(),
+        }),
+      });
+      if (res.status === 409) { setAddError("Bu telefon numarasi zaten kayitli."); return; }
+      if (!res.ok) { setAddError("Pilot eklenemedi."); return; }
+      setNewName(""); setNewPhone(""); setNewPin(""); setNewProvince("");
+      setShowAddForm(false);
+      await fetchPilots();
+    } catch {
+      setAddError("Baglanti hatasi.");
+    } finally {
+      setAdding(false);
+    }
   };
-
-  const handleReject = (id: string) => {
-    setPilots((prev) => prev.filter((p) => p.id !== id));
-  };
-
-  const handleDeactivate = (id: string) => {
-    setPilots((prev) => prev.map((p) => (p.id === id ? { ...p, status: "Pasif" as const } : p)));
-  };
-
-  const activeCount = pilots.filter((p) => p.status === "Aktif").length;
-  const pendingCount = pilots.filter((p) => p.status === "Onay Bekliyor").length;
-  const totalCapacity = pilots.filter((p) => p.status === "Aktif").reduce((sum, p) => sum + p.dailyCapacity, 0);
 
   return (
     <section className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Pilot Yonetimi</h1>
-        <p className="mt-0.5 text-sm text-slate-500">
-          {activeCount} aktif · {pendingCount} onay bekliyor · Gunluk toplam kapasite: {totalCapacity.toLocaleString("tr-TR")} donum
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">Pilot Yonetimi</h1>
+          <p className="mt-0.5 text-sm text-slate-500">{pilots.length} pilot kayitli</p>
+        </div>
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+        >
+          {showAddForm ? "Iptal" : "Pilot Ekle"}
+        </button>
       </div>
 
-      {/* Pending approvals */}
-      {pendingCount > 0 && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4">
-          <h2 className="mb-3 text-sm font-semibold text-amber-800">Onay Bekleyen Pilotlar ({pendingCount})</h2>
-          <div className="space-y-2">
-            {pilots.filter((p) => p.status === "Onay Bekliyor").map((p) => (
-              <div key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-100 bg-white p-3">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">{p.name}</p>
-                    <p className="text-xs text-slate-500">{p.phone} · {p.province}</p>
-                  </div>
-                  <span className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-600">{p.droneModel}</span>
-                  <span className="text-xs text-slate-500">{p.dailyCapacity} donum/gun</span>
-                </div>
-                <div className="flex gap-1.5">
-                  <button onClick={() => handleApprove(p.id)} className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700">
-                    Onayla
-                  </button>
-                  <button onClick={() => handleReject(p.id)} className="rounded bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-100">
-                    Reddet
-                  </button>
-                </div>
-              </div>
-            ))}
+      {/* Add pilot form */}
+      {showAddForm && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 space-y-3">
+          <h2 className="text-sm font-semibold text-slate-900">Yeni Pilot Hesabi Olustur</h2>
+          <p className="text-xs text-slate-500">Pilota bu telefon ve PIN bilgilerini ileteceksiniz. Pilot bu bilgilerle giris yapacak.</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <input placeholder="Ad Soyad" value={newName} onChange={(e) => setNewName(e.target.value)} className="rounded border border-slate-300 px-3 py-2 text-sm" />
+            <input placeholder="Telefon (ornek: 05XX...)" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} className="rounded border border-slate-300 px-3 py-2 text-sm" />
+            <input placeholder="6 Haneli PIN" type="password" inputMode="numeric" maxLength={6} value={newPin} onChange={(e) => setNewPin(e.target.value)} className="rounded border border-slate-300 px-3 py-2 text-sm" />
+            <input placeholder="Il (ornek: Diyarbakir)" value={newProvince} onChange={(e) => setNewProvince(e.target.value)} className="rounded border border-slate-300 px-3 py-2 text-sm" />
           </div>
+          {addError && <p className="text-sm text-rose-600">{addError}</p>}
+          <button
+            onClick={handleAdd}
+            disabled={adding}
+            className="rounded bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {adding ? "Olusturuluyor..." : "Pilot Hesabi Olustur"}
+          </button>
         </div>
       )}
 
-      {/* Active / all pilots table */}
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <div className="border-b border-slate-100 bg-slate-50 px-4 py-2.5">
-          <h2 className="text-sm font-semibold text-slate-700">Tum Pilotlar</h2>
+      {error && <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</div>}
+
+      {loading ? (
+        <div className="py-12 text-center text-sm text-slate-500">Yukleniyor...</div>
+      ) : pilots.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+          Henuz pilot eklenmemis. Yukaridaki butonla ilk pilotu ekleyin.
         </div>
-        <table className="w-full text-sm">
-          <thead className="border-b border-slate-100">
-            <tr>
-              <th className="px-4 py-2 text-left font-medium text-slate-600">Pilot</th>
-              <th className="px-4 py-2 text-left font-medium text-slate-600">Bolge</th>
-              <th className="px-4 py-2 text-left font-medium text-slate-600">Drone</th>
-              <th className="px-4 py-2 text-right font-medium text-slate-600">Kapasite (donum/gun)</th>
-              <th className="px-4 py-2 text-right font-medium text-slate-600">Aktif Gorev</th>
-              <th className="px-4 py-2 text-left font-medium text-slate-600">Durum</th>
-              <th className="px-4 py-2 text-right font-medium text-slate-600">Islem</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50">
-            {pilots.map((p) => (
-              <tr key={p.id} className="hover:bg-slate-50">
-                <td className="px-4 py-2.5">
-                  <p className="font-medium text-slate-900">{p.name}</p>
-                  <p className="text-xs text-slate-400">{p.phone}</p>
-                </td>
-                <td className="px-4 py-2.5 text-slate-600">{p.province}</td>
-                <td className="px-4 py-2.5">
-                  <span className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-xs">{p.droneModel}</span>
-                </td>
-                <td className="px-4 py-2.5 text-right text-slate-600">{p.dailyCapacity.toLocaleString("tr-TR")}</td>
-                <td className="px-4 py-2.5 text-right text-slate-600">{p.activeMissions}</td>
-                <td className="px-4 py-2.5"><StatusBadge status={p.status} /></td>
-                <td className="px-4 py-2.5 text-right">
-                  {p.status === "Aktif" && (
-                    <button onClick={() => handleDeactivate(p.id)} className="rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200">
-                      Devre Disi
-                    </button>
-                  )}
-                  {p.status === "Onay Bekliyor" && (
-                    <button onClick={() => handleApprove(p.id)} className="rounded bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100">
-                      Onayla
-                    </button>
-                  )}
-                </td>
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <table className="w-full text-sm">
+            <thead className="border-b border-slate-100 bg-slate-50">
+              <tr>
+                <th className="px-4 py-2 text-left font-medium text-slate-600">Pilot</th>
+                <th className="px-4 py-2 text-left font-medium text-slate-600">Bolge</th>
+                <th className="px-4 py-2 text-left font-medium text-slate-600">Durum</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {pilots.map((p) => (
+                <tr key={p.userId} className="hover:bg-slate-50">
+                  <td className="px-4 py-2.5">
+                    <p className="font-medium text-slate-900">{p.displayName || p.phone}</p>
+                    <p className="text-xs text-slate-400">{p.phone}</p>
+                  </td>
+                  <td className="px-4 py-2.5 text-slate-600">{p.province}</td>
+                  <td className="px-4 py-2.5"><StatusBadge active={p.active} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 }
