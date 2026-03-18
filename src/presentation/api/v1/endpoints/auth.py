@@ -488,18 +488,20 @@ async def logout(request: Request) -> Response:
     """
     header = request.headers.get("Authorization", "")
     if header.startswith("Bearer "):
-        token = header[len("Bearer "):].strip()
+        token = header[len("Bearer ") :].strip()
         try:
             jwt_handler = _get_jwt_handler()
             payload = jwt_handler.verify_token(token)
 
             import time as _time
+
             exp = payload.get("exp", 0)
             now = int(_time.time())
             ttl = max(1, int(exp) - now)
 
             token_uid = f"{payload.get('sub', '')}:{payload.get('iat', '')}"
             from src.infrastructure.security.token_blacklist import blacklist_token
+
             await blacklist_token(token_uid, ttl)
         except Exception:
             pass  # Best-effort blacklist

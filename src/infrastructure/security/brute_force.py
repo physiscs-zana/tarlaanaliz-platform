@@ -20,6 +20,7 @@ async def check_lockout(phone: str) -> tuple[bool, int]:
     """Check if phone is locked out. Returns (is_locked, retry_after_seconds)."""
     try:
         from src.infrastructure.persistence.redis.cache import get_redis_client
+
         client = await get_redis_client()
         lock_key = f"{_BF_LOCK_PREFIX}{phone}"
         ttl = await client.ttl(lock_key)
@@ -35,6 +36,7 @@ async def record_failure(phone: str) -> tuple[bool, int]:
     """Record a failed login attempt. Returns (is_now_locked, retry_after_seconds)."""
     try:
         from src.infrastructure.persistence.redis.cache import get_redis_client
+
         client = await get_redis_client()
 
         attempts_key = f"{_BF_PREFIX}{phone}"
@@ -68,6 +70,7 @@ async def record_success(phone: str) -> None:
     """Clear attempt tracking on successful login."""
     try:
         from src.infrastructure.persistence.redis.cache import get_redis_client
+
         client = await get_redis_client()
         await client.delete(f"{_BF_PREFIX}{phone}", f"{_BF_LOCK_PREFIX}{phone}")
     except Exception:
