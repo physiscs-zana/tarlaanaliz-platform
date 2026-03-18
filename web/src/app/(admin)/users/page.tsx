@@ -77,6 +77,22 @@ export default function AdminUsersPage() {
     } catch { setError("Kullanici listesi yuklenemedi."); } finally { setLoading(false); }
   }, []);
 
+  const handleDelete = async (userId: string) => {
+    if (!window.confirm("Bu kullaniciyi silmek istediginize emin misiniz?")) return;
+    const token = getTokenFromCookie();
+    if (!token) return;
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/admin/users/${userId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok || res.status === 204) {
+        setUsers((prev) => prev.filter((u) => u.user_id !== userId));
+      }
+    } catch { /* ignore */ }
+  };
+
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
   if (loading) return <div className="py-12 text-center text-sm text-slate-500">Yukleniyor...</div>;
@@ -104,6 +120,7 @@ export default function AdminUsersPage() {
                 <th className="px-4 py-2 text-left font-medium text-slate-600 cursor-pointer select-none" onClick={() => handleSort("role")}>Rol{sortIndicator("role")}</th>
                 <th className="px-4 py-2 text-left font-medium text-slate-600 cursor-pointer select-none" onClick={() => handleSort("province")}>Il / Ilce{sortIndicator("province")}</th>
                 <th className="px-4 py-2 text-left font-medium text-slate-600 cursor-pointer select-none" onClick={() => handleSort("active")}>Durum{sortIndicator("active")}</th>
+                <th className="px-4 py-2 text-right font-medium text-slate-600">Islem</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -123,6 +140,9 @@ export default function AdminUsersPage() {
                     <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${u.active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
                       {u.active ? "Aktif" : "Pasif"}
                     </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right">
+                    <button onClick={() => handleDelete(u.user_id)} className="rounded bg-rose-50 px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-100">Sil</button>
                   </td>
                 </tr>
               ))}
