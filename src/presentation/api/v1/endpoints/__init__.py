@@ -1,4 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-081: Endpoint router registry for API v1.
 """Endpoints package exports for API v1."""
 
 from src.presentation.api.v1.endpoints.admin_payments import router as admin_payments_router
