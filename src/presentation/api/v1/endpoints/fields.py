@@ -4,13 +4,27 @@
 
 from __future__ import annotations
 
+import logging
 import re
+import uuid as _uuid
+from datetime import datetime, timezone
+from decimal import Decimal
 
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field, field_validator
+from sqlalchemy import select
+
+from src.core.domain.entities.field import Field as FieldEntity
+from src.core.domain.entities.field import FieldStatus
+from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
+from src.infrastructure.persistence.sqlalchemy.repositories.field_repository_impl import (
+    FieldRepositoryImpl,
+)
+from src.infrastructure.persistence.sqlalchemy.session import get_async_session
+
+LOGGER = logging.getLogger("api.fields")
 
 router = APIRouter(prefix="/fields", tags=["fields"])
-
 
 # SEC: XSS sanitization — strip HTML/script injection from user inputs
 _XSS_PATTERN = re.compile(r"[<>]|javascript:|on\w+\s*=", re.IGNORECASE)
@@ -42,30 +56,45 @@ class FieldResponse(BaseModel):
     crop_type: str | None = None
 
 
-def _require_authenticated_subject(request: Request) -> str:
-    user = getattr(request.state, "user", None)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    return str(getattr(user, "subject", ""))
-
-
 class FieldListResponse(BaseModel):
     items: list[FieldResponse]
 
 
+def _get_user_uuid(request: Request) -> _uuid.UUID:
+    """Extract and validate user UUID from JWT.
+
+    Tries request.state.user.user_id first, falls back to subject.
+    Raises 401 if user is not authenticated or ID is not a valid UUID.
+    """
+    user = getattr(request.state, "user", None)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+    # Try user_id first (set by JwtMiddleware from JWT claims)
+    user_id_str = getattr(user, "user_id", None)
+    if not user_id_str:
+        user_id_str = getattr(user, "subject", None)
+
+    if not user_id_str:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Oturum bilgisi eksik. Lutfen tekrar giris yapin.",
+        )
+
+    try:
+        return _uuid.UUID(str(user_id_str))
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Gecersiz oturum. Lutfen tekrar giris yapin.",
+        ) from None
+
+
 @router.post("", response_model=FieldResponse, status_code=status.HTTP_201_CREATED)
 async def create_field(request: Request, payload: FieldCreateRequest) -> FieldResponse:
-    subject = _require_authenticated_subject(request)
-    user_id_str = getattr(getattr(request.state, "user", None), "user_id", None) or subject
+    user_uuid = _get_user_uuid(request)
 
-    import uuid as _uuid
-    from decimal import Decimal
-    from datetime import datetime, timezone
-    from src.infrastructure.persistence.sqlalchemy.session import get_async_session
-    from src.infrastructure.persistence.sqlalchemy.repositories.field_repository_impl import FieldRepositoryImpl
-    from src.core.domain.entities.field import Field, FieldStatus
-
-    # H4: Validate parcel_ref format before processing
+    # Validate parcel_ref format
     parts = payload.parcel_ref.split("/")
     if len(parts) != 5 or any(not p.strip() for p in parts):
         raise HTTPException(
@@ -74,61 +103,72 @@ async def create_field(request: Request, payload: FieldCreateRequest) -> FieldRe
         )
     province, district, village, ada, parsel = [p.strip() for p in parts]
 
-    # Auto-generate field_name from parcel_ref if not provided
+    # Validate no empty fields after sanitization
+    for name, val in [
+        ("il", province),
+        ("ilce", district),
+        ("mahalle", village),
+        ("ada", ada),
+        ("parsel", parsel),
+    ]:
+        if not val:
+            raise HTTPException(status_code=422, detail=f"{name} alani bos olamaz.")
+
     field_name = payload.field_name or f"{village} {ada}/{parsel}"
+    area_m2 = Decimal(str(payload.area_ha)) * Decimal("10000")
 
-    # Resolve user_id safely — invalid UUID should not cause 500
-    try:
-        user_uuid = _uuid.UUID(user_id_str) if user_id_str and len(user_id_str) > 8 else _uuid.uuid4()
-    except (ValueError, AttributeError):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Geçersiz kullanıcı kimliği. Lütfen tekrar giriş yapın.",
-        )
-
-    # Verify user exists before FK constraint fails
+    # SINGLE session: user check + field save in one transaction
     async with get_async_session() as session:
-        from sqlalchemy import select
-        from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
-
-        exists = await session.execute(select(UserModel.user_id).where(UserModel.user_id == user_uuid))
-        if exists.scalar_one_or_none() is None:
+        # 1. Verify user exists
+        result = await session.execute(select(UserModel.user_id).where(UserModel.user_id == user_uuid))
+        if result.scalar_one_or_none() is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Kullanici bulunamadi. Lutfen tekrar giris yapin.",
             )
 
-    now = datetime.now(timezone.utc)
-    field = Field(
-        field_id=_uuid.uuid4(),
-        user_id=user_uuid,
-        province=province,
-        district=district,
-        village=village,
-        ada=ada,
-        parsel=parsel,
-        area_m2=Decimal(str(payload.area_ha)) * Decimal("10000"),
-        status=FieldStatus.ACTIVE,
-        created_at=now,
-        updated_at=now,
-        crop_type=payload.crop_type,
-    )
+        # 2. Create entity (validates invariants)
+        now = datetime.now(timezone.utc)
+        try:
+            field = FieldEntity(
+                field_id=_uuid.uuid4(),
+                user_id=user_uuid,
+                province=province,
+                district=district,
+                village=village,
+                ada=ada,
+                parsel=parsel,
+                area_m2=area_m2,
+                status=FieldStatus.ACTIVE,
+                created_at=now,
+                updated_at=now,
+                crop_type=payload.crop_type,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from None
 
-    try:
-        async with get_async_session() as session:
+        # 3. Save to DB
+        try:
             repo = FieldRepositoryImpl(session)
             await repo.save(field)
             await session.commit()
-    except Exception as exc:
-        import logging
-
-        logging.getLogger("api.fields").error("FIELD.CREATE_FAILED user_id=%s error=%s", user_uuid, exc)
-        detail = "Tarla kaydedilemedi."
-        if "uq_field_parcel" in str(exc):
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Bu ada/parsel zaten kayitli.") from exc
-        if "foreign key" in str(exc).lower() or "violates foreign key" in str(exc).lower():
-            detail = "Gecersiz kullanici. Lutfen tekrar giris yapin."
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail) from exc
+        except Exception as exc:
+            exc_str = str(exc).lower()
+            LOGGER.error("FIELD.CREATE_FAILED user_id=%s error=%s", user_uuid, exc)
+            if "uq_field_parcel" in exc_str:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Bu ada/parsel zaten kayitli.",
+                ) from None
+            if "foreign key" in exc_str or "violates foreign key" in exc_str:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Gecersiz kullanici. Lutfen tekrar giris yapin.",
+                ) from None
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Tarla kaydedilemedi: {type(exc).__name__}",
+            ) from None
 
     return FieldResponse(
         field_id=str(field.field_id),
@@ -141,17 +181,9 @@ async def create_field(request: Request, payload: FieldCreateRequest) -> FieldRe
 
 @router.get("", response_model=FieldListResponse)
 async def list_fields(request: Request) -> FieldListResponse:
-    subject = _require_authenticated_subject(request)
-    user_id_str = getattr(getattr(request.state, "user", None), "user_id", None) or subject
-
-    import uuid as _uuid
-    from decimal import Decimal
-    from src.infrastructure.persistence.sqlalchemy.session import get_async_session
-    from src.infrastructure.persistence.sqlalchemy.repositories.field_repository_impl import FieldRepositoryImpl
-
     try:
-        user_uuid = _uuid.UUID(user_id_str)
-    except (ValueError, AttributeError):
+        user_uuid = _get_user_uuid(request)
+    except HTTPException:
         return FieldListResponse(items=[])
 
     async with get_async_session() as session:
