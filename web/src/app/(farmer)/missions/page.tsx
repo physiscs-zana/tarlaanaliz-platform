@@ -1,5 +1,5 @@
 /* BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated. */
-/* KR-015: Gorev listesi — API'den cekilir, veri yoksa bilgi mesaji gosterilir. */
+/* KR-015: Analiz listesi — API'den cekilir, veri yoksa bilgi mesaji gosterilir. */
 
 "use client";
 
@@ -44,7 +44,7 @@ export default function FarmerMissionsPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 401) { router.push("/login"); return; }
-      if (!res.ok) throw new Error("Gorevler yuklenemedi");
+      if (!res.ok) throw new Error("Analizler yuklenemedi");
       const data = (await res.json()) as Mission[];
       setMissions(data ?? []);
     } catch (err) {
@@ -58,7 +58,7 @@ export default function FarmerMissionsPage() {
 
   return (
     <section className="space-y-4">
-      <h1 className="text-2xl font-semibold">Gorevler</h1>
+      <h1 className="text-2xl font-semibold">Analizler</h1>
 
       {error && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</div>
@@ -69,7 +69,7 @@ export default function FarmerMissionsPage() {
       ) : missions.length === 0 ? (
         <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 py-16 text-center">
           <p className="text-lg font-medium text-slate-500">HENUZ VERI-BILGI BULUNMAMAKTADIR</p>
-          <p className="mt-2 text-sm text-slate-400">Tarlaniz icin gorev olusturdugunuzda burada listelenecektir.</p>
+          <p className="mt-2 text-sm text-slate-400">Tarlaniz icin analiz talebi olusturdugunuzda burada listelenecektir.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -78,7 +78,7 @@ export default function FarmerMissionsPage() {
             return (
               <div key={m.mission_id} className="rounded-lg border border-slate-200 bg-white p-4 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-900">Gorev #{m.mission_id.slice(0, 8)}</p>
+                  <p className="text-sm font-medium text-slate-900">Analiz #{m.mission_id.slice(0, 8)}</p>
                   <p className="text-xs text-slate-500">Tarih: {m.mission_date}</p>
                 </div>
                 <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusInfo.className}`}>
