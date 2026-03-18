@@ -7,6 +7,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { sanitizeText } from '@/lib/sanitize';
 
 /**
  * KR-013 + CropType VO: SSOT kanonık bitki turleri.
@@ -68,13 +69,13 @@ export function AddFieldModal({ open, onClose, onSubmit, requestMeta }: AddField
     setError(null);
     try {
       await onSubmit({
-        province: province.trim(),
-        district: district.trim(),
-        village: village.trim(),
-        block: block.trim(),
-        parcel: parcel.trim(),
+        province: sanitizeText(province),
+        district: sanitizeText(district),
+        village: sanitizeText(village),
+        block: sanitizeText(block),
+        parcel: sanitizeText(parcel),
         areaM2: area,
-        cropType,
+        cropType: sanitizeText(cropType),
         ...requestMeta,
       });
       onClose();

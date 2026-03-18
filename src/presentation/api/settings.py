@@ -95,6 +95,7 @@ class JwtSettings:
                 "/api/v1/auth/phone-pin/login",
                 "/api/v1/auth/phone-pin/register",
                 "/api/v1/auth/phone-pin/refresh",
+                "/api/v1/auth/logout",
                 "/api/v1/payments/webhooks/provider",
                 "/api/v1/payments/methods",
                 "/api/v1/pricing",

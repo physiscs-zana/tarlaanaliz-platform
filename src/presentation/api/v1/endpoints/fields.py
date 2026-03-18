@@ -4,10 +4,20 @@
 
 from __future__ import annotations
 
+import re
+
 from fastapi import APIRouter, HTTPException, Request, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 router = APIRouter(prefix="/fields", tags=["fields"])
+
+
+# SEC: XSS sanitization — strip HTML/script injection from user inputs
+_XSS_PATTERN = re.compile(r"[<>]|javascript:|on\w+\s*=", re.IGNORECASE)
+
+
+def _sanitize(value: str) -> str:
+    return _XSS_PATTERN.sub("", value).strip()
 
 
 class FieldCreateRequest(BaseModel):
@@ -15,6 +25,13 @@ class FieldCreateRequest(BaseModel):
     parcel_ref: str = Field(min_length=3, max_length=64)
     area_ha: float = Field(gt=0)
     crop_type: str | None = Field(default=None, max_length=50)
+
+    @field_validator("parcel_ref", "crop_type", "field_name", mode="before")
+    @classmethod
+    def strip_xss(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        return _sanitize(v)
 
 
 class FieldResponse(BaseModel):

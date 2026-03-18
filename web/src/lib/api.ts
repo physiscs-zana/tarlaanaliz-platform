@@ -3,10 +3,19 @@
 
 /**
  * Returns the backend API base URL (e.g. "https://api.tarlaanaliz.com/api/v1").
- * Falls back to "/api/v1" for relative requests during SSR or when env is missing.
+ *
+ * Uses NEXT_PUBLIC_API_BASE_URL (defined in .env.example and env.ts PublicEnv)
+ * which contains the domain only (e.g. "https://api.tarlaanaliz.com").
+ * Falls back to "/api/v1" for relative requests (proxied via next.config.mjs rewrite).
+ *
+ * ROOT CAUSE FIX: Previously read non-existent NEXT_PUBLIC_API_URL env var,
+ * always falling back to "/api/v1" which caused "Failed to fetch" in production
+ * when no Next.js rewrite was configured.
  */
 export function getApiBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (base) return `${base.replace(/\/+$/, "")}/api/v1`;
+  return "/api/v1";
 }
 
 /**

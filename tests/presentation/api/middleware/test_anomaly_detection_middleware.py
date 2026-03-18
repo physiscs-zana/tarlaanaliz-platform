@@ -49,7 +49,11 @@ def test_anomaly_detects_error_spike_and_logs(caplog, monkeypatch) -> None:
     assert any("AnomalyDetected" in r.message for r in caplog.records)
 
 
-def test_anomaly_detects_large_body(monkeypatch, caplog) -> None:
+def test_anomaly_blocks_high_score_request(monkeypatch, caplog) -> None:
+    """SEC-FIX: Pre-score >= 0.8 now returns 429 instead of just logging.
+
+    large_body(0.4) + uncommon_ua(0.2) + rapid_repeat(0.5) = 1.1 >= 0.8 → 429.
+    """
     monkeypatch.setattr(settings.anomaly, "large_body_threshold_bytes", 10)
     monkeypatch.setattr(settings.anomaly, "rapid_repeat_threshold", 1)
     caplog.set_level(logging.WARNING)
@@ -59,8 +63,8 @@ def test_anomaly_detects_large_body(monkeypatch, caplog) -> None:
         params={"fail": "false"},
         headers={"content-length": "100", "user-agent": "suspicious-bot/1.0"},
     )
-    assert response.status_code == 200
-    assert any("AnomalyDetected" in r.message for r in caplog.records)
+    assert response.status_code == 429
+    assert any("AnomalyBlocked" in r.message for r in caplog.records)
 
 
 def test_anomaly_metrics_status_counter_changes() -> None:
