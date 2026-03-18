@@ -12,7 +12,7 @@ function tryRoleRedirect() {
   const role = store.get(COOKIE_ROLE_KEY)?.value;
   if (role === "admin") redirect("/analytics");
   if (role === "expert") redirect("/queue");
-  if (role === "farmer") redirect("/fields");
+  if (role === "farmer") redirect("/benim-sayfam");
   if (role === "pilot") redirect("/pilot/missions");
 }
 

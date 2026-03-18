@@ -29,7 +29,7 @@ export default function LoginPage() {
       const roleHome: Record<string, string> = {
         admin: "/analytics",
         expert: "/queue",
-        farmer: "/fields",
+        farmer: "/benim-sayfam",
         pilot: "/pilot/missions",
       };
       const group = ROLE_TO_GROUP[data.user.role] ?? "farmer";

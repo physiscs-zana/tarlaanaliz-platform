@@ -16,7 +16,7 @@ export function LogoutButton() {
       document.cookie = `${COOKIE_TOKEN_KEY}=;path=/;max-age=0`;
       document.cookie = `${COOKIE_ROLE_KEY}=;path=/;max-age=0`;
     }
-    router.push("/login");
+    router.push("/");
   };
 
   return (

@@ -128,6 +128,12 @@ _ROUTE_ROLES: list[tuple[str, frozenset[str]]] = [
         "/api/v1/sla-metrics",
         frozenset({"IL_OPERATOR", "CENTRAL_ADMIN"}),
     ),
+    # Expert management (admin-only CRUD)
+    ("/api/v1/experts", frozenset({"CENTRAL_ADMIN"})),
+    # Weather block reports
+    ("/api/v1/weather-block-reports", frozenset({"PILOT", "CENTRAL_ADMIN"})),
+    # Expert portal (expert reviews)
+    ("/api/v1/expert-portal", frozenset({"EXPERT", "CENTRAL_ADMIN"})),
 ]
 
 _BYPASS_PREFIXES = (
@@ -186,10 +192,7 @@ class RBACMiddleware(BaseHTTPMiddleware):
                     )
                     return JSONResponse(
                         status_code=403,
-                        content={
-                            "detail": "Forbidden - insufficient role",
-                            "corr_id": corr_id,
-                        },
+                        content={"detail": "Forbidden"},
                     )
                 break  # Match found, access granted
         else:
@@ -204,10 +207,7 @@ class RBACMiddleware(BaseHTTPMiddleware):
                 )
                 return JSONResponse(
                     status_code=403,
-                    content={
-                        "detail": "Forbidden - route not authorized",
-                        "corr_id": corr_id,
-                    },
+                    content={"detail": "Forbidden"},
                 )
 
         return await call_next(request)
