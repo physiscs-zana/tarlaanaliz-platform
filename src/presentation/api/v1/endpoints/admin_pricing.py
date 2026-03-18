@@ -56,7 +56,7 @@ def _require_admin(request: Request) -> str:
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     roles = set(getattr(request.state, "roles", []))
-    if "admin" not in roles:
+    if "admin" not in roles and "CENTRAL_ADMIN" not in roles:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     return str(getattr(user, "subject", ""))
 
@@ -109,8 +109,17 @@ def get_pricing_config(request: Request) -> dict[str, object]:
 @router.put("/config")
 def update_pricing_config(request: Request, payload: PricingConfigRequest) -> dict[str, str]:
     """Update pricing config (IBAN + crop prices). Admin only."""
+    import logging
+
     _require_admin(request)
-    _write_config(payload.model_dump())
+    try:
+        _write_config(payload.model_dump())
+    except OSError as exc:
+        logging.getLogger("api.admin_pricing").error("CONFIG_WRITE_FAILED: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ayarlar kaydedilemedi: {exc}",
+        ) from None
     return {"status": "saved"}
 
 

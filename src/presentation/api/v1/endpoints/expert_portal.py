@@ -61,7 +61,7 @@ def _require_expert(request: Request) -> str:
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     roles = set(getattr(request.state, "roles", []))
-    if "expert" not in roles and "admin" not in roles:
+    if not roles & {"expert", "EXPERT", "admin", "CENTRAL_ADMIN"}:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     return str(getattr(user, "subject", ""))
 
