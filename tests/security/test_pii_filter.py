@@ -64,6 +64,7 @@ def test_pii_redacted_for_il_operator() -> None:
     @app.middleware("http")
     async def set_role(request: Request, call_next: Any) -> Any:
         request.state.user = FakeUser(roles=["IL_OPERATOR"])
+        request.state.roles = ["IL_OPERATOR"]
         return await call_next(request)
 
     client = TestClient(app)
@@ -82,6 +83,7 @@ def test_pii_visible_for_central_admin() -> None:
     @app.middleware("http")
     async def set_role(request: Request, call_next: Any) -> Any:
         request.state.user = FakeUser(roles=["CENTRAL_ADMIN"])
+        request.state.roles = ["CENTRAL_ADMIN"]
         return await call_next(request)
 
     client = TestClient(app)
