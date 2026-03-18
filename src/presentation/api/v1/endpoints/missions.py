@@ -25,6 +25,8 @@ class MissionResponse(BaseModel):
     field_id: str
     mission_date: date
     status: str
+    pilot_id: str | None = None
+    subscription_id: str | None = None
 
 
 def _require_authenticated(request: Request) -> tuple[str, str | None]:

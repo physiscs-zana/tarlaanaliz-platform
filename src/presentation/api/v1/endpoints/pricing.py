@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Protocol, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/pricing", tags=["pricing"])
 
@@ -19,6 +19,10 @@ class PriceSnapshotResponse(BaseModel):
     version: str
     currency: str
     effective_at: datetime
+    crop_type: str | None = None
+    price_per_donum: float | None = None
+    valid_from: str | None = None
+    valid_until: str | None = None
 
 
 class PriceSnapshotListResponse(BaseModel):

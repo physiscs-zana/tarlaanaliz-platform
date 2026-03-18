@@ -19,14 +19,14 @@ export interface ExpertReviewPayload {
 }
 
 export async function listPendingReviews(token: string): Promise<PendingReviewsResponse> {
-  return http<PendingReviewsResponse>('/expert_portal/reviews', {
+  return http<PendingReviewsResponse>('/expert-portal/reviews', {
     method: 'GET',
     token,
   });
 }
 
 export async function getReviewDetail(reviewId: string, token: string): Promise<ExpertReviewDetail> {
-  return http<ExpertReviewDetail>(`/expert_portal/reviews/${reviewId}`, {
+  return http<ExpertReviewDetail>(`/expert-portal/reviews/${reviewId}`, {
     method: 'GET',
     token,
   });
@@ -37,7 +37,7 @@ export async function submitReview(
   payload: ExpertReviewPayload,
   token: string
 ): Promise<void> {
-  await http<void>(`/expert_portal/reviews/${reviewId}/submit`, {
+  await http<void>(`/expert-portal/reviews/${reviewId}/submit`, {
     method: 'POST',
     body: JSON.stringify(payload),
     token,

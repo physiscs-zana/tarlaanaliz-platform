@@ -6,12 +6,13 @@ import { useCallback, useState } from 'react';
 import { apiRequest } from '@/lib/apiClient';
 
 export interface PriceBookEntry {
-  readonly id: string;
-  readonly cropType: string;
-  readonly pricePerDonum: number;
+  readonly snapshotId: string;
+  readonly cropType: string | null;
+  readonly pricePerDonum: number | null;
   readonly validFrom: string;
   readonly validUntil: string | null;
-  readonly version: number;
+  readonly version: string;
+  readonly currency: string;
 }
 
 export interface UsePricingResult {
@@ -30,8 +31,16 @@ export function usePricing(): UsePricingResult {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiRequest<{ items: PriceBookEntry[] }>('/pricing/active', { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
-      setEntries(res.data?.items ?? []);
+      const res = await apiRequest<{ items: Array<{ snapshot_id: string; crop_type: string | null; price_per_donum: number | null; valid_from: string; valid_until: string | null; version: string; currency: string }> }>('/pricing/active', { method: 'GET', headers: { Authorization: `Bearer ${token}` } });
+      setEntries((res.data?.items ?? []).map(e => ({
+        snapshotId: e.snapshot_id,
+        cropType: e.crop_type ?? null,
+        pricePerDonum: e.price_per_donum ?? null,
+        validFrom: e.valid_from,
+        validUntil: e.valid_until ?? null,
+        version: e.version,
+        currency: e.currency,
+      })));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fiyat bilgisi alınamadı');
     } finally {

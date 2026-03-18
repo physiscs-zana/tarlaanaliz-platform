@@ -75,7 +75,11 @@ export async function apiRequest<TData>(url: string, options: ApiRequestOptions 
       ...(options.headers ?? {}),
     };
 
-    const response = await fetch(url, {
+    // D-3 fix: prepend base URL for relative paths
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+    const resolvedUrl = url.startsWith("http") ? url : `${baseUrl}${url}`;
+
+    const response = await fetch(resolvedUrl, {
       ...options,
       headers,
       body: normalizeBody(options.body),

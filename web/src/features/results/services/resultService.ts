@@ -53,7 +53,7 @@ export interface ResultListResponse {
 }
 
 export async function getResult(missionId: string, token: string): Promise<ResultData> {
-  return http<ResultData>(`/results/${missionId}`, {
+  return http<ResultData>(`/results/${missionId}/summary`, {
     method: 'GET',
     token,
   });
