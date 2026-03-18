@@ -61,6 +61,59 @@ def _require_admin(request: Request) -> str:
     return str(getattr(user, "subject", ""))
 
 
+_CONFIG_PATH = "/app/data/pricing_config.json"
+_CONFIG_PATH_LOCAL = "data/pricing_config.json"
+
+
+def _config_path() -> str:
+    import os
+
+    return _CONFIG_PATH if os.path.exists(_CONFIG_PATH) else _CONFIG_PATH_LOCAL
+
+
+def _read_config() -> dict[str, object]:
+    import json
+    import os
+
+    path = _config_path()
+    if not os.path.exists(path):
+        return {}
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)  # type: ignore[no-any-return]
+
+
+def _write_config(data: dict[str, object]) -> None:
+    import json
+    import os
+
+    path = _config_path()
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+class PricingConfigRequest(BaseModel):
+    iban: str = Field(max_length=40)
+    bank_name: str = Field(max_length=80)
+    recipient: str = Field(max_length=120)
+    crops: list[dict[str, object]] = Field(default_factory=list)
+
+
+@router.get("/config")
+def get_pricing_config(request: Request) -> dict[str, object]:
+    """Return full pricing config (IBAN + crop prices). Admin only."""
+    _require_admin(request)
+    return _read_config()
+
+
+@router.put("/config")
+def update_pricing_config(request: Request, payload: PricingConfigRequest) -> dict[str, str]:
+    """Update pricing config (IBAN + crop prices). Admin only."""
+    _require_admin(request)
+    _write_config(payload.model_dump())
+    return {"status": "saved"}
+
+
 @router.get("/info")
 def get_pricing_info(request: Request) -> dict[str, object]:
     """Return basic pricing configuration. IBAN-only payment (KR-033)."""
