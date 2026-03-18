@@ -159,13 +159,12 @@ services:
     build:
       context: ./web
       dockerfile: Dockerfile
-      args:
-        # ROOT CAUSE FIX: Frontend code reads NEXT_PUBLIC_API_BASE_URL (domain only, no /api/v1)
-        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-https://api.tarlaanaliz.com}
-        NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-wss://api.tarlaanaliz.com/ws}
+      # NOTE: NEXT_PUBLIC_API_BASE_URL intentionally NOT passed as build arg.
+      # Frontend falls back to "/api/v1" (relative) → nginx proxies to backend
+      # (tarlaanaliz.conf line 44: location /api/ → 127.0.0.1:8000).
+      # This avoids cross-origin requests and CORS issues entirely.
     container_name: tarlaanaliz-web
     environment:
-      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-https://api.tarlaanaliz.com}
       NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-wss://api.tarlaanaliz.com/ws}
     ports:
       # Host nginx proxies tarlaanaliz.com → localhost:3000

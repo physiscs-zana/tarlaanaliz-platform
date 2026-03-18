@@ -29,10 +29,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build-time environment variables
-# ROOT CAUSE FIX: NEXT_PUBLIC_API_BASE_URL = domain only (no /api/v1 suffix)
-ARG NEXT_PUBLIC_API_BASE_URL
+# NOTE: NEXT_PUBLIC_API_BASE_URL intentionally NOT set here.
+# Frontend falls back to "/api/v1" (relative URL) which nginx proxies
+# to the backend (same-origin, no CORS). See tarlaanaliz.conf line 44.
 ARG NEXT_PUBLIC_WS_URL
-ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 ENV NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL}
 ENV NEXT_TELEMETRY_DISABLED=1
 

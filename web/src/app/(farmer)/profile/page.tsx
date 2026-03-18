@@ -43,6 +43,22 @@ export default function FarmerProfilePage() {
     return p.slice(0, -4).replace(/./g, "*") + p.slice(-4);
   };
 
+  const ROLE_TR: Record<string, string> = {
+    FARMER_SINGLE: "Bireysel Ciftci",
+    FARMER_MEMBER: "Kooperatif Uyesi Ciftci",
+    COOP_OWNER: "Kooperatif Sahibi",
+    COOP_ADMIN: "Kooperatif Yoneticisi",
+    COOP_AGRONOMIST: "Kooperatif Zirai Danismani",
+    COOP_VIEWER: "Kooperatif Izleyici",
+    PILOT: "Drone Pilotu",
+    STATION_OPERATOR: "Istasyon Operatoru",
+    IL_OPERATOR: "Il Operatoru",
+    BILLING_ADMIN: "Muhasebe Yoneticisi",
+    CENTRAL_ADMIN: "Merkez Yonetici",
+    AI_SERVICE: "YZ Servisi",
+    EXPERT: "Uzman",
+  };
+
   const handlePinChange = async () => {
     setPinError(null);
     setPinSuccess(false);
@@ -117,7 +133,7 @@ export default function FarmerProfilePage() {
         <div>
           <span className="text-sm text-slate-500">Rol</span>
           <p className="text-base font-medium text-slate-900">
-            {profile.roles.map((r) => r.replace(/_/g, " ")).join(", ")}
+            {profile.roles.map((r) => ROLE_TR[r] ?? r.replace(/_/g, " ")).join(", ")}
           </p>
         </div>
         <div>
