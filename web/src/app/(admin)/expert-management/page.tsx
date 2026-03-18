@@ -236,6 +236,14 @@ export default function ExpertManagementPage() {
     }
   };
 
+  const handleApprove = (id: string) => {
+    setExperts((prev) => prev.map((e) => (e.id === id ? { ...e, status: "Aktif" as const } : e)));
+  };
+
+  const handleDelete = (id: string) => {
+    setExperts((prev) => prev.filter((e) => e.id !== id));
+  };
+
   const activeCount = experts.filter((e) => e.status === "Aktif").length;
   const pendingCount = experts.filter((e) => e.status === "Onay Bekliyor").length;
 
