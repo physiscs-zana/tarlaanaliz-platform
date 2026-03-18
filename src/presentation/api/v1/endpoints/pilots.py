@@ -63,9 +63,9 @@ async def list_pilots(request: Request) -> list[PilotResponse]:
 
     async with get_async_session() as session:
         result = await session.execute(
-            select(UserModel).join(
-                UserRoleModel, UserModel.user_id == UserRoleModel.user_id
-            ).where(UserRoleModel.role == UserRole.PILOT.value)
+            select(UserModel)
+            .join(UserRoleModel, UserModel.user_id == UserRoleModel.user_id)
+            .where(UserRoleModel.role == UserRole.PILOT.value)
         )
         models = result.scalars().unique().all()
     return [
@@ -109,9 +109,7 @@ async def create_pilot(request: Request, payload: PilotCreateRequest) -> PilotRe
         # Save display_name to user model
         from sqlalchemy import select
 
-        result = await session.execute(
-            select(UserModel).where(UserModel.user_id == user.user_id)
-        )
+        result = await session.execute(select(UserModel).where(UserModel.user_id == user.user_id))
         user_model = result.scalar_one_or_none()
         if user_model:
             user_model.display_name = payload.display_name

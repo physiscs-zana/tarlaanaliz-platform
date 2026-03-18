@@ -59,9 +59,9 @@ async def list_experts(request: Request) -> list[ExpertResponse]:
         from src.infrastructure.persistence.sqlalchemy.models.user_role_model import UserRoleModel
 
         result = await session.execute(
-            select(UserModel).join(
-                UserRoleModel, UserModel.user_id == UserRoleModel.user_id
-            ).where(UserRoleModel.role == UserRole.EXPERT.value)
+            select(UserModel)
+            .join(UserRoleModel, UserModel.user_id == UserRoleModel.user_id)
+            .where(UserRoleModel.role == UserRole.EXPERT.value)
         )
         models = result.scalars().unique().all()
     return [
@@ -105,9 +105,7 @@ async def create_expert(request: Request, payload: ExpertCreateRequest) -> Exper
         # Save display_name and expertise_tags to user model
         from sqlalchemy import select
 
-        result = await session.execute(
-            select(UserModel).where(UserModel.user_id == user.user_id)
-        )
+        result = await session.execute(select(UserModel).where(UserModel.user_id == user.user_id))
         user_model = result.scalar_one_or_none()
         if user_model:
             user_model.display_name = payload.display_name
