@@ -143,7 +143,20 @@ export function useAuth() {
     return data;
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    // SEC-FIX: Blacklist token on server before clearing local state
+    const currentToken = getAuthToken();
+    if (currentToken) {
+      try {
+        const baseUrl = getApiBaseUrl();
+        await fetch(`${baseUrl}/auth/logout`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${currentToken}` },
+        });
+      } catch {
+        // Best-effort — continue with local logout even if server unreachable
+      }
+    }
     clearAuthStorage();
     clearCookie(COOKIE_TOKEN_KEY);
     clearCookie(COOKIE_ROLE_KEY);

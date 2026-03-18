@@ -55,7 +55,8 @@ export default function FarmerFieldsPage() {
         })),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata oluştu");
+      const msg = err instanceof Error ? err.message : "Bir hata oluştu";
+      setError(msg === "Failed to fetch" ? "Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edin." : msg);
     } finally {
       setLoading(false);
     }
@@ -68,30 +69,35 @@ export default function FarmerFieldsPage() {
   const handleAddField = async (payload: AddFieldPayload) => {
     const token = getToken();
     if (!token) throw new Error("Oturum bulunamadı");
-    const baseUrl = getApiBaseUrl();
-    const parcelRef = `${payload.province}/${payload.district}/${payload.village}/${payload.block}/${payload.parcel}`;
-    const areaHa = payload.areaM2 / 10000;
+    try {
+      const baseUrl = getApiBaseUrl();
+      const parcelRef = `${payload.province}/${payload.district}/${payload.village}/${payload.block}/${payload.parcel}`;
+      const areaHa = payload.areaM2 / 10000;
 
-    const res = await fetch(`${baseUrl}/fields`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        parcel_ref: parcelRef,
-        area_ha: areaHa,
-        crop_type: payload.cropType,
-      }),
-    });
+      const res = await fetch(`${baseUrl}/fields`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          parcel_ref: parcelRef,
+          area_ha: areaHa,
+          crop_type: payload.cropType,
+        }),
+      });
 
-    if (res.status === 409) throw new Error("Bu ada/parsel zaten kayıtlı.");
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error((body as { detail?: string }).detail || "Tarla eklenemedi");
+      if (res.status === 409) throw new Error("Bu ada/parsel zaten kayıtlı.");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as { detail?: string }).detail || "Tarla eklenemedi");
+      }
+
+      await fetchFields();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Tarla eklenemedi";
+      throw new Error(msg === "Failed to fetch" ? "Sunucuya bağlanılamadı. Lütfen tekrar deneyin." : msg);
     }
-
-    await fetchFields();
   };
 
   return (
@@ -107,6 +113,11 @@ export default function FarmerFieldsPage() {
 
       {loading ? (
         <div className="py-12 text-center text-sm text-slate-500">Yükleniyor...</div>
+      ) : fields.length === 0 ? (
+        <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 py-16 text-center">
+          <p className="text-lg font-medium text-slate-500">HENÜZ VERİ-BİLGİ BULUNMAMAKTADIR</p>
+          <p className="mt-2 text-sm text-slate-400">Tarla eklemek için yukarıdaki butonu kullanın.</p>
+        </div>
       ) : (
         <FieldList fields={fields} onSelectField={(id) => router.push(`/fields/${id}`)} />
       )}

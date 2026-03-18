@@ -62,6 +62,16 @@ class JwtMiddleware(BaseHTTPMiddleware):
             METRICS_HOOK.increment("auth_unauthorized_total")
             return self._error_response(corr_id, 401, "Unauthorized")
 
+        # SEC-FIX: Token blacklist check (logout = immediate revocation)
+        token_uid = f"{claims.get('sub', '')}:{claims.get('iat', '')}"
+        try:
+            from src.infrastructure.security.token_blacklist import is_token_blacklisted
+            if await is_token_blacklisted(token_uid):
+                METRICS_HOOK.increment("auth_blacklisted_total")
+                return self._error_response(corr_id, 401, "Unauthorized")
+        except Exception:
+            pass  # Fail-open: if Redis is down, allow (token expires naturally)
+
         if not claims.get("phone_verified", False):
             # KR-081: contract-first claim gate for authenticated identity context.
             METRICS_HOOK.increment("auth_forbidden_total")

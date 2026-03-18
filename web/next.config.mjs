@@ -23,7 +23,7 @@ const nextConfig = {
           },
           {
             key: "X-XSS-Protection",
-            value: "1; mode=block",
+            value: "0",
           },
           {
             key: "Referrer-Policy",
@@ -38,6 +38,17 @@ const nextConfig = {
             value: "max-age=63072000; includeSubDomains; preload",
           },
         ],
+      },
+    ];
+  },
+  // SEC-FIX: Proxy /api/v1/* requests to backend API to prevent "Failed to fetch"
+  // errors when NEXT_PUBLIC_API_URL is not set (relative URL fallback).
+  async rewrites() {
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.tarlaanaliz.com";
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: `${apiBaseUrl}/api/v1/:path*`,
       },
     ];
   },

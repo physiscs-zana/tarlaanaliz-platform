@@ -129,6 +129,21 @@ async def _corr_id_middleware(request: Request, call_next: Callable[..., Any]) -
     return response
 
 
+async def _security_headers_middleware(request: Request, call_next: Callable[..., Any]) -> Response:
+    """SEC: Add security headers to all API responses (XSS, clickjacking, MIME-sniffing)."""
+    response: Response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
+    response.headers.setdefault("Cache-Control", "no-store")
+    # X-XSS-Protection: 0 — Modern browsers deprecated the XSS auditor;
+    # setting 1 can introduce vulnerabilities. CSP is the replacement.
+    response.headers.setdefault("X-XSS-Protection", "0")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=(self)")
+    return response
+
+
 def _register_exception_handlers(app: FastAPI) -> None:
     # SEC: corr_id is logged server-side but NEVER returned in response body.
     # Leaking internal correlation IDs helps attackers correlate requests
@@ -181,11 +196,13 @@ def create_app() -> FastAPI:
     # Middleware stack — Starlette LIFO: last added = outermost (first to run).
     # Execution order (outermost → innermost):
     # 1. Correlation ID → 2. CORS → 3. Rate Limiting → 4. mTLS →
-    # 5. JWT → 6. RBAC → 7. Anomaly → 8. PII Filter → 9. Grid Anonymizer
+    # 5. JWT → 6. RBAC → 7. Anomaly → 8. PII Filter → 9. Grid Anonymizer →
+    # 10. Security Headers
     #
     # IMPORTANT: Code order is REVERSED because add_middleware wraps the app,
     # so innermost middleware must be added FIRST, outermost LAST.
-    app.add_middleware(GridAnonymizerMiddleware)  # 9. innermost
+    app.middleware("http")(_security_headers_middleware)  # 10. innermost: security response headers
+    app.add_middleware(GridAnonymizerMiddleware)  # 9.
     app.add_middleware(PIIFilterMiddleware)  # 8.
     app.add_middleware(AnomalyDetectionMiddleware)  # 7.
     app.add_middleware(RBACMiddleware)  # 6.

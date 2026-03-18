@@ -75,8 +75,9 @@ export async function apiRequest<TData>(url: string, options: ApiRequestOptions 
       ...(options.headers ?? {}),
     };
 
-    // D-3 fix: prepend base URL for relative paths
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+    // ROOT CAUSE FIX: Use NEXT_PUBLIC_API_BASE_URL (matches .env.example / env.ts PublicEnv)
+    const envBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const baseUrl = envBase ? `${envBase.replace(/\/+$/, "")}/api/v1` : "/api/v1";
     const resolvedUrl = url.startsWith("http") ? url : `${baseUrl}${url}`;
 
     const response = await fetch(resolvedUrl, {

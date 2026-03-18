@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import ipaddress
 import logging
+import os
 import time
 import uuid
 from collections import Counter
@@ -48,6 +49,7 @@ def ensure_request_context(request: Request) -> tuple[str, float]:
 
 
 def mask_ip(ip_value: str | None) -> str:
+    """Mask IP for logging/audit — NEVER use for rate limiting keys."""
     if not ip_value:
         return "unknown"
     try:
@@ -63,13 +65,51 @@ def mask_ip(ip_value: str | None) -> str:
     return str(network_v6.network_address) + "/64"
 
 
+# ---------------------------------------------------------------------------
+# SEC-FIX: Trusted proxy validation for X-Forwarded-For
+# ---------------------------------------------------------------------------
+def _get_trusted_proxies() -> set[str]:
+    """Load trusted proxy CIDRs from env (comma-separated)."""
+    raw = os.getenv("TRUSTED_PROXY_CIDRS", "")
+    if not raw.strip():
+        return {"127.0.0.0/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "::1/128"}
+    return {c.strip() for c in raw.split(",") if c.strip()}
+
+
+_TRUSTED_PROXIES: set[str] | None = None
+
+
+def _is_trusted_proxy(ip_str: str) -> bool:
+    """Check if IP is from a trusted proxy network."""
+    global _TRUSTED_PROXIES
+    if _TRUSTED_PROXIES is None:
+        _TRUSTED_PROXIES = _get_trusted_proxies()
+    try:
+        addr = ipaddress.ip_address(ip_str)
+    except ValueError:
+        return False
+    for cidr in _TRUSTED_PROXIES:
+        try:
+            if addr in ipaddress.ip_network(cidr, strict=False):
+                return True
+        except ValueError:
+            continue
+    return False
+
+
 def get_client_ip(request: Request) -> str:
+    """Extract real client IP with trusted proxy validation.
+
+    SEC-FIX: Only trust X-Forwarded-For when the direct connection is from
+    a known trusted proxy. Otherwise use the direct connection IP.
+    """
+    direct_ip = request.client.host if request.client else ""
+
     xff = request.headers.get("x-forwarded-for")
-    if xff:
+    if xff and _is_trusted_proxy(direct_ip):
         return xff.split(",")[0].strip()
-    if request.client:
-        return request.client.host
-    return ""
+
+    return direct_ip
 
 
 def is_bypassed_path(path: str, bypass_routes: list[str]) -> bool:

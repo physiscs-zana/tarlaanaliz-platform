@@ -54,6 +54,18 @@ class AuthRefreshRequest(BaseModel):
     refresh_token: str = Field(min_length=8)
 
 
+class PinChangeRequest(BaseModel):
+    current_pin: str = Field(min_length=_PIN_LENGTH, max_length=_PIN_LENGTH)
+    new_pin: str = Field(min_length=_PIN_LENGTH, max_length=_PIN_LENGTH)
+
+    @field_validator("current_pin", "new_pin")
+    @classmethod
+    def pin_digits_only(cls, v: str) -> str:
+        if not v.isdigit():
+            raise ValueError("PIN yalnızca rakamlardan oluşmalıdır (KR-050)")
+        return v
+
+
 class PhonePinAuthService(Protocol):
     async def login(self, phone: str, pin: str) -> AuthTokenResponse: ...
 
@@ -259,8 +271,16 @@ async def phone_pin_login(
     response: Response,
     service: PhonePinAuthService = Depends(get_phone_pin_auth_service),
 ) -> AuthTokenResponse:
-    # KR-050 / SC-SEC-02: Check lockout before attempting login
-    locked, retry_after = _LOGIN_TRACKER.is_locked(payload.phone)
+    # KR-050 / SC-SEC-02: Check lockout — try Redis first, fallback to in-memory
+    from src.infrastructure.security.brute_force import (
+        check_lockout as redis_check_lockout,
+        record_failure as redis_record_failure,
+        record_success as redis_record_success,
+    )
+
+    locked, retry_after = await redis_check_lockout(payload.phone)
+    if not locked:
+        locked, retry_after = _LOGIN_TRACKER.is_locked(payload.phone)
     if locked:
         response.headers["Retry-After"] = str(retry_after)
         raise HTTPException(
@@ -272,18 +292,21 @@ async def phone_pin_login(
         result = await service.login(phone=payload.phone, pin=payload.pin)
     except HTTPException as exc:
         if exc.status_code == status.HTTP_401_UNAUTHORIZED:
-            # Record failed attempt
+            # Record failed attempt in both stores
             now_locked, lockout_retry = _LOGIN_TRACKER.record_failure(payload.phone)
-            if now_locked:
-                response.headers["Retry-After"] = str(lockout_retry)
+            redis_locked, redis_retry = await redis_record_failure(payload.phone)
+            if redis_locked or now_locked:
+                retry = redis_retry or lockout_retry
+                response.headers["Retry-After"] = str(retry)
                 raise HTTPException(
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                     detail="Too many failed login attempts. Please try again later.",
                 ) from exc
         raise
 
-    # Success — clear attempts
+    # Success — clear attempts in both stores
     _LOGIN_TRACKER.record_success(payload.phone)
+    await redis_record_success(payload.phone)
     return result
 
 
@@ -292,6 +315,16 @@ def phone_pin_refresh(
     payload: AuthRefreshRequest, service: PhonePinAuthService = Depends(get_phone_pin_auth_service)
 ) -> AuthTokenResponse:
     return service.refresh(refresh_token=payload.refresh_token)
+
+
+import re as _re
+
+# SEC: XSS sanitization
+_XSS_PATTERN = _re.compile(r"[<>]|javascript:|on\w+\s*=", _re.IGNORECASE)
+
+
+def _sanitize(value: str) -> str:
+    return _XSS_PATTERN.sub("", value).strip()
 
 
 class PhonePinRegisterRequest(BaseModel):
@@ -309,6 +342,11 @@ class PhonePinRegisterRequest(BaseModel):
         if not v.isdigit():
             raise ValueError("PIN must be digits only")
         return v
+
+    @field_validator("province", "district", "first_name", "last_name", mode="before")
+    @classmethod
+    def strip_xss(cls, v: str) -> str:
+        return _sanitize(v) if v else v
 
 
 # Roles that unauthenticated callers may self-register with
@@ -395,3 +433,75 @@ def me(request: Request) -> dict[str, str | bool]:
         "subject": str(getattr(user, "subject", "")),
         "phone_verified": bool(getattr(user, "phone_verified", False)),
     }
+
+
+@router.post("/phone-pin/change-pin", status_code=status.HTTP_200_OK)
+async def change_pin(payload: PinChangeRequest, request: Request) -> dict[str, str | bool]:
+    """Change authenticated user's PIN (KR-050).
+
+    Contract: POST /auth/change-pin → 200 Success (platform_public.v1.yaml).
+    Response format: {success: true, message: "..."} per responses.yaml#Success.
+    """
+    user = getattr(request.state, "user", None)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+    user_id_str = getattr(user, "user_id", None) or getattr(user, "subject", "")
+
+    import uuid as _uuid
+    from src.infrastructure.persistence.sqlalchemy.session import get_async_session
+    from src.infrastructure.persistence.sqlalchemy.repositories.user_repository_impl import UserRepositoryImpl
+
+    try:
+        user_uuid = _uuid.UUID(user_id_str)
+    except (ValueError, AttributeError):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+    async with get_async_session() as session:
+        repo = UserRepositoryImpl(session)
+        db_user = await repo.find_by_id(user_uuid)
+        if db_user is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+        # Verify current PIN
+        if not bcrypt.checkpw(payload.current_pin.encode(), db_user.pin_hash.encode()):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Current PIN is incorrect")
+
+        # Ensure new PIN is different
+        if payload.current_pin == payload.new_pin:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New PIN must be different")
+
+        # Update PIN
+        new_hash = bcrypt.hashpw(payload.new_pin.encode(), bcrypt.gensalt()).decode()
+        db_user.change_pin(new_hash)
+        await repo.save(db_user)
+        await session.commit()
+
+    return {"success": True, "message": "PIN başarıyla değiştirildi"}
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(request: Request) -> Response:
+    """Logout and blacklist current token for immediate revocation.
+
+    Contract: POST /auth/logout → 204 No Content (platform_public.v1.yaml).
+    """
+    header = request.headers.get("Authorization", "")
+    if header.startswith("Bearer "):
+        token = header[len("Bearer "):].strip()
+        try:
+            jwt_handler = _get_jwt_handler()
+            payload = jwt_handler.verify_token(token)
+
+            import time as _time
+            exp = payload.get("exp", 0)
+            now = int(_time.time())
+            ttl = max(1, int(exp) - now)
+
+            token_uid = f"{payload.get('sub', '')}:{payload.get('iat', '')}"
+            from src.infrastructure.security.token_blacklist import blacklist_token
+            await blacklist_token(token_uid, ttl)
+        except Exception:
+            pass  # Best-effort blacklist
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -1,6 +1,6 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # KR-033: audit-compatible anomaly event emission.
-"""Rule-based anomaly detection middleware with safe event emission."""
+"""Rule-based anomaly detection middleware with safe event emission and active blocking."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from typing import Any
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import Response
+from starlette.responses import JSONResponse, Response
 
 from src.presentation.api.middleware._shared import (
     METRICS_HOOK,
@@ -24,6 +24,9 @@ from src.presentation.api.middleware._shared import (
 from src.presentation.api.settings import settings
 
 LOGGER = logging.getLogger("api.middleware.anomaly")
+
+# SEC-FIX: Threshold above which requests are actively blocked (not just logged)
+_BLOCK_THRESHOLD = 0.8
 
 
 @dataclass(slots=True)
@@ -37,7 +40,7 @@ class AnomalyDetectedEvent:
 
 
 class AnomalyDetectionMiddleware(BaseHTTPMiddleware):
-    """Detect unusual request patterns and emit internal observability events."""
+    """Detect unusual request patterns and block/emit internal observability events."""
 
     def __init__(self, app: Any) -> None:
         super().__init__(app)
@@ -65,12 +68,7 @@ class AnomalyDetectionMiddleware(BaseHTTPMiddleware):
         history = self._request_history[ip_key]
         repeat_count = self._record_and_count(history, now, settings.anomaly.rapid_repeat_window_seconds)
 
-        response = await call_next(request)
-
-        latency_ms = (time.monotonic() - start_time) * 1000
-        METRICS_HOOK.observe_ms("http_latency_ms", latency_ms)
-        METRICS_HOOK.increment(f"http_status_total:{response.status_code}")
-
+        # --- Pre-response anomaly scoring (can block before processing) ---
         reasons: list[str] = []
         score = 0.0
 
@@ -88,6 +86,32 @@ class AnomalyDetectionMiddleware(BaseHTTPMiddleware):
             reasons.append("uncommon_user_agent")
             score += 0.2
 
+        # SEC-FIX: Block request BEFORE processing if pre-score exceeds threshold
+        if score >= _BLOCK_THRESHOLD:
+            METRICS_HOOK.increment("anomaly_blocked_total")
+            LOGGER.warning(
+                "AnomalyBlocked",
+                extra={
+                    "event_name": "AnomalyBlocked",
+                    "corr_id": corr_id,
+                    "path": request.url.path,
+                    "anomaly_score": round(score, 3),
+                    "reasons": reasons,
+                    "masked_ip": ip_key,
+                },
+            )
+            resp = JSONResponse(status_code=429, content={"detail": "Too Many Requests"})
+            resp.headers["Retry-After"] = "60"
+            resp.headers["X-Correlation-Id"] = corr_id
+            return resp
+
+        response = await call_next(request)
+
+        latency_ms = (time.monotonic() - start_time) * 1000
+        METRICS_HOOK.observe_ms("http_latency_ms", latency_ms)
+        METRICS_HOOK.increment(f"http_status_total:{response.status_code}")
+
+        # --- Post-response checks (error spike — log only) ---
         if response.status_code >= 400:
             err_history = self._error_history[ip_key]
             error_count = self._record_and_count(err_history, now, settings.anomaly.rapid_repeat_window_seconds)
@@ -95,7 +119,7 @@ class AnomalyDetectionMiddleware(BaseHTTPMiddleware):
                 reasons.append("error_spike")
                 score += 0.4
 
-        if score >= 0.8:
+        if score >= _BLOCK_THRESHOLD:
             event = AnomalyDetectedEvent(
                 corr_id=corr_id,
                 path=request.url.path,
@@ -105,7 +129,6 @@ class AnomalyDetectionMiddleware(BaseHTTPMiddleware):
                 masked_ip=ip_key,
             )
             METRICS_HOOK.increment("anomaly_detected_total")
-            # KR-033: audit-compatible structured event logging (safe/non-PII fields only).
             LOGGER.warning(
                 "AnomalyDetected",
                 extra={
