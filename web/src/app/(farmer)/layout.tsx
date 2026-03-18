@@ -13,6 +13,7 @@ interface FarmerLayoutProps {
 }
 
 const navItems = [
+  { href: "/benim-sayfam", label: "Benim Sayfam" },
   { href: "/fields", label: "Tarlalar" },
   { href: "/missions", label: "Görevler" },
   { href: "/results", label: "Sonuçlar" },

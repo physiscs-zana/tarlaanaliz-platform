@@ -8,7 +8,8 @@ export const routes = {
   forbidden: '/forbidden',
 
   // Farmer routes
-  farmerHome: '/fields',
+  benimSayfam: '/benim-sayfam',
+  farmerHome: '/benim-sayfam',
   fields: '/fields',
   missions: '/missions',
   subscriptions: '/subscriptions',
@@ -89,7 +90,7 @@ export const ROLE_PREFIXES: Record<string, readonly string[]> = {
   ],
   expert: [routes.queue, '/review', routes.reviews, routes.expertSettings, routes.expertSla, routes.expertProfile],
   farmer: [
-    routes.fields, routes.missions, routes.subscriptions, routes.results, routes.payments, routes.farmerProfile,
+    routes.benimSayfam, routes.fields, routes.missions, routes.subscriptions, routes.results, routes.payments, routes.farmerProfile,
     // KR-014: Kooperatif yönetim sayfaları (COOP_OWNER, COOP_ADMIN farmer grubunda)
     routes.coopMembers, routes.coopInvite, routes.coopFields, routes.coopDashboard,
   ],
