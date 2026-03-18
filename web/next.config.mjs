@@ -11,7 +11,8 @@ const nextConfig = {
       {
         source: "/:path*",
         headers: [
-          // SEC: x-app-name removed — leaks application identity to attackers
+          // SEC: CSP is now set dynamically per-request in middleware.ts
+          // with a cryptographic nonce (no more unsafe-inline).
           {
             key: "X-Content-Type-Options",
             value: "nosniff",
@@ -35,20 +36,6 @@ const nextConfig = {
           {
             key: "Strict-Transport-Security",
             value: "max-age=63072000; includeSubDomains; preload",
-          },
-          {
-            key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline'",
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob:",
-              "font-src 'self'",
-              `connect-src 'self' ${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.tarlaanaliz.com'}`,
-              "frame-ancestors 'none'",
-              "base-uri 'self'",
-              "form-action 'self'",
-            ].join("; "),
           },
         ],
       },
