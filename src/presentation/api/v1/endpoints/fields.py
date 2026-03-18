@@ -86,6 +86,18 @@ async def create_field(request: Request, payload: FieldCreateRequest) -> FieldRe
             detail="Geçersiz kullanıcı kimliği. Lütfen tekrar giriş yapın.",
         )
 
+    # Verify user exists before FK constraint fails
+    async with get_async_session() as session:
+        from sqlalchemy import select
+        from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
+
+        exists = await session.execute(select(UserModel.user_id).where(UserModel.user_id == user_uuid))
+        if exists.scalar_one_or_none() is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Kullanici bulunamadi. Lutfen tekrar giris yapin.",
+            )
+
     now = datetime.now(timezone.utc)
     field = Field(
         field_id=_uuid.uuid4(),

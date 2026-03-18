@@ -3,8 +3,11 @@
 
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getApiBaseUrl, getTokenFromCookie } from "@/lib/api";
+
+type SortKey = "display_name" | "phone" | "role" | "province" | "active";
+type SortDir = "asc" | "desc";
 
 interface UserItem {
   user_id: string;
@@ -28,6 +31,36 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>("display_name");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
+  const sortedUsers = useMemo(() => {
+    return [...users].sort((a, b) => {
+      let aVal: string | boolean = a[sortKey];
+      let bVal: string | boolean = b[sortKey];
+      if (typeof aVal === "boolean") {
+        return sortDir === "asc"
+          ? (aVal === bVal ? 0 : aVal ? -1 : 1)
+          : (aVal === bVal ? 0 : aVal ? 1 : -1);
+      }
+      const aStr = (aVal ?? "").toString().toLocaleLowerCase("tr");
+      const bStr = (bVal ?? "").toString().toLocaleLowerCase("tr");
+      const cmp = aStr.localeCompare(bStr, "tr");
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [users, sortKey, sortDir]);
+
+  const sortIndicator = (key: SortKey) =>
+    sortKey === key ? (sortDir === "asc" ? " \u25B2" : " \u25BC") : "";
 
   const fetchUsers = useCallback(async () => {
     const token = getTokenFromCookie();
@@ -66,15 +99,15 @@ export default function AdminUsersPage() {
           <table className="w-full text-sm">
             <thead className="border-b border-slate-100 bg-slate-50">
               <tr>
-                <th className="px-4 py-2 text-left font-medium text-slate-600">Ad Soyad</th>
-                <th className="px-4 py-2 text-left font-medium text-slate-600">Telefon</th>
-                <th className="px-4 py-2 text-left font-medium text-slate-600">Rol</th>
-                <th className="px-4 py-2 text-left font-medium text-slate-600">Il / Ilce</th>
-                <th className="px-4 py-2 text-left font-medium text-slate-600">Durum</th>
+                <th className="px-4 py-2 text-left font-medium text-slate-600 cursor-pointer select-none" onClick={() => handleSort("display_name")}>Ad Soyad{sortIndicator("display_name")}</th>
+                <th className="px-4 py-2 text-left font-medium text-slate-600 cursor-pointer select-none" onClick={() => handleSort("phone")}>Telefon{sortIndicator("phone")}</th>
+                <th className="px-4 py-2 text-left font-medium text-slate-600 cursor-pointer select-none" onClick={() => handleSort("role")}>Rol{sortIndicator("role")}</th>
+                <th className="px-4 py-2 text-left font-medium text-slate-600 cursor-pointer select-none" onClick={() => handleSort("province")}>Il / Ilce{sortIndicator("province")}</th>
+                <th className="px-4 py-2 text-left font-medium text-slate-600 cursor-pointer select-none" onClick={() => handleSort("active")}>Durum{sortIndicator("active")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {users.map((u) => (
+              {sortedUsers.map((u) => (
                 <tr key={u.user_id} className="hover:bg-slate-50">
                   <td className="px-4 py-2.5 font-medium text-slate-900">{u.display_name || "—"}</td>
                   <td className="px-4 py-2.5 font-mono text-xs">{u.phone}</td>
