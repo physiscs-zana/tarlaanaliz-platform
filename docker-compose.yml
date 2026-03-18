@@ -133,6 +133,10 @@ services:
       TARLA_S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD required}
       TARLA_JWT_SECRET_KEY: ${APP_SECRET_KEY:?APP_SECRET_KEY required}
       TARLA_CORS_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      # --- Payment settings (admin-configurable via .env) ---
+      TARLA_PAYMENT_IBAN: ${TARLA_PAYMENT_IBAN:-TR33 0006 1005 1978 6457 8413 26}
+      TARLA_PAYMENT_BANK: ${TARLA_PAYMENT_BANK:-Halkbank}
+      TARLA_PAYMENT_RECIPIENT: ${TARLA_PAYMENT_RECIPIENT:-TarlaAnaliz Tarim Teknolojileri A.S.}
       # --- non-prefixed (for other tools) ---
       APP_ENV: production
       API_JWT_SECRET: ${APP_SECRET_KEY:?APP_SECRET_KEY required}

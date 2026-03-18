@@ -43,15 +43,21 @@ router = APIRouter(
 @router.get("/methods")
 def get_payment_methods() -> dict[str, object]:
     """Available payment methods — KR-033."""
+    import os
+
+    iban = os.environ.get("TARLA_PAYMENT_IBAN", "TR33 0006 1005 1978 6457 8413 26")
+    bank = os.environ.get("TARLA_PAYMENT_BANK", "Halkbank")
+    recipient = os.environ.get("TARLA_PAYMENT_RECIPIENT", "TarlaAnaliz Tarim Teknolojileri A.S.")
+
     return {
         "methods": [
             {
                 "code": "IBAN",
                 "name": "Havale / EFT",
                 "available": True,
-                "iban": "TR33 0006 1005 1978 6457 8413 26",
-                "bank_name": "Halkbank",
-                "recipient": "TarlaAnaliz Tarim Teknolojileri A.S.",
+                "iban": iban,
+                "bank_name": bank,
+                "recipient": recipient,
             },
             {
                 "code": "CREDIT_CARD",
