@@ -148,14 +148,14 @@ export default function ExpertManagementPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) return;
-      const data = (await res.json()) as Array<{ user_id: string; phone: string; display_name: string; province: string; expertise_tags: string[]; active: boolean }>;
+      const data = (await res.json()) as Array<{ user_id: string; phone: string; display_name: string; province: string; expertise_tags: string[]; active: boolean; review_count?: number; sla_rate?: string }>;
       setExperts(data.map((e) => ({
         id: e.user_id,
         name: e.display_name || e.phone,
         phone: e.phone,
-        competencies: parseExpertiseTags(e.expertise_tags),
-        reviewCount: 0,
-        slaRate: "—",
+        competencies: parseExpertiseTags(e.expertise_tags ?? []),
+        reviewCount: e.review_count ?? 0,
+        slaRate: e.sla_rate ?? "—",
         status: e.active ? "Aktif" as const : "Pasif" as const,
       })));
     } catch { /* ignore */ } finally { setLoading(false); }
@@ -236,12 +236,34 @@ export default function ExpertManagementPage() {
     }
   };
 
-  const handleApprove = (id: string) => {
-    setExperts((prev) => prev.map((e) => (e.id === id ? { ...e, status: "Aktif" as const } : e)));
+  const handleApprove = async (id: string) => {
+    const token = getTokenFromCookie();
+    if (!token) return;
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/experts/${id}/approve`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setExperts((prev) => prev.map((e) => (e.id === id ? { ...e, status: "Aktif" as const } : e)));
+      }
+    } catch { /* ignore */ }
   };
 
-  const handleDelete = (id: string) => {
-    setExperts((prev) => prev.filter((e) => e.id !== id));
+  const handleDelete = async (id: string) => {
+    const token = getTokenFromCookie();
+    if (!token) return;
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/experts/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setExperts((prev) => prev.filter((e) => e.id !== id));
+      }
+    } catch { /* ignore */ }
   };
 
   const activeCount = experts.filter((e) => e.status === "Aktif").length;

@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getApiBaseUrl, getTokenFromCookie, decodeJwtPayload } from "@/lib/api";
 
 export default function PilotProfilePage() {
@@ -12,6 +12,9 @@ export default function PilotProfilePage() {
   const [droneSerial, setDroneSerial] = useState("");
   const [sensorType, setSensorType] = useState("");
   const [saved, setSaved] = useState(false);
+  const [droneLocked, setDroneLocked] = useState(false);
+  const [droneLoading, setDroneLoading] = useState(true);
+  const [droneError, setDroneError] = useState<string | null>(null);
 
   const [showPinChange, setShowPinChange] = useState(false);
   const [currentPin, setCurrentPin] = useState("");
@@ -28,7 +31,53 @@ export default function PilotProfilePage() {
     setPhone((claims.phone as string) ?? "");
   }, []);
 
-  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
+  const fetchDroneInfo = useCallback(async () => {
+    const token = getTokenFromCookie();
+    if (!token) { setDroneLoading(false); return; }
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/pilots/me/drone`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { drone_model?: string; drone_serial?: string; sensor_type?: string; locked?: boolean };
+        if (data.drone_model) {
+          setDroneModel(data.drone_model);
+          setDroneSerial(data.drone_serial ?? "");
+          setSensorType(data.sensor_type ?? "");
+          setDroneLocked(data.locked ?? true);
+        }
+      }
+    } catch { /* ignore */ } finally { setDroneLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchDroneInfo(); }, [fetchDroneInfo]);
+
+  const handleSave = async () => {
+    if (droneLocked) return;
+    setDroneError(null);
+    if (!droneModel) { setDroneError("Drone modeli secilmelidir."); return; }
+
+    const token = getTokenFromCookie();
+    if (!token) return;
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/pilots/me/drone`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ drone_model: droneModel, drone_serial: droneSerial, sensor_type: sensorType }),
+      });
+      if (res.ok) {
+        setSaved(true);
+        setDroneLocked(true);
+        setTimeout(() => setSaved(false), 2000);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setDroneError((body as { detail?: string }).detail || "Bilgiler kaydedilemedi.");
+      }
+    } catch { setDroneError("Baglanti hatasi."); }
+  };
+
   const maskPhone = (p: string) => p.length < 4 ? p : p.slice(0, -4).replace(/./g, "*") + p.slice(-4);
 
   const handlePinChange = async () => {
@@ -72,13 +121,52 @@ export default function PilotProfilePage() {
       <div className="rounded-lg border border-slate-200 bg-white p-5 space-y-4">
         <h2 className="text-lg font-semibold">Drone Bilgileri</h2>
         <p className="text-xs text-slate-500">Sahip oldugunuz drone bilgilerini girin. Bu bilgiler gorev atamasinda kullanilir.</p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div><label className="mb-1 block text-sm font-medium">Drone Modeli</label><select value={droneModel} onChange={(e) => setDroneModel(e.target.value)} className="w-full rounded border border-slate-300 px-3 py-2 text-sm"><option value="">Secin</option><option value="DJI M3M">DJI Matrice 300 RTK + MicaSense</option><option value="DJI Mavic 3M">DJI Mavic 3 Multispectral</option><option value="WingtraOne">WingtraOne Gen II</option><option value="senseFly eBee X">senseFly eBee X + Sequoia</option><option value="Diger">Diger</option></select></div>
-          <div><label className="mb-1 block text-sm font-medium">Seri Numarasi</label><input placeholder="ornek: 1ZNBJ1234567" value={droneSerial} onChange={(e) => setDroneSerial(e.target.value)} className="w-full rounded border border-slate-300 px-3 py-2 text-sm" /></div>
-        </div>
-        <div><label className="mb-1 block text-sm font-medium">Sensor Tipi</label><select value={sensorType} onChange={(e) => setSensorType(e.target.value)} className="w-full rounded border border-slate-300 px-3 py-2 text-sm"><option value="">Secin</option><option value="MicaSense RedEdge-MX">MicaSense RedEdge-MX (5 bant)</option><option value="MicaSense Altum-PT">MicaSense Altum-PT (6 bant + termal)</option><option value="DJI Multispectral">DJI Multispectral (4 bant)</option><option value="Sequoia+">Parrot Sequoia+ (4 bant)</option></select></div>
-        {saved && <p className="text-sm text-emerald-600">Bilgiler kaydedildi.</p>}
-        <button onClick={handleSave} disabled={!droneModel} className="rounded bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800 disabled:opacity-50">Kaydet</button>
+
+        {droneLocked && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+            <strong>Uyari:</strong> Drone bilgileri yalnizca bir kez girilip kaydedilebilir. Degisiklik icin Central Admin onayi gereklidir.
+            Degisiklik talep etmek icin yoneticinize basvurunuz.
+          </div>
+        )}
+
+        {droneLoading ? (
+          <div className="py-4 text-center text-sm text-slate-500">Yukleniyor...</div>
+        ) : (
+          <>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-medium">Drone Modeli</label>
+                <select value={droneModel} onChange={(e) => setDroneModel(e.target.value)} disabled={droneLocked} className={`w-full rounded border border-slate-300 px-3 py-2 text-sm ${droneLocked ? "opacity-60 cursor-not-allowed bg-slate-100" : ""}`}>
+                  <option value="">Secin</option>
+                  <option value="DJI M3M">DJI Matrice 300 RTK + MicaSense</option>
+                  <option value="DJI Mavic 3M">DJI Mavic 3 Multispectral</option>
+                  <option value="WingtraOne">WingtraOne Gen II</option>
+                  <option value="senseFly eBee X">senseFly eBee X + Sequoia</option>
+                  <option value="Diger">Diger</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">Seri Numarasi</label>
+                <input placeholder="ornek: 1ZNBJ1234567" value={droneSerial} onChange={(e) => setDroneSerial(e.target.value)} disabled={droneLocked} className={`w-full rounded border border-slate-300 px-3 py-2 text-sm ${droneLocked ? "opacity-60 cursor-not-allowed bg-slate-100" : ""}`} />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">Sensor Tipi</label>
+              <select value={sensorType} onChange={(e) => setSensorType(e.target.value)} disabled={droneLocked} className={`w-full rounded border border-slate-300 px-3 py-2 text-sm ${droneLocked ? "opacity-60 cursor-not-allowed bg-slate-100" : ""}`}>
+                <option value="">Secin</option>
+                <option value="MicaSense RedEdge-MX">MicaSense RedEdge-MX (5 bant)</option>
+                <option value="MicaSense Altum-PT">MicaSense Altum-PT (6 bant + termal)</option>
+                <option value="DJI Multispectral">DJI Multispectral (4 bant)</option>
+                <option value="Sequoia+">Parrot Sequoia+ (4 bant)</option>
+              </select>
+            </div>
+            {droneError && <p className="text-sm text-rose-600">{droneError}</p>}
+            {saved && <p className="text-sm text-emerald-600">Bilgiler kaydedildi.</p>}
+            {!droneLocked && (
+              <button onClick={handleSave} disabled={!droneModel} className="rounded bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800 disabled:opacity-50">Kaydet</button>
+            )}
+          </>
+        )}
       </div>
 
       {/* PIN Degistir */}
