@@ -112,6 +112,26 @@ export default function AdminPilotsPage() {
     }
   };
 
+  const handleDelete = async (userId: string) => {
+    if (!confirm("Bu pilotu silmek istediginizden emin misiniz?")) return;
+    const token = getTokenFromCookie();
+    if (!token) return;
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/pilots/${userId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        setError("Pilot silinemedi.");
+        return;
+      }
+      setPilots((prev) => prev.filter((p) => p.userId !== userId));
+    } catch {
+      setError("Baglanti hatasi.");
+    }
+  };
+
   return (
     <section className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -167,6 +187,7 @@ export default function AdminPilotsPage() {
                 <th className="px-4 py-2 text-left font-medium text-slate-600">Bolge</th>
                 <th className="px-4 py-2 text-left font-medium text-slate-600">Durum</th>
                 <th className="px-4 py-2 text-left font-medium text-slate-600">Haftalik Tarama</th>
+                <th className="px-4 py-2 text-left font-medium text-slate-600">Islem</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -184,10 +205,18 @@ export default function AdminPilotsPage() {
                         ? `${p.weeklyScans.length} tarla taranmis`
                         : "Tarama yok"}
                     </td>
+                    <td className="px-4 py-2.5">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(p.userId); }}
+                        className="rounded bg-rose-50 px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-100"
+                      >
+                        Sil
+                      </button>
+                    </td>
                   </tr>
                   {expandedPilot === p.userId && p.weeklyScans.length > 0 && (
                     <tr key={`${p.userId}-detail`}>
-                      <td colSpan={5} className="bg-slate-50 px-8 py-3">
+                      <td colSpan={6} className="bg-slate-50 px-8 py-3">
                         <p className="mb-2 text-xs font-semibold text-slate-600">Bu Haftaki Taramalar</p>
                         <div className="space-y-1">
                           {p.weeklyScans.map((scan, idx) => (

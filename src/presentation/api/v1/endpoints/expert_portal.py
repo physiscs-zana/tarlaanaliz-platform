@@ -86,3 +86,24 @@ def submit_review(
 ) -> ReviewSubmitResponse:
     subject = _require_expert(request)
     return service.submit(review_id=review_id, payload=payload, expert_subject=subject)
+
+
+@router.get("/me/expertise")
+async def get_my_expertise(request: Request) -> dict:
+    """Return current expert's expertise_tags from database."""
+    subject = _require_expert(request)
+    from sqlalchemy import select
+    from src.infrastructure.persistence.sqlalchemy.session import get_async_session
+    from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
+    import uuid as _uuid
+
+    try:
+        user_uuid = _uuid.UUID(subject)
+    except ValueError:
+        return {"expertise_tags": []}
+
+    async with get_async_session() as session:
+        result = await session.execute(select(UserModel.expertise_tags).where(UserModel.user_id == user_uuid))
+        tags = result.scalar_one_or_none()
+
+    return {"expertise_tags": tags or []}

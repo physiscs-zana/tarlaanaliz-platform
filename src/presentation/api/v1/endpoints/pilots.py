@@ -135,3 +135,28 @@ async def get_my_capacity(request: Request) -> PilotCapacityResponse:
         work_days=["Pazartesi", "Sali", "Carsamba", "Persembe", "Cuma", "Cumartesi"],
         daily_capacity_donum=2750,
     )
+
+
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_pilot(request: Request, user_id: str) -> None:
+    """Delete a pilot user (admin only)."""
+    _require_admin(request)
+    from sqlalchemy import select, delete as sa_delete
+    from src.infrastructure.persistence.sqlalchemy.models.user_role_model import UserRoleModel
+
+    try:
+        uid = _uuid.UUID(user_id)
+    except ValueError as err:
+        raise HTTPException(status_code=422, detail="Invalid user_id") from err
+
+    async with get_async_session() as session:
+        result = await session.execute(select(UserModel).where(UserModel.user_id == uid))
+        user_model = result.scalar_one_or_none()
+        if user_model is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pilot not found")
+
+        await session.execute(sa_delete(UserRoleModel).where(UserRoleModel.user_id == uid))
+        await session.delete(user_model)
+        await session.commit()
+
+    LOGGER.info("PILOT.DELETED user_id=%s", user_id)

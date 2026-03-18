@@ -119,18 +119,19 @@ export default function HomePage() {
 
       {/* ===== Stats ===== */}
       <div className="border-y border-slate-100 bg-slate-50">
-        <div className="mx-auto grid max-w-4xl grid-cols-3 divide-x divide-slate-200 py-5">
-          <div className="text-center">
-            <div className="text-xl font-bold text-emerald-600 sm:text-2xl">81</div>
-            <div className="text-xs text-slate-500">İl Kapsama</div>
+        <div className="mx-auto grid max-w-4xl grid-cols-3 divide-x divide-slate-200 py-8">
+          <div className="text-center px-2">
+            <div className="text-xs font-semibold uppercase tracking-wide text-amber-500">Şimdilik GAP Bölgesinde</div>
+            <div className="mt-1 text-3xl font-extrabold text-emerald-600 sm:text-4xl">YAKINDA 81</div>
+            <div className="mt-1 text-sm text-slate-500">İl Kapsama</div>
           </div>
           <div className="text-center px-2">
-            <div className="text-xl font-bold text-emerald-600 sm:text-2xl">En Az 1 Hafta</div>
-            <div className="text-xs text-slate-500">Erken Tespit</div>
+            <div className="text-3xl font-extrabold text-emerald-600 sm:text-4xl">En Az 1 Hafta</div>
+            <div className="mt-1 text-sm text-slate-500">Erken Tespit</div>
           </div>
           <div className="text-center px-2">
-            <div className="text-lg font-bold text-emerald-600 sm:text-xl">%93&ndash;%99</div>
-            <div className="text-xs text-slate-500">Bitki Türüne Göre Doğruluk</div>
+            <div className="text-3xl font-extrabold text-emerald-600 sm:text-4xl">%93&ndash;%99</div>
+            <div className="mt-1 text-sm text-slate-500">Bitki Türüne Göre Doğruluk</div>
           </div>
         </div>
       </div>
@@ -180,20 +181,33 @@ export default function HomePage() {
 
       {/* ===== Önce / Sonra ===== */}
       <section className="bg-slate-50 py-10 sm:py-14">
-        <div className="mx-auto max-w-3xl px-4">
-          <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">
-            Gözle Görünmeyeni Ortaya Çıkarır
-          </h2>
-          <p className="mx-auto mt-2 max-w-xl text-center text-sm text-slate-600">
-            Üstte normal görüntü, altta analiz sonucu. Kırmızı bölgeler sorunlu alanları gösterir.
-          </p>
-          <div className="mx-auto mt-6 flex max-w-md flex-col gap-3">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="grid items-center gap-8 lg:grid-cols-2">
+            <div className="flex flex-col justify-center">
+              <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+                Gözle Görünmeyeni Ortaya Çıkarır
+              </h2>
+              <p className="mt-3 text-sm text-slate-600 sm:text-base leading-relaxed">
+                Üstte normal görüntü, altta analiz sonucu. Kırmızı bölgeler sorunlu alanları gösterir.
+                Drone ile çekilen görüntüler 7 farklı katmanda işlenerek tarlanızın detaylı sağlık haritası çıkarılır.
+              </p>
+            </div>
+            <Image
+              src="/images/analiz-katmanlari.png"
+              alt="Analiz katmanları — 7 katmanlı tarla analizi"
+              width={700}
+              height={500}
+              className="w-full rounded-xl"
+              unoptimized
+            />
+          </div>
+          <div className="mt-8 grid grid-cols-2 gap-4">
             <div className="overflow-hidden rounded-xl border border-slate-200">
-              <Image src="/images/tarla-oncesi.png" alt="Tarla — normal havadan görüntü" width={600} height={450} className="w-full" unoptimized />
+              <Image src="/images/tarla-oncesi.png" alt="Tarla — normal havadan görüntü" width={600} height={200} className="h-40 w-full object-cover" unoptimized />
               <div className="bg-white px-4 py-2 text-center text-sm font-medium text-slate-700">Normal Görüntü</div>
             </div>
             <div className="overflow-hidden rounded-xl border border-emerald-200">
-              <Image src="/images/tarla-sonrasi.png" alt="Tarla — analiz sonucu" width={600} height={450} className="w-full" unoptimized />
+              <Image src="/images/tarla-sonrasi.png" alt="Tarla — analiz sonucu" width={600} height={200} className="h-40 w-full object-cover" unoptimized />
               <div className="bg-emerald-50 px-4 py-2 text-center text-sm font-medium text-emerald-700">Analiz Sonucu</div>
             </div>
           </div>
