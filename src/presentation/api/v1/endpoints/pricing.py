@@ -73,3 +73,21 @@ def list_active_pricing(
     # KR-081: explicit response contract for PWA pricing list.
     _require_authenticated(request)
     return service.list_active(region=region, limit=limit)
+
+
+@router.get("/crops")
+def get_crop_prices(request: Request) -> dict[str, object]:
+    """Public crop prices from admin pricing config. KR-033."""
+    _require_authenticated(request)
+    import json
+    import os
+
+    for path in ("/app/data/pricing_config.json", "data/pricing_config.json"):
+        if os.path.exists(path):
+            try:
+                with open(path, encoding="utf-8") as f:
+                    cfg = json.load(f)
+                return {"crops": cfg.get("crops", []), "currency": "TRY"}
+            except (json.JSONDecodeError, OSError):
+                pass
+    return {"crops": [], "currency": "TRY"}

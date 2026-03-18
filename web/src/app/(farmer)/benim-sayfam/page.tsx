@@ -14,7 +14,7 @@ export default function BenimSayfamPage() {
           {[
             { step: "1", title: "Tarla Ekle", desc: "Il, ilce, ada/parsel ve bitki turunu girin.", href: "/fields" },
             { step: "2", title: "Odeme Yap", desc: "Analiz ucretini odeyin.", href: "/payments" },
-            { step: "3", title: "Gorev Olustur", desc: "Tarlaniz icin drone tarama gorevi olusturun.", href: "/missions" },
+            { step: "3", title: "Analiz Talebi", desc: "Tarlaniz icin drone analiz talebi olusturun.", href: "/fields" },
             { step: "4", title: "Sonuclari Gor", desc: "Hastalik, zararli, ot ve su haritalarini inceleyin.", href: "/results" },
           ].map((item) => (
             <a key={item.step} href={item.href} className="rounded-lg border border-slate-200 bg-white p-3 hover:shadow-sm transition">
