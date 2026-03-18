@@ -102,10 +102,21 @@ async def create_field(request: Request, payload: FieldCreateRequest) -> FieldRe
         crop_type=payload.crop_type,
     )
 
-    async with get_async_session() as session:
-        repo = FieldRepositoryImpl(session)
-        await repo.save(field)
-        await session.commit()
+    try:
+        async with get_async_session() as session:
+            repo = FieldRepositoryImpl(session)
+            await repo.save(field)
+            await session.commit()
+    except Exception as exc:
+        import logging
+
+        logging.getLogger("api.fields").error("FIELD.CREATE_FAILED user_id=%s error=%s", user_uuid, exc)
+        detail = "Tarla kaydedilemedi."
+        if "uq_field_parcel" in str(exc):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Bu ada/parsel zaten kayitli.") from exc
+        if "foreign key" in str(exc).lower() or "violates foreign key" in str(exc).lower():
+            detail = "Gecersiz kullanici. Lutfen tekrar giris yapin."
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail) from exc
 
     return FieldResponse(
         field_id=str(field.field_id),

@@ -121,10 +121,9 @@ class PIIFilterMiddleware(BaseHTTPMiddleware):
             return response
 
         # Kullanici rolunu kontrol et
-        user = getattr(request.state, "user", None)
-        user_roles: set[str] = set()
-        if user is not None:
-            user_roles = set(getattr(user, "roles", []))
+        # Roles are stored on request.state.roles (set by JwtMiddleware),
+        # NOT on request.state.user (AuthenticatedUser has no roles attr).
+        user_roles: set[str] = set(getattr(request.state, "roles", []))
 
         # PII gormeye yetkili roller bypass
         if user_roles & _PII_ALLOWED_ROLES:

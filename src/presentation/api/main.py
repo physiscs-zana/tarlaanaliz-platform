@@ -28,6 +28,7 @@ from src.presentation.api.v1.endpoints import (
     admin_audit_router,
     admin_payments_router,
     admin_pricing_router,
+    admin_users_router,
     auth_router,
     calibration_router,
     expert_portal_router,
@@ -262,6 +263,7 @@ def create_app() -> FastAPI:
     app.include_router(payment_webhooks_router, prefix="/api/v1")
     app.include_router(admin_audit_router, prefix="/api/v1")
     app.include_router(admin_pricing_router, prefix="/api/v1")
+    app.include_router(admin_users_router, prefix="/api/v1")
     app.include_router(pilots_router, prefix="/api/v1")
     app.include_router(pricing_router, prefix="/api/v1")
     app.include_router(results_router, prefix="/api/v1")
