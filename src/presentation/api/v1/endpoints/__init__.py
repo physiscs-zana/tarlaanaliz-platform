@@ -4,6 +4,7 @@
 from src.presentation.api.v1.endpoints.admin_payments import router as admin_payments_router
 from src.presentation.api.v1.endpoints.admin_audit import router as admin_audit_router
 from src.presentation.api.v1.endpoints.admin_pricing import router as admin_pricing_router
+from src.presentation.api.v1.endpoints.admin_users import router as admin_users_router
 from src.presentation.api.v1.endpoints.auth import router as auth_router
 from src.presentation.api.v1.endpoints.calibration import router as calibration_router
 from src.presentation.api.v1.endpoints.expert_portal import router as expert_portal_router
@@ -28,6 +29,7 @@ __all__: list[str] = [
     "admin_payments_router",
     "admin_audit_router",
     "admin_pricing_router",
+    "admin_users_router",
     "auth_router",
     "calibration_router",
     "expert_portal_router",
