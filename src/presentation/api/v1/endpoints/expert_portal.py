@@ -89,7 +89,7 @@ def submit_review(
 
 
 @router.get("/me/expertise")
-async def get_my_expertise(request: Request) -> dict:
+async def get_my_expertise(request: Request) -> dict[str, list[str]]:
     """Return current expert's expertise_tags from database."""
     subject = _require_expert(request)
     from sqlalchemy import select

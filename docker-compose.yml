@@ -144,6 +144,7 @@ services:
     volumes:
       - ./src:/app/src:ro
       - ./alembic:/app/alembic:ro
+      - ./data:/app/data
     depends_on:
       postgres:
         condition: service_healthy

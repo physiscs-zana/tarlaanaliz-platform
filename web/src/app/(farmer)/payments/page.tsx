@@ -3,16 +3,42 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { getApiBaseUrl, getTokenFromCookie } from '@/lib/api';
 import { IbanInstructions } from '@/components/features/payment/IbanInstructions';
-
-const COMPANY_IBAN = 'TR33 0006 1005 1978 6457 8413 26';
-const COMPANY_NAME = 'TarlaAnaliz Tarim Teknolojileri A.S.';
 
 type PaymentMethod = 'iban' | 'credit_card';
 
+interface IbanInfo {
+  iban: string;
+  recipient: string;
+}
+
 export default function FarmerPaymentsPage() {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('iban');
+  const [ibanInfo, setIbanInfo] = useState<IbanInfo>({ iban: '', recipient: '' });
+
+  const fetchPaymentMethods = useCallback(async () => {
+    try {
+      const baseUrl = getApiBaseUrl();
+      const token = getTokenFromCookie();
+      const res = await fetch(`${baseUrl}/payments/methods`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { methods: Array<{ code: string; iban?: string; recipient?: string }> };
+        const ibanMethod = data.methods?.find((m) => m.code === 'IBAN');
+        if (ibanMethod) {
+          setIbanInfo({
+            iban: ibanMethod.iban ?? '',
+            recipient: ibanMethod.recipient ?? '',
+          });
+        }
+      }
+    } catch { /* fallback to empty */ }
+  }, []);
+
+  useEffect(() => { fetchPaymentMethods(); }, [fetchPaymentMethods]);
 
   return (
     <section className="space-y-6" aria-label="Farmer payments">
@@ -51,10 +77,10 @@ export default function FarmerPaymentsPage() {
       </div>
 
       {/* IBAN ile odeme */}
-      {selectedMethod === 'iban' && (
+      {selectedMethod === 'iban' && ibanInfo.iban && (
         <IbanInstructions
-          iban={COMPANY_IBAN}
-          recipientName={COMPANY_NAME}
+          iban={ibanInfo.iban}
+          recipientName={ibanInfo.recipient}
           amount=""
           fieldId=""
         />
