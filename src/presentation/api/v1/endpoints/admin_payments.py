@@ -85,7 +85,7 @@ def list_payment_intents(
             seen: set[str] = set()
             records = []
             for r in [*records_a, *records_b]:
-                pid = getattr(r, "payment_id", id(r))
+                pid = str(getattr(r, "payment_id", id(r)))
                 if pid not in seen:
                     seen.add(pid)
                     records.append(r)
