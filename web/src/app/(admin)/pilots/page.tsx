@@ -8,6 +8,12 @@ import { useCallback, useEffect, useState } from "react";
 import { getApiBaseUrl, getTokenFromCookie } from "@/lib/api";
 
 /* ------- Types ------- */
+interface WeeklyScan {
+  field_name: string;
+  area_donum: number;
+  date: string;
+}
+
 interface Pilot {
   userId: string;
   phone: string;
@@ -15,6 +21,7 @@ interface Pilot {
   province: string;
   role: string;
   active: boolean;
+  weeklyScans: WeeklyScan[];
 }
 
 function StatusBadge({ active }: { active: boolean }) {
@@ -30,6 +37,7 @@ export default function AdminPilotsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [expandedPilot, setExpandedPilot] = useState<string | null>(null);
 
   /* Add form state */
   const [newName, setNewName] = useState("");
@@ -49,7 +57,7 @@ export default function AdminPilotsPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Pilot listesi alinamadi");
-      const data = (await res.json()) as Array<{ user_id: string; phone: string; display_name: string; province: string; role: string; active: boolean }>;
+      const data = (await res.json()) as Array<{ user_id: string; phone: string; display_name: string; province: string; role: string; active: boolean; weekly_scans?: WeeklyScan[] }>;
       setPilots(data.map((p) => ({
         userId: p.user_id,
         phone: p.phone,
@@ -57,6 +65,7 @@ export default function AdminPilotsPage() {
         province: p.province,
         role: p.role,
         active: p.active,
+        weeklyScans: p.weekly_scans ?? [],
       })));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Hata olustu");
@@ -154,20 +163,45 @@ export default function AdminPilotsPage() {
             <thead className="border-b border-slate-100 bg-slate-50">
               <tr>
                 <th className="px-4 py-2 text-left font-medium text-slate-600">Pilot</th>
+                <th className="px-4 py-2 text-left font-medium text-slate-600">Telefon</th>
                 <th className="px-4 py-2 text-left font-medium text-slate-600">Bolge</th>
                 <th className="px-4 py-2 text-left font-medium text-slate-600">Durum</th>
+                <th className="px-4 py-2 text-left font-medium text-slate-600">Haftalik Tarama</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {pilots.map((p) => (
-                <tr key={p.userId} className="hover:bg-slate-50">
-                  <td className="px-4 py-2.5">
-                    <p className="font-medium text-slate-900">{p.displayName || p.phone}</p>
-                    <p className="text-xs text-slate-400">{p.phone}</p>
-                  </td>
-                  <td className="px-4 py-2.5 text-slate-600">{p.province}</td>
-                  <td className="px-4 py-2.5"><StatusBadge active={p.active} /></td>
-                </tr>
+                <>
+                  <tr key={p.userId} className="hover:bg-slate-50 cursor-pointer" onClick={() => setExpandedPilot(expandedPilot === p.userId ? null : p.userId)}>
+                    <td className="px-4 py-2.5">
+                      <p className="font-medium text-slate-900">{p.displayName || p.phone}</p>
+                    </td>
+                    <td className="px-4 py-2.5 font-mono text-xs text-slate-700">{p.phone}</td>
+                    <td className="px-4 py-2.5 text-slate-600">{p.province}</td>
+                    <td className="px-4 py-2.5"><StatusBadge active={p.active} /></td>
+                    <td className="px-4 py-2.5 text-xs text-slate-500">
+                      {p.weeklyScans.length > 0
+                        ? `${p.weeklyScans.length} tarla taranmis`
+                        : "Tarama yok"}
+                    </td>
+                  </tr>
+                  {expandedPilot === p.userId && p.weeklyScans.length > 0 && (
+                    <tr key={`${p.userId}-detail`}>
+                      <td colSpan={5} className="bg-slate-50 px-8 py-3">
+                        <p className="mb-2 text-xs font-semibold text-slate-600">Bu Haftaki Taramalar</p>
+                        <div className="space-y-1">
+                          {p.weeklyScans.map((scan, idx) => (
+                            <div key={idx} className="flex items-center gap-4 text-xs text-slate-600">
+                              <span className="font-medium">{scan.field_name}</span>
+                              <span>{scan.area_donum} donum</span>
+                              <span className="text-slate-400">{scan.date}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
               ))}
             </tbody>
           </table>

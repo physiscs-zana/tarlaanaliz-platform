@@ -15,7 +15,6 @@ interface PilotLayoutProps {
 const navItems = [
   { href: "/pilot/missions", label: "Görevler" },
   { href: "/planner", label: "Planlayıcı" },
-  { href: "/capacity", label: "Kapasite" },
   { href: "/weather-block", label: "Hava Engeli" },
   { href: "/pilot/settings", label: "Ayarlar" },
   { href: "/pilot/profile", label: "Profil" },

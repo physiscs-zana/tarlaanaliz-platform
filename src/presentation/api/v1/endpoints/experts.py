@@ -13,6 +13,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from src.core.domain.entities.user import User, UserRole
+from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
 from src.infrastructure.persistence.sqlalchemy.repositories.user_repository_impl import UserRepositoryImpl
 from src.infrastructure.persistence.sqlalchemy.session import get_async_session
 
@@ -52,18 +53,28 @@ def _require_admin(request: Request) -> None:
 async def list_experts(request: Request) -> list[ExpertResponse]:
     """List all users with EXPERT role (admin only)."""
     _require_admin(request)
+    from sqlalchemy import select
+
     async with get_async_session() as session:
-        repo = UserRepositoryImpl(session)
-        experts = await repo.list_by_role(UserRole.EXPERT)
+        from src.infrastructure.persistence.sqlalchemy.models.user_role_model import UserRoleModel
+
+        result = await session.execute(
+            select(UserModel).join(
+                UserRoleModel, UserModel.user_id == UserRoleModel.user_id
+            ).where(UserRoleModel.role == UserRole.EXPERT.value)
+        )
+        models = result.scalars().unique().all()
     return [
         ExpertResponse(
-            user_id=str(e.user_id),
-            phone=e.phone_number,
-            display_name="",
-            province=e.province,
-            role=e.role.value,
+            user_id=str(m.user_id),
+            phone=m.phone,
+            display_name=m.display_name or f"{m.first_name} {m.last_name}".strip() or "",
+            province=m.province or "",
+            role=UserRole.EXPERT.value,
+            expertise_tags=m.expertise_tags or [],
+            active=m.is_active,
         )
-        for e in experts
+        for m in models
     ]
 
 
@@ -90,6 +101,17 @@ async def create_expert(request: Request, payload: ExpertCreateRequest) -> Exper
             updated_at=now,
         )
         await repo.save(user)
+
+        # Save display_name and expertise_tags to user model
+        from sqlalchemy import select
+
+        result = await session.execute(
+            select(UserModel).where(UserModel.user_id == user.user_id)
+        )
+        user_model = result.scalar_one_or_none()
+        if user_model:
+            user_model.display_name = payload.display_name
+            user_model.expertise_tags = payload.expertise_tags
         await session.commit()
 
     LOGGER.info("EXPERT.CREATED user_id=%s phone=%s", user.user_id, payload.phone[-4:])

@@ -13,9 +13,9 @@ export default function BenimSayfamPage() {
         <div className="mt-3 grid gap-3 sm:grid-cols-4">
           {[
             { step: "1", title: "Tarla Ekle", desc: "Il, ilce, ada/parsel ve bitki turunu girin.", href: "/fields" },
-            { step: "2", title: "Gorev Olustur", desc: "Tarlaniz icin drone tarama gorevi olusturun.", href: "/missions" },
-            { step: "3", title: "Sonuclari Gor", desc: "Hastalik, zararli, ot ve su haritalarini inceleyin.", href: "/results" },
-            { step: "4", title: "Odeme Yap", desc: "Analiz ucretini odeyin ve raporunuzu alin.", href: "/payments" },
+            { step: "2", title: "Odeme Yap", desc: "Analiz ucretini odeyin.", href: "/payments" },
+            { step: "3", title: "Gorev Olustur", desc: "Tarlaniz icin drone tarama gorevi olusturun.", href: "/missions" },
+            { step: "4", title: "Sonuclari Gor", desc: "Hastalik, zararli, ot ve su haritalarini inceleyin.", href: "/results" },
           ].map((item) => (
             <a key={item.step} href={item.href} className="rounded-lg border border-slate-200 bg-white p-3 hover:shadow-sm transition">
               <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">{item.step}</div>

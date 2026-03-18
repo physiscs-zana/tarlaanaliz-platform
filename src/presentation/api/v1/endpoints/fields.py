@@ -77,10 +77,19 @@ async def create_field(request: Request, payload: FieldCreateRequest) -> FieldRe
     # Auto-generate field_name from parcel_ref if not provided
     field_name = payload.field_name or f"{village} {ada}/{parsel}"
 
+    # Resolve user_id safely — invalid UUID should not cause 500
+    try:
+        user_uuid = _uuid.UUID(user_id_str) if user_id_str and len(user_id_str) > 8 else _uuid.uuid4()
+    except (ValueError, AttributeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Geçersiz kullanıcı kimliği. Lütfen tekrar giriş yapın.",
+        )
+
     now = datetime.now(timezone.utc)
     field = Field(
         field_id=_uuid.uuid4(),
-        user_id=_uuid.UUID(user_id_str) if len(user_id_str) > 8 else _uuid.uuid4(),
+        user_id=user_uuid,
         province=province,
         district=district,
         village=village,
@@ -90,6 +99,7 @@ async def create_field(request: Request, payload: FieldCreateRequest) -> FieldRe
         status=FieldStatus.ACTIVE,
         created_at=now,
         updated_at=now,
+        crop_type=payload.crop_type,
     )
 
     async with get_async_session() as session:
@@ -112,6 +122,7 @@ async def list_fields(request: Request) -> FieldListResponse:
     user_id_str = getattr(getattr(request.state, "user", None), "user_id", None) or subject
 
     import uuid as _uuid
+    from decimal import Decimal
     from src.infrastructure.persistence.sqlalchemy.session import get_async_session
     from src.infrastructure.persistence.sqlalchemy.repositories.field_repository_impl import FieldRepositoryImpl
 
@@ -128,10 +139,10 @@ async def list_fields(request: Request) -> FieldListResponse:
         items=[
             FieldResponse(
                 field_id=str(f.field_id),
-                field_name=f.parcel_ref,
+                field_name=f"{f.village} {f.ada}/{f.parsel}",
                 parcel_ref=f.parcel_ref,
-                area_ha=float(f.area_m2 / 10000),
-                crop_type=None,
+                area_ha=float(f.area_m2 / Decimal("10000")),
+                crop_type=f.crop_type,
             )
             for f in fields
         ]

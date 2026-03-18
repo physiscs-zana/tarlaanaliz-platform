@@ -3,13 +3,43 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getApiBaseUrl, getTokenFromCookie, decodeJwtPayload } from "@/lib/api";
+
+interface ExpertiseItem {
+  crop: string;
+  layer: string;
+}
+
+const CROP_LABELS: Record<string, string> = {
+  PAMUK: "Pamuk", ANTEP_FISTIGI: "Antep Fistigi", MISIR: "Misir", BUGDAY: "Bugday",
+  AYCICEGI: "Aycicegi", UZUM: "Uzum", ZEYTIN: "Zeytin", KIRMIZI_MERCIMEK: "Kirmizi Mercimek",
+};
+const LAYER_LABELS: Record<string, string> = {
+  DISEASE: "Hastalik", PEST: "Zararli Bocek", WEED: "Yabanci Ot",
+  WATER_STRESS: "Su Stresi", N_STRESS: "Azot Stresi", THERMAL_STRESS: "Termal Stres",
+};
+
+function parseExpertiseTags(tags: string[]): ExpertiseItem[] {
+  return tags
+    .map((tag) => { const [crop, layer] = tag.split(":"); return crop && layer ? { crop, layer } : null; })
+    .filter((c): c is ExpertiseItem => c !== null);
+}
+
+function groupByCrop(items: ExpertiseItem[]): Record<string, string[]> {
+  const map: Record<string, string[]> = {};
+  for (const item of items) {
+    if (!map[item.crop]) map[item.crop] = [];
+    map[item.crop].push(item.layer);
+  }
+  return map;
+}
 
 export default function ExpertProfilePage() {
   const [phone, setPhone] = useState("");
-  const [roles, setRoles] = useState<string[]>([]);
   const [userId, setUserId] = useState("");
+  const [expertise, setExpertise] = useState<ExpertiseItem[]>([]);
+  const [expertiseLoading, setExpertiseLoading] = useState(true);
   const [showPinChange, setShowPinChange] = useState(false);
   const [currentPin, setCurrentPin] = useState("");
   const [newPin, setNewPin] = useState("");
@@ -23,9 +53,24 @@ export default function ExpertProfilePage() {
     if (!token) return;
     const claims = decodeJwtPayload(token);
     setPhone((claims.phone as string) ?? "");
-    setRoles((claims.roles as string[]) ?? []);
     setUserId((claims.user_id as string) ?? "");
   }, []);
+
+  const fetchExpertise = useCallback(async () => {
+    const token = getTokenFromCookie();
+    if (!token) { setExpertiseLoading(false); return; }
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/expert-portal/me/expertise`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) { setExpertiseLoading(false); return; }
+      const data = (await res.json()) as { expertise_tags: string[] };
+      setExpertise(parseExpertiseTags(data.expertise_tags ?? []));
+    } catch { /* ignore */ } finally { setExpertiseLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchExpertise(); }, [fetchExpertise]);
 
   const maskPhone = (p: string) => (p.length < 4 ? p : p.slice(0, -4).replace(/./g, "*") + p.slice(-4));
 
@@ -61,6 +106,8 @@ export default function ExpertProfilePage() {
 
   if (!phone) return <div className="py-12 text-center text-sm text-slate-500">Yukleniyor...</div>;
 
+  const grouped = groupByCrop(expertise);
+
   return (
     <section className="space-y-4">
       <h1 className="text-2xl font-semibold">Uzman Profili</h1>
@@ -70,23 +117,27 @@ export default function ExpertProfilePage() {
         <div><span className="text-sm text-slate-500">Kullanici ID</span><p className="font-mono text-xs text-slate-400">{userId}</p></div>
       </div>
 
-      {/* KR-019: Uzmanlik alanlari */}
+      {/* KR-019: Uzmanlik alanlari — backend'den gelen veriler */}
       <div className="rounded-lg border border-slate-200 bg-white p-5 space-y-3">
         <h2 className="text-lg font-semibold">Uzmanlik Alanlari</h2>
         <p className="text-xs text-slate-500">Inceleme kuyrugunuzda asagidaki bitki ve durum kombinasyonlari onceliklendirilir.</p>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {[
-            { crop: "Pamuk", conditions: ["Hastalik", "Zararli Bocek", "Yabanci Ot"] },
-            { crop: "Misir", conditions: ["Su Stresi", "Azot Stresi", "Hastalik"] },
-            { crop: "Bugday", conditions: ["Mantar", "Hastalik", "Azot Stresi"] },
-            { crop: "Antep Fistigi", conditions: ["Zararli Bocek", "Mantar"] },
-          ].map((item) => (
-            <div key={item.crop} className="rounded border border-slate-100 p-3">
-              <p className="text-sm font-medium text-slate-900">{item.crop}</p>
-              <p className="text-xs text-slate-500">{item.conditions.join(", ")}</p>
-            </div>
-          ))}
-        </div>
+        {expertiseLoading ? (
+          <div className="py-4 text-center text-sm text-slate-500">Yukleniyor...</div>
+        ) : expertise.length === 0 ? (
+          <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 py-8 text-center">
+            <p className="text-sm font-medium text-slate-500">HENÜZ VERİ-BİLGİ BULUNMAMAKTADIR</p>
+            <p className="mt-1 text-xs text-slate-400">Uzmanlik alanlariniz admin tarafindan atanmamistir.</p>
+          </div>
+        ) : (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {Object.entries(grouped).map(([crop, layers]) => (
+              <div key={crop} className="rounded border border-slate-100 p-3">
+                <p className="text-sm font-medium text-slate-900">{CROP_LABELS[crop] ?? crop}</p>
+                <p className="text-xs text-slate-500">{layers.map((l) => LAYER_LABELS[l] ?? l).join(", ")}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white p-5">

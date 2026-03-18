@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, List
 
 from sqlalchemy import Boolean, DateTime, Integer, String, text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.infrastructure.persistence.sqlalchemy.base import Base
@@ -29,6 +29,8 @@ class UserModel(Base):
     pin_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     first_name: Mapped[str] = mapped_column(String(100), nullable=False, default="")
     last_name: Mapped[str] = mapped_column(String(100), nullable=False, default="")
+    display_name: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    expertise_tags: Mapped[list[str] | None] = mapped_column(ARRAY(String(50)), nullable=True)
     province: Mapped[str | None] = mapped_column(String(100), nullable=True)
     district: Mapped[str | None] = mapped_column(String(100), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))

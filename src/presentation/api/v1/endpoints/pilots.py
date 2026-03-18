@@ -14,6 +14,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from src.core.domain.entities.user import User, UserRole
+from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
 from src.infrastructure.persistence.sqlalchemy.repositories.user_repository_impl import UserRepositoryImpl
 from src.infrastructure.persistence.sqlalchemy.session import get_async_session
 
@@ -57,18 +58,26 @@ def _require_admin(request: Request) -> None:
 async def list_pilots(request: Request) -> list[PilotResponse]:
     """List all users with PILOT role (admin only)."""
     _require_admin(request)
+    from sqlalchemy import select
+    from src.infrastructure.persistence.sqlalchemy.models.user_role_model import UserRoleModel
+
     async with get_async_session() as session:
-        repo = UserRepositoryImpl(session)
-        pilots = await repo.list_by_role(UserRole.PILOT)
+        result = await session.execute(
+            select(UserModel).join(
+                UserRoleModel, UserModel.user_id == UserRoleModel.user_id
+            ).where(UserRoleModel.role == UserRole.PILOT.value)
+        )
+        models = result.scalars().unique().all()
     return [
         PilotResponse(
-            user_id=str(p.user_id),
-            phone=p.phone_number,
-            display_name="",  # UserModel doesn't store display_name separately
-            province=p.province,
-            role=p.role.value,
+            user_id=str(m.user_id),
+            phone=m.phone,
+            display_name=m.display_name or f"{m.first_name} {m.last_name}".strip() or "",
+            province=m.province or "",
+            role=UserRole.PILOT.value,
+            active=m.is_active,
         )
-        for p in pilots
+        for m in models
     ]
 
 
@@ -96,6 +105,16 @@ async def create_pilot(request: Request, payload: PilotCreateRequest) -> PilotRe
             updated_at=now,
         )
         await repo.save(user)
+
+        # Save display_name to user model
+        from sqlalchemy import select
+
+        result = await session.execute(
+            select(UserModel).where(UserModel.user_id == user.user_id)
+        )
+        user_model = result.scalar_one_or_none()
+        if user_model:
+            user_model.display_name = payload.display_name
         await session.commit()
 
     LOGGER.info("PILOT.CREATED user_id=%s phone=%s", user.user_id, payload.phone[-4:])
