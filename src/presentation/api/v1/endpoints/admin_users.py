@@ -60,16 +60,13 @@ async def list_users(request: Request) -> list[AdminUserResponse]:
         models = result.scalars().unique().all()
 
         # Only FARMER_SINGLE users
-        farmer_models = [
-            m for m in models
-            if any(r.role == "FARMER_SINGLE" for r in m.roles)
-        ]
+        farmer_models = [m for m in models if any(r.role == "FARMER_SINGLE" for r in m.roles)]
 
         # Batch load fields for all farmer user_ids
         farmer_ids = [m.user_id for m in farmer_models]
-        field_result = await session.execute(
-            select(FieldModel).where(FieldModel.user_id.in_(farmer_ids))
-        ) if farmer_ids else None
+        field_result = (
+            await session.execute(select(FieldModel).where(FieldModel.user_id.in_(farmer_ids))) if farmer_ids else None
+        )
         field_rows = field_result.scalars().all() if field_result else []
 
     # Group fields by user_id
