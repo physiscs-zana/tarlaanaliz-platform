@@ -5,10 +5,14 @@
 from __future__ import annotations
 
 import base64
+import logging
+import os
 import time
+import uuid as _uuid
+from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile, status
 
 from src.presentation.api.dependencies import (
     AuditEvent,
@@ -247,6 +251,54 @@ def get_payment_intent(
     except Exception as exc:  # noqa: BLE001
         _observe(request, metrics, started, status.HTTP_500_INTERNAL_SERVER_ERROR)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error") from exc
+
+
+_RECEIPT_DIR_PATHS = ("/app/data/receipts", "data/receipts")
+_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "application/pdf"}
+_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
+_LOGGER = logging.getLogger("api.payments")
+
+
+def _receipt_dir() -> str:
+    for path in _RECEIPT_DIR_PATHS:
+        parent = os.path.dirname(path) or "."
+        if os.path.isdir(parent):
+            os.makedirs(path, exist_ok=True)
+            return path
+    os.makedirs(_RECEIPT_DIR_PATHS[0], exist_ok=True)
+    return _RECEIPT_DIR_PATHS[0]
+
+
+@router.post("/upload-receipt")
+async def simple_upload_receipt(
+    request: Request,
+    file: UploadFile = File(...),
+    field_id: str = Form(...),
+) -> dict[str, str]:
+    """Simple receipt upload — saves to filesystem. KR-033."""
+    user = getattr(request.state, "user", None)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+    if file.content_type and file.content_type not in _ALLOWED_TYPES:
+        raise HTTPException(status_code=422, detail="Sadece JPEG, PNG, WebP veya PDF yuklenebilir.")
+
+    content = await file.read()
+    if len(content) > _MAX_SIZE:
+        raise HTTPException(status_code=422, detail="Dosya boyutu 10 MB'dan buyuk olamaz.")
+
+    user_id = getattr(user, "user_id", None) or getattr(user, "subject", "unknown")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    ext = os.path.splitext(file.filename or "receipt.jpg")[1] or ".jpg"
+    safe_name = f"{field_id[:8]}_{ts}_{_uuid.uuid4().hex[:6]}{ext}"
+
+    receipt_path = os.path.join(_receipt_dir(), safe_name)
+    with open(receipt_path, "wb") as f:
+        f.write(content)
+
+    _LOGGER.info("RECEIPT.UPLOADED user=%s field=%s file=%s size=%d", user_id, field_id, safe_name, len(content))
+
+    return {"status": "uploaded", "filename": safe_name, "message": "Dekont yuklendi. Onay bekleniyor."}
 
 
 __all__ = ["router"]

@@ -35,6 +35,86 @@ function CopyButton({ text }: { readonly text: string }) {
   );
 }
 
+function ReceiptUpload({ fieldId }: { readonly fieldId: string }) {
+  const [uploading, setUploading] = useState(false);
+  const [result, setResult] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Preview
+    if (file.type.startsWith('image/')) {
+      setPreview(URL.createObjectURL(file));
+    }
+
+    const token = getTokenFromCookie();
+    if (!token) { setResult({ type: 'err', text: 'Oturum bulunamadi.' }); return; }
+
+    setUploading(true);
+    setResult(null);
+    try {
+      const baseUrl = getApiBaseUrl();
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('field_id', fieldId);
+
+      const res = await fetch(`${baseUrl}/payments/upload-receipt`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (res.ok) {
+        setResult({ type: 'ok', text: 'Dekont yuklendi. Merkez Yonetim tarafindan onaylanacaktir.' });
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setResult({ type: 'err', text: (body as { detail?: string }).detail || 'Yuklenemedi.' });
+      }
+    } catch {
+      setResult({ type: 'err', text: 'Baglanti hatasi.' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-5 space-y-3">
+      <h2 className="text-lg font-semibold">Dekont Yukle</h2>
+      <p className="text-xs text-slate-500">Havale/EFT yaptiktan sonra dekont fotografini veya PDF dosyasini yukleyin.</p>
+
+      <label className="flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-6 hover:border-emerald-400 hover:bg-emerald-50/30 transition">
+        <input type="file" accept="image/*,.pdf" onChange={handleUpload} className="hidden" disabled={uploading} />
+        <div className="text-center">
+          {uploading ? (
+            <p className="text-sm text-slate-500">Yukleniyor...</p>
+          ) : (
+            <>
+              <div className="text-3xl text-slate-300">&#128206;</div>
+              <p className="mt-1 text-sm font-medium text-slate-600">Dekont secmek icin tiklayin</p>
+              <p className="text-xs text-slate-400">JPEG, PNG, WebP veya PDF (maks. 10 MB)</p>
+            </>
+          )}
+        </div>
+      </label>
+
+      {preview && (
+        <div className="flex justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt="Dekont onizleme" className="max-h-48 rounded border border-slate-200" />
+        </div>
+      )}
+
+      {result && (
+        <div className={`rounded-lg border p-3 text-sm ${result.type === 'ok' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
+          {result.text}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function FarmerPaymentsPage() {
   const [ibanInfo, setIbanInfo] = useState<IbanInfo>({ iban: '', recipient: '', bank_name: '' });
   const [fields, setFields] = useState<FieldItem[]>([]);
@@ -133,6 +213,11 @@ export default function FarmerPaymentsPage() {
         </div>
       ) : (
         <div className="py-8 text-center text-sm text-slate-500">Odeme bilgileri yukleniyor...</div>
+      )}
+
+      {/* Dekont Yukleme */}
+      {selectedFieldId && (
+        <ReceiptUpload fieldId={selectedFieldId} />
       )}
 
       {/* Kredi karti uyarisi */}
