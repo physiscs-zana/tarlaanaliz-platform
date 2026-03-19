@@ -146,7 +146,8 @@ export default function AdminUsersPage() {
                     )}
                   </td>
                   <td className="px-4 py-2.5 text-slate-600">
-                    {u.province || "\u2014"}{u.district ? ` / ${u.district}` : ""}
+                    <div>{u.province || "\u2014"}</div>
+                    {u.district && <div className="text-xs text-slate-400">{u.district}</div>}
                   </td>
                   <td className="px-4 py-2.5">
                     <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${u.active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
