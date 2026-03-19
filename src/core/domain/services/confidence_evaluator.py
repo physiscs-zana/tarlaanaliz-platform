@@ -54,7 +54,7 @@ class ConfidenceThresholds:
     """Güven skoru eşik değerleri — KR-019 fail-closed seviyeleri ile hizalı.
 
     Worker fail-closed mapping:
-      ≥ auto_accept (global_floor) → FULL_REPORT   → EscalationLevel.NONE
+      ≥ auto_accept (0.80)         → FULL_REPORT   → EscalationLevel.NONE
       ≥ standard    (0.45)         → PARTIAL_REPORT → EscalationLevel.STANDARD
       ≥ priority    (0.25)         → INDICES_ONLY   → EscalationLevel.PRIORITY
       < priority    (< 0.25)       → NO_RESULT      → EscalationLevel.CRITICAL
@@ -64,7 +64,7 @@ class ConfidenceThresholds:
     - Tüm değerler 0.0 ile 1.0 arasında olmalıdır.
     """
 
-    auto_accept: float = 0.65  # KR-019 global_floor — dynamic_threshold minimum
+    auto_accept: float = 0.80  # KR-019 global_floor v1.2.0 — cross-repo sync
     standard: float = 0.45  # PARTIAL_REPORT sınırı
     priority: float = 0.25  # INDICES_ONLY sınırı
     critical: float = 0.10  # NO_RESULT alt sınırı (< 0.25 tamamı CRITICAL)
@@ -92,7 +92,7 @@ class ConfidenceThresholds:
         Args:
             dynamic_threshold: Crop-specific threshold (e.g., 0.82 for pamuk.disease).
         """
-        floor = 0.65  # KR-019 global_floor
+        floor = 0.80  # KR-019 global_floor v1.2.0
         effective = max(dynamic_threshold, floor)
         return cls(auto_accept=effective)
 
@@ -121,7 +121,7 @@ class ConfidenceEvaluator:
     Eşik hizalaması (KR-019 v1.2.0):
       Worker ResultMode        | Platform EscalationLevel | Eşik
       ─────────────────────────┼──────────────────────────┼──────
-      FULL_REPORT              | NONE                     | ≥ dynamic_threshold (min 0.65)
+      FULL_REPORT              | NONE                     | ≥ dynamic_threshold (min 0.80)
       PARTIAL_REPORT           | STANDARD                 | 0.45 – dynamic_threshold
       INDICES_ONLY             | PRIORITY                 | 0.25 – 0.45
       NO_RESULT                | CRITICAL                 | < 0.25
