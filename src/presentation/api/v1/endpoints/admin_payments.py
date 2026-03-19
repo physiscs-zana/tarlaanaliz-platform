@@ -16,8 +16,6 @@ from sqlalchemy.orm import selectinload
 
 from src.infrastructure.persistence.sqlalchemy.models.payment_intent_model import PaymentIntentModel
 from src.infrastructure.persistence.sqlalchemy.session import get_async_session
-from typing import Any
-
 from src.presentation.api.dependencies import (
     AuditEvent,
     AuditPublisher,
@@ -37,9 +35,10 @@ from src.presentation.api.dependencies import (
 )
 
 
-def _get_service(request: Request) -> Any | None:
+def _get_service(request: Request) -> PaymentService | None:
     """Return registered payment service if available (test/DI), else None (use DB)."""
-    return getattr(request.app.state, "payment_service", None)
+    svc: PaymentService | None = getattr(request.app.state, "payment_service", None)
+    return svc
 
 
 # KR-033 §10: Geri ödeme eşiği — 500 TL = 50000 kuruş
