@@ -61,14 +61,46 @@ def _require_admin(request: Request) -> str:
     return str(getattr(user, "subject", ""))
 
 
-_CONFIG_PATH = "/app/data/pricing_config.json"
-_CONFIG_PATH_LOCAL = "data/pricing_config.json"
+_CONFIG_PATHS = ("/app/data/pricing_config.json", "data/pricing_config.json")
+
+_DEFAULT_CONFIG: dict[str, object] = {
+    "iban": "TR33 0006 1005 1978 6457 8413 26",
+    "bank_name": "Halkbank",
+    "recipient": "TarlaAnaliz Tarim Teknolojileri A.S.",
+    "crops": [
+        {"code": "PAMUK", "label": "Pamuk", "single_price": 250, "seasonal_price": 120, "interval_days": 7},
+        {
+            "code": "ANTEP_FISTIGI",
+            "label": "Antep Fistigi",
+            "single_price": 250,
+            "seasonal_price": 120,
+            "interval_days": 10,
+        },
+        {"code": "MISIR", "label": "Misir", "single_price": 250, "seasonal_price": 120, "interval_days": 15},
+        {"code": "BUGDAY", "label": "Bugday", "single_price": 250, "seasonal_price": 120, "interval_days": 10},
+        {"code": "AYCICEGI", "label": "Aycicegi", "single_price": 250, "seasonal_price": 120, "interval_days": 7},
+        {"code": "UZUM", "label": "Uzum", "single_price": 250, "seasonal_price": 120, "interval_days": 7},
+        {"code": "ZEYTIN", "label": "Zeytin", "single_price": 250, "seasonal_price": 120, "interval_days": 15},
+        {
+            "code": "KIRMIZI_MERCIMEK",
+            "label": "Kirmizi Mercimek",
+            "single_price": 250,
+            "seasonal_price": 120,
+            "interval_days": 10,
+        },
+    ],
+}
 
 
 def _config_path() -> str:
+    """Return first writable config path. Prefer /app/data (Docker), fallback to data/ (local)."""
     import os
 
-    return _CONFIG_PATH if os.path.exists(_CONFIG_PATH) else _CONFIG_PATH_LOCAL
+    for path in _CONFIG_PATHS:
+        parent = os.path.dirname(path) or "."
+        if os.path.isdir(parent):
+            return path
+    return _CONFIG_PATHS[0]
 
 
 def _read_config() -> dict[str, object]:
@@ -77,7 +109,9 @@ def _read_config() -> dict[str, object]:
 
     path = _config_path()
     if not os.path.exists(path):
-        return {}
+        # Auto-create with defaults on first read
+        _write_config(_DEFAULT_CONFIG)
+        return dict(_DEFAULT_CONFIG)
     with open(path, encoding="utf-8") as f:
         return json.load(f)  # type: ignore[no-any-return]
 

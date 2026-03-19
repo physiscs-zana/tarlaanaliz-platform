@@ -79,15 +79,7 @@ def list_active_pricing(
 def get_crop_prices(request: Request) -> dict[str, object]:
     """Public crop prices from admin pricing config. KR-033."""
     _require_authenticated(request)
-    import json
-    import os
+    from src.presentation.api.v1.endpoints.admin_pricing import _read_config
 
-    for path in ("/app/data/pricing_config.json", "data/pricing_config.json"):
-        if os.path.exists(path):
-            try:
-                with open(path, encoding="utf-8") as f:
-                    cfg = json.load(f)
-                return {"crops": cfg.get("crops", []), "currency": "TRY"}
-            except (json.JSONDecodeError, OSError):
-                pass
-    return {"crops": [], "currency": "TRY"}
+    cfg = _read_config()
+    return {"crops": cfg.get("crops", []), "currency": "TRY"}

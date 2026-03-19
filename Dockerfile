@@ -49,6 +49,9 @@ COPY alembic/ ./alembic/
 COPY alembic.ini ./
 COPY src/ ./src/
 
+# Writable data directory for admin config (pricing, etc.)
+RUN mkdir -p /app/data && chown appuser:appuser /app/data
+
 # Non-root kullaniciya gec [KR-040: least privilege]
 USER appuser
 
