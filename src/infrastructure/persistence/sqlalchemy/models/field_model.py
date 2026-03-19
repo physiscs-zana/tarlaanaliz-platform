@@ -37,7 +37,9 @@ class FieldModel(Base):
     area_donum: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     crop_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
     field_code: Mapped[str] = mapped_column(
-        String(8), nullable=False, unique=True,
+        String(8),
+        nullable=False,
+        unique=True,
         server_default=text("LPAD(nextval('field_code_seq')::text, 8, '0')"),
         comment="8-digit human-readable field code for payment flows",
     )

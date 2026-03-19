@@ -174,9 +174,7 @@ async def create_field(request: Request, payload: FieldCreateRequest) -> FieldRe
 
     # Fetch DB-generated field_code (server_default from sequence)
     async with get_async_session() as session:
-        result = await session.execute(
-            select(FieldModel.field_code).where(FieldModel.field_id == field.field_id)
-        )
+        result = await session.execute(select(FieldModel.field_code).where(FieldModel.field_id == field.field_id))
         field_code = result.scalar_one()
 
     return FieldResponse(
