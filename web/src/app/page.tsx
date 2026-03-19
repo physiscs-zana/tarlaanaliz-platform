@@ -119,19 +119,19 @@ export default function HomePage() {
 
       {/* ===== Stats ===== */}
       <div className="border-y border-slate-100 bg-slate-50">
-        <div className="mx-auto grid max-w-4xl grid-cols-3 divide-x divide-slate-200 py-8">
+        <div className="mx-auto grid max-w-4xl grid-cols-3 divide-x divide-slate-200 py-5">
           <div className="text-center px-2">
-            <div className="text-xs font-semibold uppercase tracking-wide text-amber-500">Şimdilik GAP Bölgesinde</div>
-            <div className="mt-1 text-3xl font-extrabold text-emerald-600 sm:text-4xl">YAKINDA 81</div>
-            <div className="mt-1 text-sm text-slate-500">İl Kapsama</div>
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-amber-500 sm:text-xs">Şimdilik Sadece GAP Bölgesinde</div>
+            <div className="mt-1 text-lg font-extrabold text-emerald-600 sm:text-2xl">YAKINDA 81</div>
+            <div className="mt-0.5 text-xs text-slate-500">İl Kapsama</div>
           </div>
           <div className="text-center px-2">
-            <div className="text-3xl font-extrabold text-emerald-600 sm:text-4xl">En Az 1 Hafta</div>
-            <div className="mt-1 text-sm text-slate-500">Erken Tespit</div>
+            <div className="text-lg font-extrabold text-emerald-600 sm:text-2xl">En Az 1 Hafta</div>
+            <div className="mt-0.5 text-xs text-slate-500">Erken Tespit</div>
           </div>
           <div className="text-center px-2">
-            <div className="text-3xl font-extrabold text-emerald-600 sm:text-4xl">%93&ndash;%99</div>
-            <div className="mt-1 text-sm text-slate-500">Bitki Türüne Göre Doğruluk</div>
+            <div className="text-lg font-extrabold text-emerald-600 sm:text-2xl">%93&ndash;%99</div>
+            <div className="mt-0.5 text-xs text-slate-500">Bitki Türüne Göre Doğruluk</div>
           </div>
         </div>
       </div>

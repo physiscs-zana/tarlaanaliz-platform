@@ -8,6 +8,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
+      disallow: ["/api/", "/admin/", "/expert/", "/pilot/", "/benim-sayfam", "/fields/", "/missions/", "/results/", "/payments/", "/profile/", "/subscriptions/"],
     },
+    sitemap: "https://tarlaanaliz.com/sitemap.xml",
   };
 }

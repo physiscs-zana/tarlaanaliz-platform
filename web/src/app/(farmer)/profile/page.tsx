@@ -11,6 +11,7 @@ interface ProfileData {
   phone: string;
   roles: string[];
   userId: string;
+  displayName: string;
 }
 
 export default function FarmerProfilePage() {
@@ -27,11 +28,29 @@ export default function FarmerProfilePage() {
     const token = getTokenFromCookie();
     if (!token) return;
     const claims = decodeJwtPayload(token);
+    const userId = (claims.user_id as string) ?? "";
     setProfile({
       phone: (claims.phone as string) ?? "",
       roles: (claims.roles as string[]) ?? [],
-      userId: (claims.user_id as string) ?? "",
+      userId,
+      displayName: "",
     });
+    // Fetch display_name from backend
+    const fetchName = async () => {
+      try {
+        const baseUrl = getApiBaseUrl();
+        const res = await fetch(`${baseUrl}/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { display_name?: string };
+          if (data.display_name) {
+            setProfile((prev) => prev ? { ...prev, displayName: data.display_name ?? "" } : prev);
+          }
+        }
+      } catch { /* ignore */ }
+    };
+    fetchName();
   }, []);
 
   if (!profile) {
@@ -126,6 +145,12 @@ export default function FarmerProfilePage() {
     <section className="space-y-4">
       <h1 className="text-2xl font-semibold">Profilim</h1>
       <div className="rounded-lg border border-slate-200 bg-white p-5 space-y-3">
+        {profile.displayName && (
+          <div>
+            <span className="text-sm text-slate-500">Ad Soyad</span>
+            <p className="text-base font-medium text-slate-900">{profile.displayName}</p>
+          </div>
+        )}
         <div>
           <span className="text-sm text-slate-500">Telefon</span>
           <p className="text-base font-medium text-slate-900">{maskPhone(profile.phone)}</p>

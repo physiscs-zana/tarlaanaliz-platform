@@ -425,13 +425,39 @@ async def phone_pin_register(payload: PhonePinRegisterRequest, request: Request)
 
 
 @router.get("/me")
-def me(request: Request) -> dict[str, str | bool]:
+async def me(request: Request) -> dict[str, str | bool | None]:
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+    display_name: str | None = None
+    user_id_str = getattr(user, "user_id", None) or getattr(user, "subject", "")
+    if user_id_str:
+        import uuid as _uuid
+
+        from sqlalchemy import select
+
+        from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
+        from src.infrastructure.persistence.sqlalchemy.session import get_async_session
+
+        try:
+            uid = _uuid.UUID(str(user_id_str))
+            async with get_async_session() as session:
+                result = await session.execute(
+                    select(UserModel.display_name, UserModel.first_name, UserModel.last_name).where(
+                        UserModel.user_id == uid
+                    )
+                )
+                row = result.one_or_none()
+                if row:
+                    display_name = row.display_name or f"{row.first_name} {row.last_name}".strip() or None
+        except (ValueError, Exception):
+            pass
+
     return {
         "subject": str(getattr(user, "subject", "")),
         "phone_verified": bool(getattr(user, "phone_verified", False)),
+        "display_name": display_name,
     }
 
 

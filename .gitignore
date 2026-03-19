@@ -108,3 +108,6 @@ mypy.out
 # --- AI Agent Artifacts ---
 AGENTS.md
 codex.patch
+
+# --- Admin config data (server-specific, not tracked) ---
+data/pricing_config.json
