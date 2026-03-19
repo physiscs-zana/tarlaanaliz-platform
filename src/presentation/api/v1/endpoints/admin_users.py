@@ -1,5 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
-# KR-063: Admin user listing — all users with roles and field info.
+# KR-063: Admin user listing — farmers with field/parcel info.
 """Admin user management endpoints."""
 
 from __future__ import annotations
@@ -10,7 +10,9 @@ import uuid as _uuid
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy import delete as sa_delete, select
+from sqlalchemy.orm import selectinload
 
+from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel
 from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
 from src.infrastructure.persistence.sqlalchemy.models.user_role_model import UserRoleModel
 from src.infrastructure.persistence.sqlalchemy.session import get_async_session
@@ -20,14 +22,23 @@ LOGGER = logging.getLogger("api.admin_users")
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
+class FieldInfo(BaseModel):
+    field_code: str
+    block_no: str
+    parcel_no: str
+    village: str
+    crop_type: str | None = None
+    area_donum: float | None = None
+
+
 class AdminUserResponse(BaseModel):
     user_id: str
     phone: str
     display_name: str
-    role: str
     province: str
     district: str
     active: bool
+    fields: list[FieldInfo]
 
 
 def _require_admin(request: Request) -> None:
@@ -41,28 +52,50 @@ def _require_admin(request: Request) -> None:
 
 @router.get("/users", response_model=list[AdminUserResponse])
 async def list_users(request: Request) -> list[AdminUserResponse]:
-    """List all users with their primary role (admin only)."""
+    """List farmer users with their field/parcel info (admin only)."""
     _require_admin(request)
-    from sqlalchemy.orm import selectinload
 
     async with get_async_session() as session:
         result = await session.execute(select(UserModel).options(selectinload(UserModel.roles)))
         models = result.scalars().unique().all()
 
-    # Hide admin accounts from the user list (CENTRAL_ADMIN, BILLING_ADMIN)
-    _HIDDEN_ROLES = {"CENTRAL_ADMIN", "BILLING_ADMIN"}
+        # Only FARMER_SINGLE users
+        farmer_models = [
+            m for m in models
+            if any(r.role == "FARMER_SINGLE" for r in m.roles)
+        ]
+
+        # Batch load fields for all farmer user_ids
+        farmer_ids = [m.user_id for m in farmer_models]
+        field_result = await session.execute(
+            select(FieldModel).where(FieldModel.user_id.in_(farmer_ids))
+        ) if farmer_ids else None
+        field_rows = field_result.scalars().all() if field_result else []
+
+    # Group fields by user_id
+    fields_by_user: dict[_uuid.UUID, list[FieldInfo]] = {}
+    for f in field_rows:
+        info = FieldInfo(
+            field_code=f.field_code,
+            block_no=f.block_no,
+            parcel_no=f.parcel_no,
+            village=f.village,
+            crop_type=f.crop_type,
+            area_donum=float(f.area_donum) if f.area_donum is not None else None,
+        )
+        fields_by_user.setdefault(f.user_id, []).append(info)
+
     return [
         AdminUserResponse(
             user_id=str(m.user_id),
             phone=m.phone,
             display_name=m.display_name or f"{m.first_name} {m.last_name}".strip() or "",
-            role=m.roles[0].role if m.roles else "\u2014",
             province=m.province or "",
             district=m.district or "",
             active=m.is_active,
+            fields=fields_by_user.get(m.user_id, []),
         )
-        for m in models
-        if not any(r.role in _HIDDEN_ROLES for r in m.roles)
+        for m in farmer_models
     ]
 
 

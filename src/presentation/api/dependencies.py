@@ -122,6 +122,9 @@ class PaymentIntentResponse(BaseModel):
     package_code: str
     field_ids: list[UUID]
     created_at: datetime
+    receipt_blob_id: str | None = None
+    payer_display_name: str | None = None
+    payment_ref: str | None = None
 
 
 class CalibrationRecordCreateRequest(BaseModel):
