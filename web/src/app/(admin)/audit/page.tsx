@@ -23,12 +23,21 @@ export default function AdminAuditPage() {
     if (!token) { setLoading(false); return; }
     try {
       const baseUrl = getApiBaseUrl();
-      const res = await fetch(`${baseUrl}/admin/audit`, {
+      const res = await fetch(`${baseUrl}/admin/audit/logs`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        const data = (await res.json()) as AuditEntry[];
-        setEntries(data ?? []);
+        const data = await res.json();
+        // Backend returns {items: [...], total: N} — map to AuditEntry[]
+        const items = (data.items ?? data) as Array<Record<string, string>>;
+        setEntries(
+          items.map((item) => ({
+            timestamp: item.occurred_at ?? item.timestamp ?? "",
+            user: item.actor_subject ?? item.user ?? "",
+            action: item.action ?? "",
+            status: item.resource ?? item.status ?? "",
+          }))
+        );
       }
     } catch { setError("Audit verileri yuklenemedi."); } finally { setLoading(false); }
   }, []);
