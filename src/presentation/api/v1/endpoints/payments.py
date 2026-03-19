@@ -42,25 +42,13 @@ router = APIRouter(
 
 @router.get("/methods")
 def get_payment_methods() -> dict[str, object]:
-    """Available payment methods — KR-033. Reads from pricing config file."""
-    import json
-    import os
+    """Available payment methods — KR-033. Reads from shared pricing config."""
+    from src.presentation.api.v1.endpoints.admin_pricing import _read_config
 
-    iban = "TR33 0006 1005 1978 6457 8413 26"
-    bank = "Halkbank"
-    recipient = "TarlaAnaliz Tarim Teknolojileri A.S."
-
-    for path in ("/app/data/pricing_config.json", "data/pricing_config.json"):
-        if os.path.exists(path):
-            try:
-                with open(path, encoding="utf-8") as f:
-                    cfg = json.load(f)
-                iban = cfg.get("iban", iban)
-                bank = cfg.get("bank_name", bank)
-                recipient = cfg.get("recipient", recipient)
-            except (json.JSONDecodeError, OSError):
-                pass
-            break
+    cfg = _read_config()
+    iban = str(cfg.get("iban", "TR33 0006 1005 1978 6457 8413 26"))
+    bank = str(cfg.get("bank_name", "Halkbank"))
+    recipient = str(cfg.get("recipient", "TarlaAnaliz Tarim Teknolojileri A.S."))
 
     return {
         "methods": [
