@@ -10,6 +10,7 @@ interface DashboardSummary {
   active_missions: number;
   completed_analyses: number;
   pending_payments: number;
+  total_users: number;
 }
 
 interface RecentActivity {
@@ -67,9 +68,10 @@ export default function AdminDashboardPage() {
 
   const summaryCards = [
     { label: "Toplam Tarla", value: summary.total_fields.toLocaleString("tr-TR") },
-    { label: "Aktif Görev", value: summary.active_missions.toLocaleString("tr-TR") },
+    { label: "Kayitli Kullanici", value: (summary.total_users ?? 0).toLocaleString("tr-TR") },
+    { label: "Aktif Gorev", value: summary.active_missions.toLocaleString("tr-TR") },
     { label: "Tamamlanan Analiz", value: summary.completed_analyses.toLocaleString("tr-TR") },
-    { label: "Bekleyen Ödeme", value: summary.pending_payments.toLocaleString("tr-TR") },
+    { label: "Bekleyen Odeme", value: summary.pending_payments.toLocaleString("tr-TR") },
   ];
 
   return (

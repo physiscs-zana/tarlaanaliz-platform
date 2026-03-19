@@ -32,39 +32,52 @@ async def get_dashboard(request: Request) -> dict[str, Any]:
     """Admin dashboard summary — field/mission/analysis/payment counts."""
     _require_admin(request)
 
-    async with get_async_session() as session:
-        total_fields = (await session.execute(select(func.count()).select_from(FieldModel))).scalar() or 0
+    import sqlalchemy as sa
 
-        # Active missions (status = ASSIGNED or IN_PROGRESS)
-        active_missions = 0
-        try:
-            from src.infrastructure.persistence.sqlalchemy.models.mission_model import MissionModel
+    total_fields = 0
+    active_missions = 0
+    pending_payments = 0
+    completed_analyses = 0
+    total_users = 0
 
-            active_missions = (
-                await session.execute(
-                    select(func.count())
-                    .select_from(MissionModel)
-                    .where(MissionModel.status.in_(["ASSIGNED", "IN_PROGRESS", "PLANNED"]))
-                )
-            ).scalar() or 0
-        except Exception:
-            pass  # Mission model may not exist yet
+    try:
+        async with get_async_session() as session:
+            total_fields = (await session.execute(select(func.count()).select_from(FieldModel))).scalar() or 0
+            total_users = (await session.execute(select(func.count()).select_from(UserModel))).scalar() or 0
 
-        # Pending payments
-        pending_payments = (
-            await session.execute(
-                select(func.count())
-                .select_from(PaymentIntentModel)
-                .where(PaymentIntentModel.status.in_(["PAYMENT_PENDING", "PENDING_ADMIN_REVIEW"]))
-            )
-        ).scalar() or 0
+            # Active missions via raw SQL (model may not be fully mapped)
+            try:
+                active_missions = (
+                    await session.execute(
+                        sa.text("SELECT count(*) FROM missions WHERE status IN ('ASSIGNED','IN_PROGRESS','PLANNED')")
+                    )
+                ).scalar() or 0
+            except Exception:
+                pass
 
-        # Completed analyses (paid intents as proxy)
-        completed_analyses = (
-            await session.execute(
-                select(func.count()).select_from(PaymentIntentModel).where(PaymentIntentModel.status == "PAID")
-            )
-        ).scalar() or 0
+            # Pending payments
+            try:
+                pending_payments = (
+                    await session.execute(
+                        select(func.count())
+                        .select_from(PaymentIntentModel)
+                        .where(PaymentIntentModel.status.in_(["PAYMENT_PENDING", "PENDING_ADMIN_REVIEW"]))
+                    )
+                ).scalar() or 0
+            except Exception:
+                pass
+
+            # Completed (PAID)
+            try:
+                completed_analyses = (
+                    await session.execute(
+                        select(func.count()).select_from(PaymentIntentModel).where(PaymentIntentModel.status == "PAID")
+                    )
+                ).scalar() or 0
+            except Exception:
+                pass
+    except Exception:
+        pass  # DB connection issue — return zeros
 
     return {
         "summary": {
@@ -72,6 +85,7 @@ async def get_dashboard(request: Request) -> dict[str, Any]:
             "active_missions": active_missions,
             "completed_analyses": completed_analyses,
             "pending_payments": pending_payments,
+            "total_users": total_users,
         },
         "recent_activities": [],
     }

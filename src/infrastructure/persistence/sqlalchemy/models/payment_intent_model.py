@@ -35,8 +35,8 @@ class PaymentIntentModel(Base):
     method: Mapped[str] = mapped_column(String(20), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, server_default=text("'PAYMENT_PENDING'"))
     payment_ref: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-    price_snapshot_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("price_snapshots.price_snapshot_id", ondelete="RESTRICT"), nullable=False
+    price_snapshot_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("price_snapshots.price_snapshot_id", ondelete="RESTRICT"), nullable=True
     )
 
     # Provider
