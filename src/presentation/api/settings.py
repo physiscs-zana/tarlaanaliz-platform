@@ -104,9 +104,7 @@ class JwtSettings:
             ],
         )
     )
-    secret: str = field(
-        default_factory=lambda: _require_env("API_JWT_SECRET", _JWT_INSECURE_FALLBACK)
-    )
+    secret: str = field(default_factory=lambda: _require_env("API_JWT_SECRET", _JWT_INSECURE_FALLBACK))
     algorithm: str = field(default_factory=lambda: os.getenv("API_JWT_ALGORITHM", "HS256"))
 
     def __post_init__(self) -> None:

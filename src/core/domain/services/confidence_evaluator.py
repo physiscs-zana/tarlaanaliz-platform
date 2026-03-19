@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/services/confidence_evaluator.py
 # DESC: YZ confidence değerlendirme ve expert escalation kararı (KR-019).
 # KR-019 v1.2.0: Worker fail-closed seviyeleri ile hizalanmış eşikler.
@@ -39,11 +40,13 @@ class EscalationReason(str, Enum):
 
 # KR-019 canonical severity boosters: these reasons indicate severe model
 # uncertainty beyond what confidence score alone captures.
-_SEVERITY_BOOSTING_REASONS: frozenset[EscalationReason] = frozenset({
-    EscalationReason.OOD_DETECTED,
-    EscalationReason.HIGH_EPISTEMIC,
-    EscalationReason.EXPERT_RE_TRIGGER,
-})
+_SEVERITY_BOOSTING_REASONS: frozenset[EscalationReason] = frozenset(
+    {
+        EscalationReason.OOD_DETECTED,
+        EscalationReason.HIGH_EPISTEMIC,
+        EscalationReason.EXPERT_RE_TRIGGER,
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -62,9 +65,9 @@ class ConfidenceThresholds:
     """
 
     auto_accept: float = 0.65  # KR-019 global_floor — dynamic_threshold minimum
-    standard: float = 0.45     # PARTIAL_REPORT sınırı
-    priority: float = 0.25     # INDICES_ONLY sınırı
-    critical: float = 0.10     # NO_RESULT alt sınırı (< 0.25 tamamı CRITICAL)
+    standard: float = 0.45  # PARTIAL_REPORT sınırı
+    priority: float = 0.25  # INDICES_ONLY sınırı
+    critical: float = 0.10  # NO_RESULT alt sınırı (< 0.25 tamamı CRITICAL)
 
     def __post_init__(self) -> None:
         for name, val in [
