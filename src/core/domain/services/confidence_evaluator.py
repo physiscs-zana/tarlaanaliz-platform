@@ -86,7 +86,7 @@ class ConfidenceThresholds:
         """Crop-specific dynamic threshold ile oluşturur.
 
         Worker'ın config/dynamic_thresholds.yaml'ından okunan crop × analysis_type
-        bazlı eşik değeri auto_accept olarak kullanılır. global_floor (0.65) altına
+        bazlı eşik değeri auto_accept olarak kullanılır. global_floor (0.80) altına
         inemez (KR-019 güvencesi).
 
         Args:
