@@ -24,6 +24,41 @@ LOGGER = logging.getLogger("api.auth")
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+# KR-063: Role → permissions mapping for JWT claims
+_ROLE_PERMISSIONS: dict[str, list[str]] = {
+    "CENTRAL_ADMIN": [
+        "payments:review",
+        "payments:approve",
+        "payments:reject",
+        "payments:refund",
+        "users:manage",
+        "pricing:manage",
+        "audit:read",
+        "sla:read",
+    ],
+    "BILLING_ADMIN": [
+        "payments:review",
+        "payments:approve",
+        "payments:reject",
+        "payments:refund",
+    ],
+    "IL_OPERATOR": ["sla:read"],
+    "STATION_OPERATOR": ["ingest:manage", "qc:manage", "calibration:manage"],
+    "EXPERT": ["reviews:manage"],
+    "PILOT": ["missions:execute"],
+    "FARMER_SINGLE": [],
+    "FARMER_MEMBER": [],
+}
+
+
+def _resolve_permissions(roles: list[str]) -> list[str]:
+    """Resolve permissions from role list (union of all role permissions)."""
+    perms: set[str] = set()
+    for role in roles:
+        perms.update(_ROLE_PERMISSIONS.get(role, []))
+    return sorted(perms)
+
+
 # KR-050: Sabit 6 haneli sayısal PIN (v1.2.0 — eski: 4-12 chars)
 _PIN_LENGTH = 6
 _MAX_FAILED_LOGIN_ATTEMPTS = 16  # KR-050 / SC-SEC-02: 16 hata → 30 dakika kilit
@@ -158,6 +193,7 @@ class _InMemoryPhonePinAuthService:
                     "phone": phone,
                     "phone_verified": True,
                     "roles": jwt_roles,
+                    "permissions": _resolve_permissions(jwt_roles),
                     "user_id": str(user.user_id),
                 },
             )
@@ -177,6 +213,7 @@ class _InMemoryPhonePinAuthService:
                             "phone": phone,
                             "phone_verified": True,
                             "roles": ["CENTRAL_ADMIN"],
+                            "permissions": _resolve_permissions(["CENTRAL_ADMIN"]),
                             "user_id": "user-1",
                         },
                     )
@@ -420,6 +457,7 @@ async def phone_pin_register(payload: PhonePinRegisterRequest, request: Request)
             "phone": payload.phone,
             "phone_verified": True,
             "roles": [target_role.value],
+            "permissions": _resolve_permissions([target_role.value]),
             "user_id": str(user.user_id),
         },
     )

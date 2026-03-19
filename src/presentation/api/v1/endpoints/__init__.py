@@ -2,6 +2,7 @@
 # KR-081: Endpoint router registry for API v1.
 """Endpoints package exports for API v1."""
 
+from src.presentation.api.v1.endpoints.admin_dashboard import router as admin_dashboard_router
 from src.presentation.api.v1.endpoints.admin_payments import router as admin_payments_router
 from src.presentation.api.v1.endpoints.admin_audit import router as admin_audit_router
 from src.presentation.api.v1.endpoints.admin_pricing import router as admin_pricing_router
@@ -27,6 +28,7 @@ from src.presentation.api.v1.endpoints.weather_block_reports import router as we
 from src.presentation.api.v1.endpoints.weather_blocks import router as weather_blocks_router
 
 __all__: list[str] = [
+    "admin_dashboard_router",
     "admin_payments_router",
     "admin_audit_router",
     "admin_pricing_router",

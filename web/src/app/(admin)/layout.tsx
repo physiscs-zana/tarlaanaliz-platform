@@ -24,6 +24,8 @@ const navItems = [
   { href: "/audit", label: "Denetim Kayitlari" },
   { href: "/calibration", label: "Kalibrasyon" },
   { href: "/qc", label: "Kalite Kontrol" },
+  { href: "/il/dashboard", label: "Il Operatoru" },
+  { href: "/il/metrics", label: "Il Metrikleri" },
   { href: "/api-keys", label: "API Anahtarlari" },
 ] as const;
 
