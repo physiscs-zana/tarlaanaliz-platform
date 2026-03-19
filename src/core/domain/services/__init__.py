@@ -22,6 +22,7 @@ from src.core.domain.services.confidence_evaluator import (
     ConfidenceEvaluator,
     ConfidenceThresholds,
     EscalationLevel,
+    EscalationReason,
 )
 from src.core.domain.services.coverage_calculator import (
     CoverageCalculationError,
@@ -135,6 +136,7 @@ __all__: list[str] = [
     "ConfidenceEvaluationError",
     "ConfidenceThresholds",
     "EscalationLevel",
+    "EscalationReason",
     # Coverage Calculator (KR-016)
     "CoverageCalculator",
     "CoverageResult",

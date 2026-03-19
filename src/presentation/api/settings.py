@@ -81,6 +81,9 @@ class CorsSettings:
     allow_credentials: bool = field(default_factory=lambda: _env_bool("API_CORS_ALLOW_CREDENTIALS", False))
 
 
+_JWT_INSECURE_FALLBACK = "test-only-insecure-key-do-not-use-in-prod"
+
+
 @dataclass(slots=True)
 class JwtSettings:
     enabled: bool = field(default_factory=lambda: _env_bool("API_JWT_ENABLED", True))
@@ -102,9 +105,17 @@ class JwtSettings:
         )
     )
     secret: str = field(
-        default_factory=lambda: _require_env("API_JWT_SECRET", "test-only-insecure-key-do-not-use-in-prod")
+        default_factory=lambda: _require_env("API_JWT_SECRET", _JWT_INSECURE_FALLBACK)
     )
     algorithm: str = field(default_factory=lambda: os.getenv("API_JWT_ALGORITHM", "HS256"))
+
+    def __post_init__(self) -> None:
+        env = os.getenv("TARLA_ENVIRONMENT", os.getenv("APP_ENV", "development"))
+        if env == "production" and self.secret == _JWT_INSECURE_FALLBACK:
+            raise ValueError(
+                "CRITICAL: JWT secret must be configured in production! "
+                "Set API_JWT_SECRET environment variable to a strong random key."
+            )
 
 
 @dataclass(slots=True)
