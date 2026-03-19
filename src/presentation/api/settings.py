@@ -98,7 +98,6 @@ class JwtSettings:
                 "/api/v1/auth/logout",
                 "/api/v1/payments/webhooks/provider",
                 "/api/v1/payments/methods",
-                "/api/v1/pricing",
             ],
         )
     )
