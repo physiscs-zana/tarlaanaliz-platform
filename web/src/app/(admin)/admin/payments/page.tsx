@@ -17,6 +17,8 @@ interface PaymentItem {
   receipt_blob_id: string | null;
   payer_display_name: string | null;
   payment_ref: string | null;
+  sla_deadline: string | null;
+  sla_overdue: boolean;
 }
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
@@ -51,6 +53,7 @@ function PaymentTable({ payments, title, emptyMsg }: { payments: PaymentItem[]; 
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Tutar</th>
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Dekont</th>
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Durum</th>
+            <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">SLA</th>
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Tarih</th>
           </tr>
         </thead>
@@ -71,6 +74,15 @@ function PaymentTable({ payments, title, emptyMsg }: { payments: PaymentItem[]; 
                 </td>
                 <td className="px-3 py-2">
                   <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${si.className}`}>{si.label}</span>
+                </td>
+                <td className="px-3 py-2 text-xs">
+                  {p.sla_overdue ? (
+                    <span className="inline-block rounded-full bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700">SLA Asim!</span>
+                  ) : p.sla_deadline ? (
+                    <span className="text-slate-400">{new Date(p.sla_deadline).toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                  ) : (
+                    <span className="text-slate-300">{"\u2014"}</span>
+                  )}
                 </td>
                 <td className="px-3 py-2 text-xs text-slate-500">{new Date(p.created_at).toLocaleDateString("tr-TR")}</td>
               </tr>
