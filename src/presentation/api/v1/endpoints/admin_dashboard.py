@@ -126,13 +126,33 @@ async def get_analytics(request: Request) -> dict[str, Any]:
 
 @router.get("/sla")
 async def get_sla_metrics(request: Request) -> dict[str, Any]:
-    """Admin SLA summary metrics."""
+    """Admin SLA summary metrics — real data from payment lifecycle."""
     _require_admin(request)
+
+    import sqlalchemy as sa
+
+    compliance_rate = None
+    try:
+        async with get_async_session() as session:
+            total_done = (
+                await session.execute(
+                    sa.text("SELECT count(*) FROM payment_intents WHERE status IN ('PAID','REJECTED')")
+                )
+            ).scalar() or 0
+            pending = (
+                await session.execute(
+                    sa.text("SELECT count(*) FROM payment_intents WHERE status = 'PENDING_ADMIN_REVIEW'")
+                )
+            ).scalar() or 0
+            if total_done + pending > 0:
+                compliance_rate = round((total_done / (total_done + pending)) * 100, 1)
+    except Exception:
+        pass
 
     return {
         "review_start_sla_hours": 24,
         "decision_sla_hours": 48,
-        "compliance_rate": None,
+        "compliance_rate": compliance_rate,
     }
 
 

@@ -55,6 +55,8 @@ async def create_mission(request: Request, payload: MissionCreateRequest) -> Mis
         payload.mission_date.year, payload.mission_date.month, payload.mission_date.day, tzinfo=timezone.utc
     )
 
+    payment_ref = f"PAY-{planned_at.strftime('%Y%m%d')}-{_uuid.uuid4().hex[:6].upper()}"
+
     async with get_async_session() as session:
         repo = MissionRepositoryImpl(session)
         await repo.save(
@@ -65,6 +67,38 @@ async def create_mission(request: Request, payload: MissionCreateRequest) -> Mis
             analysis_type=payload.analysis_type,
             planned_at=planned_at,
         )
+
+        # KR-033: Auto-create payment_intent when mission is created
+        from src.infrastructure.persistence.sqlalchemy.models.payment_intent_model import PaymentIntentModel
+        import sqlalchemy as sa
+
+        # Look up price_snapshot if exists
+        ps_result = await session.execute(sa.text("SELECT price_snapshot_id FROM price_snapshots LIMIT 1"))
+        ps_row = ps_result.scalar_one_or_none()
+
+        payment_intent_id = _uuid.uuid4()
+        intent = PaymentIntentModel(
+            payment_intent_id=payment_intent_id,
+            payer_user_id=user_id,
+            target_type="MISSION",
+            target_id=mission_id,
+            amount_kurus=0,  # Will be set by pricing flow
+            currency="TRY",
+            method="IBAN_TRANSFER",
+            status="PAYMENT_PENDING",
+            payment_ref=payment_ref,
+            price_snapshot_id=ps_row,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        )
+        session.add(intent)
+
+        # Link mission to payment intent
+        await session.execute(
+            sa.text("UPDATE missions SET payment_intent_id = :pi_id WHERE mission_id = :m_id"),
+            {"pi_id": payment_intent_id, "m_id": mission_id},
+        )
+
         await session.commit()
 
     return MissionResponse(

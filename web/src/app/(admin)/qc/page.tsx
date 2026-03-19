@@ -23,12 +23,18 @@ export default function AdminQcPage() {
     if (!token) { setLoading(false); return; }
     try {
       const baseUrl = getApiBaseUrl();
-      const res = await fetch(`${baseUrl}/admin/qc`, {
+      const res = await fetch(`${baseUrl}/qc/reports`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        const data = (await res.json()) as QcItem[];
-        setItems(data ?? []);
+        const raw = await res.json();
+        const arr = Array.isArray(raw) ? raw : (raw.items ?? raw.reports ?? []);
+        setItems(arr.map((r: Record<string, string>) => ({
+          qc_id: r.report_id ?? r.qc_id ?? "",
+          dataset_id: r.dataset_id ?? r.field_id ?? "",
+          status: r.decision ?? r.status ?? "",
+          created_at: r.created_at ?? "",
+        })));
       }
     } catch { setError("QC verileri yuklenemedi."); } finally { setLoading(false); }
   }, []);

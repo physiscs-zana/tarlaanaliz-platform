@@ -23,12 +23,18 @@ export default function AdminCalibrationPage() {
     if (!token) { setLoading(false); return; }
     try {
       const baseUrl = getApiBaseUrl();
-      const res = await fetch(`${baseUrl}/admin/calibration`, {
+      const res = await fetch(`${baseUrl}/calibration/records`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        const data = (await res.json()) as CalibrationItem[];
-        setItems(data ?? []);
+        const raw = await res.json();
+        const arr = Array.isArray(raw) ? raw : (raw.items ?? raw.records ?? []);
+        setItems(arr.map((r: Record<string, string>) => ({
+          mission_id: r.record_id ?? r.mission_id ?? "",
+          drone_id: r.drone_id ?? "",
+          status: r.status ?? r.calibration_type ?? "",
+          date: r.captured_at ?? r.date ?? r.created_at ?? "",
+        })));
       }
     } catch { setError("Kalibrasyon verileri yuklenemedi."); } finally { setLoading(false); }
   }, []);
