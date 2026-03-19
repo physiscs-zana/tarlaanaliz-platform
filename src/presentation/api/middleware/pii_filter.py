@@ -63,6 +63,15 @@ _ADMIN_ONLY_PATHS: frozenset[str] = frozenset(
     }
 )
 
+# Endpoint'ler — sirket bilgisi icerdikleri icin PII filtresinden muaf
+_PII_BYPASS_PATHS: frozenset[str] = frozenset(
+    {
+        "/api/v1/payments/methods",
+        "/api/v1/pricing/crops",
+        "/api/v1/admin/pricing/config",
+    }
+)
+
 # PII gormeye yetkili roller (KR-063: CENTRAL_ADMIN)
 _PII_ALLOWED_ROLES: frozenset[str] = frozenset(
     {
@@ -127,6 +136,11 @@ class PIIFilterMiddleware(BaseHTTPMiddleware):
 
         # PII gormeye yetkili roller bypass
         if user_roles & _PII_ALLOWED_ROLES:
+            response.headers["X-Correlation-Id"] = corr_id
+            return response
+
+        # Sirket bilgisi iceren endpoint'ler PII filtresinden muaf
+        if request.url.path in _PII_BYPASS_PATHS:
             response.headers["X-Correlation-Id"] = corr_id
             return response
 
