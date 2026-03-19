@@ -16,6 +16,8 @@ from sqlalchemy.orm import selectinload
 
 from src.infrastructure.persistence.sqlalchemy.models.payment_intent_model import PaymentIntentModel
 from src.infrastructure.persistence.sqlalchemy.session import get_async_session
+from typing import Any
+
 from src.presentation.api.dependencies import (
     AuditEvent,
     AuditPublisher,
@@ -33,6 +35,12 @@ from src.presentation.api.dependencies import (
     require_permissions,
     require_roles,
 )
+
+
+def _get_service(request: Request) -> Any | None:
+    """Return registered payment service if available (test/DI), else None (use DB)."""
+    return getattr(request.app.state, "payment_service", None)
+
 
 # KR-033 §10: Geri ödeme eşiği — 500 TL = 50000 kuruş
 _REFUND_APPROVAL_THRESHOLD_KURUS = 50000
@@ -98,6 +106,12 @@ async def list_payment_intents(
     corr_id = getattr(request.state, "corr_id", None)
     response.headers["X-Correlation-Id"] = corr_id or ""
     try:
+        svc = _get_service(request)
+        if svc is not None:
+            records = svc.list_intents(status_filter=status_filter, field_id=field_id, corr_id=corr_id)
+            _observe(request, metrics, started, status.HTTP_200_OK)
+            return records
+
         async with get_async_session() as session:
             stmt = select(PaymentIntentModel).options(selectinload(PaymentIntentModel.payer))
 
@@ -138,6 +152,23 @@ async def mark_paid(
     corr_id = getattr(request.state, "corr_id", None)
     response.headers["X-Correlation-Id"] = corr_id or ""
     try:
+        svc = _get_service(request)
+        if svc is not None:
+            intent = svc.approve_payment(
+                actor_user_id=user.user_id, payment_id=payment_id, admin_note=payload.admin_note, corr_id=corr_id
+            )
+            audit.publish(
+                AuditEvent(
+                    event_type="PAYMENT.MARK_PAID",
+                    actor_user_id=user.user_id,
+                    subject_id=str(payment_id),
+                    corr_id=corr_id,
+                    details={"status": "PAID", "admin_note": payload.admin_note},
+                )
+            )
+            _observe(request, metrics, started, status.HTTP_200_OK)
+            return intent
+
         from datetime import datetime, timezone
 
         async with get_async_session() as session:
@@ -192,6 +223,23 @@ async def reject_payment(
     corr_id = getattr(request.state, "corr_id", None)
     response.headers["X-Correlation-Id"] = corr_id or ""
     try:
+        svc = _get_service(request)
+        if svc is not None:
+            intent = svc.reject_payment(
+                actor_user_id=user.user_id, payment_id=payment_id, reason=payload.reason, corr_id=corr_id
+            )
+            audit.publish(
+                AuditEvent(
+                    event_type="PAYMENT.REJECTED",
+                    actor_user_id=user.user_id,
+                    subject_id=str(payment_id),
+                    corr_id=corr_id,
+                    details={"reason": payload.reason, "status": "REJECTED"},
+                )
+            )
+            _observe(request, metrics, started, status.HTTP_200_OK)
+            return intent
+
         from datetime import datetime, timezone
 
         async with get_async_session() as session:
@@ -251,6 +299,31 @@ async def refund_payment(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Refunds exceeding 500 TL require CENTRAL_ADMIN approval (KR-033 §10)",
                 )
+
+        svc = _get_service(request)
+        if svc is not None:
+            intent = svc.refund_payment(
+                actor_user_id=user.user_id,
+                payment_id=payment_id,
+                refund_amount_kurus=payload.refund_amount_kurus,
+                reason=payload.reason,
+                corr_id=corr_id,
+            )
+            audit.publish(
+                AuditEvent(
+                    event_type="PAYMENT.REFUNDED",
+                    actor_user_id=user.user_id,
+                    subject_id=str(payment_id),
+                    corr_id=corr_id,
+                    details={
+                        "refund_amount_kurus": payload.refund_amount_kurus,
+                        "reason": payload.reason,
+                        "status": "REFUNDED",
+                    },
+                )
+            )
+            _observe(request, metrics, started, status.HTTP_200_OK)
+            return intent
 
         from datetime import datetime, timezone
 

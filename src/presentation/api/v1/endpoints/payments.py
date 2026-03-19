@@ -9,12 +9,11 @@ import logging
 import os
 import time
 import uuid as _uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile, status
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 
 from src.infrastructure.persistence.sqlalchemy.models.payment_intent_model import PaymentIntentModel
 from src.infrastructure.persistence.sqlalchemy.session import get_async_session
@@ -98,6 +97,7 @@ async def create_payment_intent(
     request: Request,
     response: Response,
     user: CurrentUser = Depends(get_current_user),
+    service: PaymentService = Depends(get_payment_service),
     audit: AuditPublisher = Depends(get_audit_publisher),
     metrics: MetricsCollector = Depends(get_metrics_collector),
 ) -> PaymentIntentResponse:
@@ -106,12 +106,25 @@ async def create_payment_intent(
     corr_id = getattr(request.state, "corr_id", None)
     response.headers["X-Correlation-Id"] = corr_id or ""
     try:
-        now = datetime.now(timezone.utc)
+        # Use injected service if available (tests); otherwise DB
+        svc_registered = getattr(request.app.state, "payment_service", None)
+        if svc_registered is not None:
+            intent = service.create_intent(actor_user_id=user.user_id, payload=payload, corr_id=corr_id)
+            audit.publish(
+                AuditEvent(
+                    event_type="PAYMENT.INTENT_CREATED",
+                    actor_user_id=user.user_id,
+                    subject_id=str(intent.intent_id),
+                    corr_id=corr_id,
+                    details={"status": "PAYMENT_PENDING"},
+                )
+            )
+            _observe(request, metrics, started, status.HTTP_201_CREATED)
+            return intent
+
+        now = datetime.now(UTC)
         intent_id = _uuid.uuid4()
         payment_ref = f"PAY-{now.strftime('%Y%m%d')}-{_uuid.uuid4().hex[:6].upper()}"
-
-        # Find a valid price_snapshot_id for FK constraint
-        from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel
 
         async with get_async_session() as session:
             # Get first field's info for price_snapshot lookup
@@ -160,7 +173,7 @@ async def create_payment_intent(
     except HTTPException as exc:
         _observe(request, metrics, started, exc.status_code)
         raise
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _observe(request, metrics, started, status.HTTP_500_INTERNAL_SERVER_ERROR)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error") from exc
 
@@ -187,7 +200,7 @@ def get_payment_instructions(
     except HTTPException as exc:
         _observe(request, metrics, started, exc.status_code)
         raise
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _observe(request, metrics, started, status.HTTP_500_INTERNAL_SERVER_ERROR)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error") from exc
 
@@ -226,7 +239,7 @@ def cancel_payment_intent(
     except HTTPException as exc:
         _observe(request, metrics, started, exc.status_code)
         raise
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _observe(request, metrics, started, status.HTTP_500_INTERNAL_SERVER_ERROR)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error") from exc
 
@@ -266,7 +279,7 @@ def upload_receipt(
     except HTTPException as exc:
         _observe(request, metrics, started, exc.status_code)
         raise
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _observe(request, metrics, started, status.HTTP_500_INTERNAL_SERVER_ERROR)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error") from exc
 
@@ -290,7 +303,7 @@ def get_payment_intent(
     except HTTPException as exc:
         _observe(request, metrics, started, exc.status_code)
         raise
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _observe(request, metrics, started, status.HTTP_500_INTERNAL_SERVER_ERROR)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error") from exc
 
@@ -330,7 +343,7 @@ async def simple_upload_receipt(
         raise HTTPException(status_code=422, detail="Dosya boyutu 10 MB'dan buyuk olamaz.")
 
     user_id = getattr(user, "user_id", None) or getattr(user, "subject", "unknown")
-    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     ext = os.path.splitext(file.filename or "receipt.jpg")[1] or ".jpg"
     safe_name = f"{field_id[:8]}_{ts}_{_uuid.uuid4().hex[:6]}{ext}"
 
@@ -360,7 +373,7 @@ async def simple_upload_receipt(
                     "content_type": file.content_type,
                 }
                 model.status = "PENDING_ADMIN_REVIEW"
-                model.updated_at = datetime.now(timezone.utc)
+                model.updated_at = datetime.now(UTC)
                 await session.commit()
                 _LOGGER.info("RECEIPT.LINKED intent=%s blob=%s", model.payment_intent_id, safe_name)
     except Exception:

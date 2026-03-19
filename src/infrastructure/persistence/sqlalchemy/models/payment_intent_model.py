@@ -10,6 +10,8 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import BigInteger, DateTime, ForeignKey, String, Text, text
+from typing import Any
+
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -44,7 +46,7 @@ class PaymentIntentModel(Base):
 
     # Receipt (dekont)
     receipt_blob_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    receipt_meta: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    receipt_meta: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
 
     # Approval
     approved_by_admin_user_id: Mapped[uuid.UUID | None] = mapped_column(
