@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import re
 from typing import Optional
+from xml.sax.saxutils import escape as xml_escape
 
 import httpx
 import structlog
@@ -179,16 +180,17 @@ class NetGSMAdapter(SMSGateway):
             provider="netgsm",
         )
 
-        # NetGSM XML payload
+        # NetGSM XML payload (xml_escape prevents XML injection in header/body fields)
+        safe_header = xml_escape(sender_id or self._sender_id)
         xml_payload = (
             '<?xml version="1.0" encoding="UTF-8"?>'
             "<mainbody>"
             "<header>"
-            f"<msgheader>{sender_id or self._sender_id}</msgheader>"
+            f"<msgheader>{safe_header}</msgheader>"
             "</header>"
             "<body>"
             f"<msg><![CDATA[{message}]]></msg>"
-            f"<no>{normalized}</no>"
+            f"<no>{xml_escape(normalized)}</no>"
             "</body>"
             "</mainbody>"
         )
@@ -234,13 +236,14 @@ class NetGSMAdapter(SMSGateway):
         )
 
         normalized_numbers = [_normalize_phone(p) for p in recipients]
-        numbers_xml = "".join(f"<no>{n}</no>" for n in normalized_numbers)
+        numbers_xml = "".join(f"<no>{xml_escape(n)}</no>" for n in normalized_numbers)
+        safe_header = xml_escape(sender_id or self._sender_id)
 
         xml_payload = (
             '<?xml version="1.0" encoding="UTF-8"?>'
             "<mainbody>"
             "<header>"
-            f"<msgheader>{sender_id or self._sender_id}</msgheader>"
+            f"<msgheader>{safe_header}</msgheader>"
             "</header>"
             "<body>"
             f"<msg><![CDATA[{message}]]></msg>"
