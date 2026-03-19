@@ -9,6 +9,8 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
+from typing import Any
+
 from sqlalchemy import Boolean, DateTime, Integer, String, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -46,5 +48,5 @@ class AuditLogModel(Base):
     latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     error_code: Mapped[str | None] = mapped_column(String(50), nullable=True)
     error_message: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    detail: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    detail: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     pii: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
