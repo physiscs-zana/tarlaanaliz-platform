@@ -71,10 +71,27 @@ def _observe(request: Request, metrics: MetricsCollector, started: float, status
 
 
 def _model_to_response(m: PaymentIntentModel) -> PaymentIntentResponse:
-    """Convert ORM model to API response."""
+    """Convert ORM model to API response with T+1 SLA calculation."""
+    from datetime import datetime, timedelta, timezone
+
     payer_name = None
     if m.payer:
         payer_name = m.payer.display_name or f"{m.payer.first_name} {m.payer.last_name}".strip() or None
+
+    # T+1 SLA: receipt upload time + 1 business day (17:00)
+    sla_deadline = None
+    sla_overdue = False
+    if m.status == "PENDING_ADMIN_REVIEW" and m.updated_at:
+        # Deadline: next business day 17:00 after receipt upload
+        receipt_time = m.updated_at
+        deadline = receipt_time + timedelta(days=1)
+        # Skip weekends
+        while deadline.weekday() >= 5:  # Saturday=5, Sunday=6
+            deadline += timedelta(days=1)
+        deadline = deadline.replace(hour=17, minute=0, second=0, microsecond=0)
+        sla_deadline = deadline.isoformat()
+        sla_overdue = datetime.now(timezone.utc) > deadline
+
     return PaymentIntentResponse(
         intent_id=m.payment_intent_id,
         status=PaymentStatus(m.status)
@@ -88,6 +105,8 @@ def _model_to_response(m: PaymentIntentModel) -> PaymentIntentResponse:
         receipt_blob_id=m.receipt_blob_id,
         payer_display_name=payer_name,
         payment_ref=m.payment_ref,
+        sla_deadline=sla_deadline,
+        sla_overdue=sla_overdue,
     )
 
 

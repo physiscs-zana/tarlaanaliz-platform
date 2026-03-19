@@ -125,6 +125,8 @@ class PaymentIntentResponse(BaseModel):
     receipt_blob_id: str | None = None
     payer_display_name: str | None = None
     payment_ref: str | None = None
+    sla_deadline: str | None = None
+    sla_overdue: bool = False
 
 
 class CalibrationRecordCreateRequest(BaseModel):
@@ -318,7 +320,7 @@ class MetricsCollector(Protocol):
 
 @dataclass
 class InMemoryAuditPublisher:
-    """Fallback audit sink for local/dev use."""
+    """Audit publisher that persists to DB (audit_logs WORM table) and keeps in-memory copy."""
 
     events: list[AuditEvent]
 
@@ -333,6 +335,56 @@ class InMemoryAuditPublisher:
                 "corr_id": event.corr_id,
             },
         )
+        # Persist to audit_logs DB table (best-effort, non-blocking)
+        self._persist_to_db(event)
+
+    @staticmethod
+    def _persist_to_db(event: AuditEvent) -> None:
+        """Insert audit event into DB. Failures are logged, never raised."""
+        import asyncio
+        import hashlib
+
+        async def _insert() -> None:
+            try:
+                from src.infrastructure.persistence.sqlalchemy.session import get_async_session
+                import sqlalchemy as sa
+
+                # Parse event_type: "PAYMENT.MARK_PAID" -> type=PAYMENT, action=MARK_PAID
+                parts = event.event_type.split(".", 1)
+                ev_type = parts[0] if parts else "SYSTEM"
+                ev_action = parts[1] if len(parts) > 1 else "CREATE"
+
+                actor_hash = (
+                    hashlib.sha256(event.actor_user_id.encode()).hexdigest()[:32] if event.actor_user_id else None
+                )
+
+                async with get_async_session() as session:
+                    await session.execute(
+                        sa.text(
+                            "INSERT INTO audit_logs (service, event_type, event_action, outcome, "
+                            "correlation_id, actor_type, actor_id_hash, detail) "
+                            "VALUES (:svc, :et, :ea, :oc, :cid, :at, :ah, :dt)"
+                        ),
+                        {
+                            "svc": "platform",
+                            "et": ev_type,
+                            "ea": ev_action,
+                            "oc": "SUCCESS",
+                            "cid": event.corr_id or "",
+                            "at": "USER",
+                            "ah": actor_hash,
+                            "dt": str(event.details) if event.details else None,
+                        },
+                    )
+                    await session.commit()
+            except Exception as exc:
+                logger.warning("audit_persist_failed: %s", exc)
+
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(_insert())
+        except RuntimeError:
+            pass
 
 
 class NoOpMetricsCollector:
