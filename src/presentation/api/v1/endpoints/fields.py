@@ -16,6 +16,7 @@ from sqlalchemy import select
 
 from src.core.domain.entities.field import Field as FieldEntity
 from src.core.domain.entities.field import FieldStatus
+from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel
 from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
 from src.infrastructure.persistence.sqlalchemy.repositories.field_repository_impl import (
     FieldRepositoryImpl,
@@ -50,6 +51,7 @@ class FieldCreateRequest(BaseModel):
 
 class FieldResponse(BaseModel):
     field_id: str
+    field_code: str
     field_name: str
     parcel_ref: str
     area_ha: float
@@ -170,8 +172,16 @@ async def create_field(request: Request, payload: FieldCreateRequest) -> FieldRe
                 detail=f"Tarla kaydedilemedi: {type(exc).__name__}",
             ) from None
 
+    # Fetch DB-generated field_code (server_default from sequence)
+    async with get_async_session() as session:
+        result = await session.execute(
+            select(FieldModel.field_code).where(FieldModel.field_id == field.field_id)
+        )
+        field_code = result.scalar_one()
+
     return FieldResponse(
         field_id=str(field.field_id),
+        field_code=field_code,
         field_name=field_name,
         parcel_ref=payload.parcel_ref,
         area_ha=payload.area_ha,
@@ -194,6 +204,7 @@ async def list_fields(request: Request) -> FieldListResponse:
         items=[
             FieldResponse(
                 field_id=str(f.field_id),
+                field_code=f.field_code or "",
                 field_name=f"{f.village} {f.ada}/{f.parsel}",
                 parcel_ref=f.parcel_ref,
                 area_ha=float(f.area_m2 / Decimal("10000")),

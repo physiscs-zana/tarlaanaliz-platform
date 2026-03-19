@@ -1,6 +1,6 @@
 // BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 // KR-033 §3c: IBAN Talimat Ekrani (PWA)
-// IBAN (kopyala), alici adi, tutar, "Tarla ID'nizi yaziniz" (kopyala), dekont yukleme, bilgi notu.
+// IBAN (kopyala), alici adi, tutar, "Tarla Kodunuzu yaziniz" (kopyala), dekont yukleme, bilgi notu.
 'use client';
 
 import { useState } from 'react';
@@ -9,7 +9,7 @@ interface IbanInstructionsProps {
   readonly iban: string;
   readonly recipientName: string;
   readonly amount: string;
-  readonly fieldId: string;
+  readonly fieldCode: string;
   readonly corrId?: string;
   readonly requestId?: string;
 }
@@ -39,7 +39,7 @@ function CopyButton({ text, label }: { readonly text: string; readonly label: st
   );
 }
 
-export function IbanInstructions({ iban, recipientName, amount, fieldId, corrId, requestId }: IbanInstructionsProps) {
+export function IbanInstructions({ iban, recipientName, amount, fieldCode, corrId, requestId }: IbanInstructionsProps) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-5 space-y-4" data-corr-id={corrId} data-request-id={requestId}>
       <h2 className="text-lg font-semibold">Havale / EFT Bilgileri</h2>
@@ -62,15 +62,15 @@ export function IbanInstructions({ iban, recipientName, amount, fieldId, corrId,
         </div>
 
         <div className="flex items-center">
-          <span className="font-medium w-28">Tarla ID:</span>
-          <code className="bg-slate-50 px-2 py-1 rounded text-sm">{fieldId}</code>
-          <CopyButton text={fieldId} label="Tarla ID" />
+          <span className="font-medium w-28">Tarla Kodu:</span>
+          <code className="bg-slate-50 px-2 py-1 rounded text-sm">{fieldCode}</code>
+          <CopyButton text={fieldCode} label="Tarla Kodu" />
         </div>
       </div>
 
       <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-        <p className="font-medium">Havale açıklamasına Tarla ID&apos;nizi yazınız.</p>
-        <p className="mt-1">Dekontu aşağıdan yükleyiniz.</p>
+        <p className="font-medium">Havale aciklamasina Tarla Kodunuzu yaziniz.</p>
+        <p className="mt-1">Dekontu asagidan yukleyiniz.</p>
       </div>
 
       <p className="text-xs text-slate-500">

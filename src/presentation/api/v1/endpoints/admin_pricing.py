@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Protocol, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -147,7 +147,9 @@ def update_pricing_config(request: Request, payload: PricingConfigRequest) -> di
 
     _require_admin(request)
     try:
-        _write_config(payload.model_dump())
+        data: dict[str, object] = payload.model_dump()
+        data["last_updated"] = datetime.now(timezone.utc).isoformat()
+        _write_config(data)
     except OSError as exc:
         logging.getLogger("api.admin_pricing").error("CONFIG_WRITE_FAILED: %s", exc)
         raise HTTPException(
