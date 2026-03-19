@@ -162,8 +162,8 @@ export default function FarmerProfilePage() {
           </p>
         </div>
         <div>
-          <span className="text-sm text-slate-500">Kullanıcı ID</span>
-          <p className="font-mono text-xs text-slate-400">{profile.userId}</p>
+          <span className="text-sm text-slate-500">Kullanici No</span>
+          <p className="font-mono text-xs text-slate-400">{profile.userId.slice(0, 8).toUpperCase()}</p>
         </div>
       </div>
 

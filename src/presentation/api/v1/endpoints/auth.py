@@ -407,6 +407,8 @@ async def phone_pin_register(payload: PhonePinRegisterRequest, request: Request)
             province=payload.province,
             created_at=now,
             updated_at=now,
+            first_name=payload.first_name,
+            last_name=payload.last_name,
         )
         await repo.save(user)
         await session.commit()

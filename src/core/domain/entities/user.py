@@ -52,6 +52,8 @@ class User:
     province: str
     created_at: datetime
     updated_at: datetime
+    first_name: str = ""
+    last_name: str = ""
     must_reset_pin: bool = False
     coop_id: Optional[uuid.UUID] = None
 
