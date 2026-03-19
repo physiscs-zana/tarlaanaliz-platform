@@ -24,9 +24,8 @@ class PaymentIntentRepositoryImpl:
 
     async def save(self, model: PaymentIntentModel) -> None:
         """Insert or merge a payment intent."""
-        merged = await self._session.merge(model)
+        await self._session.merge(model)
         await self._session.flush()
-        return merged
 
     async def find_by_id(self, payment_intent_id: uuid.UUID) -> Optional[PaymentIntentModel]:
         result = await self._session.execute(

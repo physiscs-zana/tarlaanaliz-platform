@@ -13,6 +13,8 @@ from src.infrastructure.persistence.sqlalchemy.models.user_model import UserMode
 from src.infrastructure.persistence.sqlalchemy.models.user_role_model import UserRoleModel
 from src.infrastructure.persistence.sqlalchemy.session import get_async_session
 
+from typing import Any
+
 router = APIRouter(prefix="/admin", tags=["admin-dashboard"])
 
 
@@ -26,7 +28,7 @@ def _require_admin(request: Request) -> None:
 
 
 @router.get("/dashboard")
-async def get_dashboard(request: Request) -> dict:
+async def get_dashboard(request: Request) -> dict[str, Any]:
     """Admin dashboard summary — field/mission/analysis/payment counts."""
     _require_admin(request)
 
@@ -76,7 +78,7 @@ async def get_dashboard(request: Request) -> dict:
 
 
 @router.get("/analytics")
-async def get_analytics(request: Request) -> dict:
+async def get_analytics(request: Request) -> dict[str, Any]:
     """Admin analytics metrics — expert/review/SLA counts."""
     _require_admin(request)
 
@@ -109,7 +111,7 @@ async def get_analytics(request: Request) -> dict:
 
 
 @router.get("/sla")
-async def get_sla_metrics(request: Request) -> dict:
+async def get_sla_metrics(request: Request) -> dict[str, Any]:
     """Admin SLA summary metrics."""
     _require_admin(request)
 
