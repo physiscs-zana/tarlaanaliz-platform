@@ -9,8 +9,41 @@ import { headers } from "next/headers";
 import "../styles/globals.css";
 
 export const metadata: Metadata = {
-  title: "TarlaAnaliz Platform",
-  description: "Role-based workflows for admin, expert, farmer and pilot users.",
+  title: {
+    default: "TarlaAnaliz - Drone ile Tarla Analizi | Hastalik, Zararli, Ot Tespiti",
+    template: "%s | TarlaAnaliz",
+  },
+  description:
+    "TarlaAnaliz drone ile tarla analizi yapar. Hastalik, zararli bocek, yabanci ot ve su eksikligini insan gozunden en az bir hafta once tespit eder. GAP Bolgesi ve tum Turkiye.",
+  keywords: [
+    "tarla analizi",
+    "drone tarla tarama",
+    "bitki hastaligi tespit",
+    "zararli bocek tespiti",
+    "yabanci ot tespiti",
+    "tarimsal drone",
+    "akilli tarim",
+    "hassas tarim",
+    "NDVI analizi",
+    "tarla saglik haritasi",
+    "GAP bolgesi tarim",
+    "pamuk hastaligi",
+    "bugday analizi",
+  ],
+  openGraph: {
+    title: "TarlaAnaliz - Drone ile Tarla Analizi",
+    description:
+      "Tarlanizin check-up ve tahlilini drone ile yapiyoruz. Hastalik, zararli bocek, yabanci ot ve su eksikligini erken tespit.",
+    url: "https://tarlaanaliz.com",
+    siteName: "TarlaAnaliz",
+    locale: "tr_TR",
+    type: "website",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  metadataBase: new URL("https://tarlaanaliz.com"),
 };
 
 interface RootLayoutProps {
