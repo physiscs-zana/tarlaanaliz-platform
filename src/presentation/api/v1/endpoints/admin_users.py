@@ -59,8 +59,13 @@ async def list_users(request: Request) -> list[AdminUserResponse]:
         result = await session.execute(select(UserModel).options(selectinload(UserModel.roles)))
         models = result.scalars().unique().all()
 
-        # Only FARMER_SINGLE users
-        farmer_models = [m for m in models if any(r.role == "FARMER_SINGLE" for r in m.roles)]
+        # Only FARMER_SINGLE users — exclude anyone with an admin/system role
+        _PROTECTED_ROLES = {"CENTRAL_ADMIN", "BILLING_ADMIN", "IL_OPERATOR", "STATION_OPERATOR"}
+        farmer_models = [
+            m
+            for m in models
+            if any(r.role == "FARMER_SINGLE" for r in m.roles) and not any(r.role in _PROTECTED_ROLES for r in m.roles)
+        ]
 
         # Batch load fields for all farmer user_ids
         farmer_ids = [m.user_id for m in farmer_models]
@@ -106,11 +111,22 @@ async def delete_user(request: Request, user_id: str) -> None:
     except ValueError:
         raise HTTPException(status_code=422, detail="Invalid user_id") from None
 
+    _PROTECTED_ROLES = {"CENTRAL_ADMIN", "BILLING_ADMIN", "IL_OPERATOR", "STATION_OPERATOR"}
+
     async with get_async_session() as session:
-        result = await session.execute(select(UserModel).where(UserModel.user_id == uid))
+        result = await session.execute(
+            select(UserModel).options(selectinload(UserModel.roles)).where(UserModel.user_id == uid)
+        )
         user_model = result.scalar_one_or_none()
         if user_model is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+        # Prevent deleting admin/operator accounts
+        if any(r.role in _PROTECTED_ROLES for r in user_model.roles):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin ve operator hesaplari silinemez.",
+            )
 
         await session.execute(sa_delete(UserRoleModel).where(UserRoleModel.user_id == uid))
         await session.delete(user_model)
