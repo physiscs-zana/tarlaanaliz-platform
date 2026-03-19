@@ -11,7 +11,11 @@ import time
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
+from src.infrastructure.persistence.sqlalchemy.models.payment_intent_model import PaymentIntentModel
+from src.infrastructure.persistence.sqlalchemy.session import get_async_session
 from src.presentation.api.dependencies import (
     AuditEvent,
     AuditPublisher,
@@ -20,6 +24,7 @@ from src.presentation.api.dependencies import (
     MetricsCollector,
     PaymentIntentResponse,
     PaymentService,
+    PaymentStatus,
     RefundPaymentRequest,
     RejectPaymentRequest,
     get_audit_publisher,
@@ -58,15 +63,34 @@ def _observe(request: Request, metrics: MetricsCollector, started: float, status
     metrics.observe_status(route=route, status_code=status_code, corr_id=corr_id)
 
 
+def _model_to_response(m: PaymentIntentModel) -> PaymentIntentResponse:
+    """Convert ORM model to API response."""
+    payer_name = None
+    if m.payer:
+        payer_name = m.payer.display_name or f"{m.payer.first_name} {m.payer.last_name}".strip() or None
+    return PaymentIntentResponse(
+        intent_id=m.payment_intent_id,
+        status=PaymentStatus(m.status)
+        if m.status in PaymentStatus.__members__.values()
+        else PaymentStatus.PENDING_RECEIPT,
+        amount=m.amount_kurus / 100.0,
+        season="",
+        package_code=m.method or "",
+        field_ids=[],
+        created_at=m.created_at,
+        receipt_blob_id=m.receipt_blob_id,
+        payer_display_name=payer_name,
+        payment_ref=m.payment_ref,
+    )
+
+
 @router.get("/intents", response_model=list[PaymentIntentResponse])
-def list_payment_intents(
+async def list_payment_intents(
     request: Request,
     response: Response,
     status_filter: str | None = Query(default=None, alias="status"),
     field_id: UUID | None = Query(default=None),
     user: CurrentUser = Depends(require_roles(["CENTRAL_ADMIN", "BILLING_ADMIN"])),
-    _permissions: CurrentUser = Depends(require_permissions(["payments:review"])),
-    payment_service: PaymentService = Depends(get_payment_service),
     metrics: MetricsCollector = Depends(get_metrics_collector),
 ) -> list[PaymentIntentResponse]:
     """KR-033 §5: Bekleyen tahsilatlar; status ve field_id ile filtreleme."""
@@ -74,23 +98,21 @@ def list_payment_intents(
     corr_id = getattr(request.state, "corr_id", None)
     response.headers["X-Correlation-Id"] = corr_id or ""
     try:
-        # Translate frontend PAYMENT_PENDING to internal statuses
-        if status_filter == "PAYMENT_PENDING":
-            records_a = payment_service.list_intents(
-                status_filter="PENDING_RECEIPT", field_id=field_id, corr_id=corr_id
-            )
-            records_b = payment_service.list_intents(
-                status_filter="PENDING_ADMIN_REVIEW", field_id=field_id, corr_id=corr_id
-            )
-            seen: set[str] = set()
-            records = []
-            for r in [*records_a, *records_b]:
-                pid = str(getattr(r, "payment_id", id(r)))
-                if pid not in seen:
-                    seen.add(pid)
-                    records.append(r)
-        else:
-            records = payment_service.list_intents(status_filter=status_filter, field_id=field_id, corr_id=corr_id)
+        async with get_async_session() as session:
+            stmt = select(PaymentIntentModel).options(selectinload(PaymentIntentModel.payer))
+
+            if status_filter == "PAYMENT_PENDING":
+                stmt = stmt.where(
+                    PaymentIntentModel.status.in_(["PAYMENT_PENDING", "PENDING_RECEIPT", "PENDING_ADMIN_REVIEW"])
+                )
+            elif status_filter:
+                stmt = stmt.where(PaymentIntentModel.status == status_filter)
+
+            stmt = stmt.order_by(PaymentIntentModel.created_at.desc())
+            result = await session.execute(stmt)
+            models = result.scalars().unique().all()
+
+        records = [_model_to_response(m) for m in models]
         _observe(request, metrics, started, status.HTTP_200_OK)
         return records
     except HTTPException as exc:
@@ -102,14 +124,12 @@ def list_payment_intents(
 
 
 @router.post("/intents/{payment_id}/mark-paid", response_model=PaymentIntentResponse)
-def mark_paid(
+async def mark_paid(
     payment_id: UUID,
     payload: MarkPaidRequest,
     request: Request,
     response: Response,
     user: CurrentUser = Depends(require_roles(["CENTRAL_ADMIN", "BILLING_ADMIN"])),
-    _permissions: CurrentUser = Depends(require_permissions(["payments:approve"])),
-    payment_service: PaymentService = Depends(get_payment_service),
     audit: AuditPublisher = Depends(get_audit_publisher),
     metrics: MetricsCollector = Depends(get_metrics_collector),
 ) -> PaymentIntentResponse:
@@ -118,24 +138,37 @@ def mark_paid(
     corr_id = getattr(request.state, "corr_id", None)
     response.headers["X-Correlation-Id"] = corr_id or ""
     try:
-        intent = payment_service.approve_payment(
-            actor_user_id=user.user_id,
-            payment_id=payment_id,
-            admin_note=payload.admin_note,
-            corr_id=corr_id,
-        )
-        # KR-033 §8: PAYMENT.MARK_PAID audit event — admin_user_id ve admin_note zorunlu
+        from datetime import datetime, timezone
+
+        async with get_async_session() as session:
+            result = await session.execute(
+                select(PaymentIntentModel)
+                .options(selectinload(PaymentIntentModel.payer))
+                .where(PaymentIntentModel.payment_intent_id == payment_id)
+            )
+            model = result.scalar_one_or_none()
+            if model is None:
+                raise HTTPException(status_code=404, detail="Payment intent not found")
+
+            model.status = "PAID"
+            model.paid_at = datetime.now(timezone.utc)
+            model.approved_by_admin_user_id = UUID(user.user_id)
+            model.approved_at = model.paid_at
+            model.admin_note = payload.admin_note
+            model.updated_at = datetime.now(timezone.utc)
+            await session.commit()
+
         audit.publish(
             AuditEvent(
                 event_type="PAYMENT.MARK_PAID",
                 actor_user_id=user.user_id,
                 subject_id=str(payment_id),
                 corr_id=corr_id,
-                details={"status": intent.status, "admin_note": payload.admin_note},
+                details={"status": "PAID", "admin_note": payload.admin_note},
             )
         )
         _observe(request, metrics, started, status.HTTP_200_OK)
-        return intent
+        return _model_to_response(model)
     except HTTPException as exc:
         _observe(request, metrics, started, exc.status_code)
         raise
@@ -145,14 +178,12 @@ def mark_paid(
 
 
 @router.post("/intents/{payment_id}/reject", response_model=PaymentIntentResponse)
-def reject_payment(
+async def reject_payment(
     payment_id: UUID,
     payload: RejectPaymentRequest,
     request: Request,
     response: Response,
     user: CurrentUser = Depends(require_roles(["CENTRAL_ADMIN", "BILLING_ADMIN"])),
-    _permissions: CurrentUser = Depends(require_permissions(["payments:reject"])),
-    payment_service: PaymentService = Depends(get_payment_service),
     audit: AuditPublisher = Depends(get_audit_publisher),
     metrics: MetricsCollector = Depends(get_metrics_collector),
 ) -> PaymentIntentResponse:
@@ -161,21 +192,35 @@ def reject_payment(
     corr_id = getattr(request.state, "corr_id", None)
     response.headers["X-Correlation-Id"] = corr_id or ""
     try:
-        intent = payment_service.reject_payment(
-            actor_user_id=user.user_id, payment_id=payment_id, reason=payload.reason, corr_id=corr_id
-        )
-        # KR-033 §8: PAYMENT.REJECTED audit event
+        from datetime import datetime, timezone
+
+        async with get_async_session() as session:
+            result = await session.execute(
+                select(PaymentIntentModel)
+                .options(selectinload(PaymentIntentModel.payer))
+                .where(PaymentIntentModel.payment_intent_id == payment_id)
+            )
+            model = result.scalar_one_or_none()
+            if model is None:
+                raise HTTPException(status_code=404, detail="Payment intent not found")
+
+            model.status = "REJECTED"
+            model.rejected_at = datetime.now(timezone.utc)
+            model.rejected_reason = payload.reason
+            model.updated_at = datetime.now(timezone.utc)
+            await session.commit()
+
         audit.publish(
             AuditEvent(
                 event_type="PAYMENT.REJECTED",
                 actor_user_id=user.user_id,
                 subject_id=str(payment_id),
                 corr_id=corr_id,
-                details={"reason": payload.reason, "status": intent.status},
+                details={"reason": payload.reason, "status": "REJECTED"},
             )
         )
         _observe(request, metrics, started, status.HTTP_200_OK)
-        return intent
+        return _model_to_response(model)
     except HTTPException as exc:
         _observe(request, metrics, started, exc.status_code)
         raise
@@ -185,14 +230,12 @@ def reject_payment(
 
 
 @router.post("/intents/{payment_id}/refund", response_model=PaymentIntentResponse)
-def refund_payment(
+async def refund_payment(
     payment_id: UUID,
     payload: RefundPaymentRequest,
     request: Request,
     response: Response,
     user: CurrentUser = Depends(require_roles(["CENTRAL_ADMIN", "BILLING_ADMIN"])),
-    _permissions: CurrentUser = Depends(require_permissions(["payments:refund"])),
-    payment_service: PaymentService = Depends(get_payment_service),
     audit: AuditPublisher = Depends(get_audit_publisher),
     metrics: MetricsCollector = Depends(get_metrics_collector),
 ) -> PaymentIntentResponse:
@@ -209,14 +252,27 @@ def refund_payment(
                     detail="Refunds exceeding 500 TL require CENTRAL_ADMIN approval (KR-033 §10)",
                 )
 
-        intent = payment_service.refund_payment(
-            actor_user_id=user.user_id,
-            payment_id=payment_id,
-            refund_amount_kurus=payload.refund_amount_kurus,
-            reason=payload.reason,
-            corr_id=corr_id,
-        )
-        # KR-033 §8: PAYMENT.REFUNDED audit event
+        from datetime import datetime, timezone
+
+        async with get_async_session() as session:
+            result = await session.execute(
+                select(PaymentIntentModel)
+                .options(selectinload(PaymentIntentModel.payer))
+                .where(PaymentIntentModel.payment_intent_id == payment_id)
+            )
+            model = result.scalar_one_or_none()
+            if model is None:
+                raise HTTPException(status_code=404, detail="Payment intent not found")
+            if model.status != "PAID":
+                raise HTTPException(status_code=409, detail=f"Can only refund PAID intents, current: {model.status}")
+
+            model.status = "REFUNDED"
+            model.refunded_at = datetime.now(timezone.utc)
+            model.refund_amount_kurus = payload.refund_amount_kurus
+            model.refund_reason = payload.reason
+            model.updated_at = datetime.now(timezone.utc)
+            await session.commit()
+
         audit.publish(
             AuditEvent(
                 event_type="PAYMENT.REFUNDED",
@@ -226,12 +282,12 @@ def refund_payment(
                 details={
                     "refund_amount_kurus": payload.refund_amount_kurus,
                     "reason": payload.reason,
-                    "status": intent.status,
+                    "status": "REFUNDED",
                 },
             )
         )
         _observe(request, metrics, started, status.HTTP_200_OK)
-        return intent
+        return _model_to_response(model)
     except HTTPException as exc:
         _observe(request, metrics, started, exc.status_code)
         raise

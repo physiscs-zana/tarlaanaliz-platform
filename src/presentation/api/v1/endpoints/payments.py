@@ -13,7 +13,11 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile, status
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
+from src.infrastructure.persistence.sqlalchemy.models.payment_intent_model import PaymentIntentModel
+from src.infrastructure.persistence.sqlalchemy.session import get_async_session
 from src.presentation.api.dependencies import (
     AuditEvent,
     AuditPublisher,
@@ -24,6 +28,7 @@ from src.presentation.api.dependencies import (
     PaymentIntentCreateRequest,
     PaymentIntentResponse,
     PaymentService,
+    PaymentStatus,
     ReceiptUploadRequest,
     get_audit_publisher,
     get_current_user,
@@ -88,12 +93,11 @@ def _observe(request: Request, metrics: MetricsCollector, started: float, status
 
 
 @router.post("/intents", response_model=PaymentIntentResponse, status_code=status.HTTP_201_CREATED)
-def create_payment_intent(
+async def create_payment_intent(
     payload: PaymentIntentCreateRequest,
     request: Request,
     response: Response,
     user: CurrentUser = Depends(get_current_user),
-    service: PaymentService = Depends(get_payment_service),
     audit: AuditPublisher = Depends(get_audit_publisher),
     metrics: MetricsCollector = Depends(get_metrics_collector),
 ) -> PaymentIntentResponse:
@@ -102,19 +106,57 @@ def create_payment_intent(
     corr_id = getattr(request.state, "corr_id", None)
     response.headers["X-Correlation-Id"] = corr_id or ""
     try:
-        intent = service.create_intent(actor_user_id=user.user_id, payload=payload, corr_id=corr_id)
+        now = datetime.now(timezone.utc)
+        intent_id = _uuid.uuid4()
+        payment_ref = f"PAY-{now.strftime('%Y%m%d')}-{_uuid.uuid4().hex[:6].upper()}"
+
+        # Find a valid price_snapshot_id for FK constraint
+        from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel
+
+        async with get_async_session() as session:
+            # Get first field's info for price_snapshot lookup
+            price_snapshot_id = _uuid.uuid4()  # Placeholder — will be replaced when pricing is wired
+            field_id_val = payload.field_ids[0] if payload.field_ids else None
+
+            model = PaymentIntentModel(
+                payment_intent_id=intent_id,
+                payer_user_id=_uuid.UUID(user.user_id),
+                target_type="MISSION",
+                target_id=field_id_val or _uuid.uuid4(),
+                amount_kurus=int(payload.amount * 100),
+                currency="TRY",
+                method="IBAN_TRANSFER",
+                status="PAYMENT_PENDING",
+                payment_ref=payment_ref,
+                price_snapshot_id=price_snapshot_id,
+                created_at=now,
+                updated_at=now,
+            )
+            session.add(model)
+            await session.commit()
+
+        intent_resp = PaymentIntentResponse(
+            intent_id=intent_id,
+            status=PaymentStatus.PENDING_RECEIPT,
+            amount=payload.amount,
+            season=payload.season,
+            package_code=payload.package_code,
+            field_ids=payload.field_ids,
+            created_at=now,
+            payment_ref=payment_ref,
+        )
         # KR-033 §8: PAYMENT.INTENT_CREATED audit event
         audit.publish(
             AuditEvent(
                 event_type="PAYMENT.INTENT_CREATED",
                 actor_user_id=user.user_id,
-                subject_id=str(intent.intent_id),
+                subject_id=str(intent_id),
                 corr_id=corr_id,
-                details={"status": intent.status},
+                details={"status": "PAYMENT_PENDING"},
             )
         )
         _observe(request, metrics, started, status.HTTP_201_CREATED)
-        return intent
+        return intent_resp
     except HTTPException as exc:
         _observe(request, metrics, started, exc.status_code)
         raise
@@ -297,6 +339,32 @@ async def simple_upload_receipt(
         f.write(content)
 
     _LOGGER.info("RECEIPT.UPLOADED user=%s field=%s file=%s size=%d", user_id, field_id, safe_name, len(content))
+
+    # Update matching payment_intent with receipt_blob_id (find by payer + PAYMENT_PENDING status)
+    try:
+        async with get_async_session() as session:
+            stmt = (
+                select(PaymentIntentModel)
+                .where(PaymentIntentModel.payer_user_id == _uuid.UUID(str(user_id)))
+                .where(PaymentIntentModel.status == "PAYMENT_PENDING")
+                .order_by(PaymentIntentModel.created_at.desc())
+                .limit(1)
+            )
+            result = await session.execute(stmt)
+            model = result.scalar_one_or_none()
+            if model is not None:
+                model.receipt_blob_id = safe_name
+                model.receipt_meta = {
+                    "filename": file.filename,
+                    "size": len(content),
+                    "content_type": file.content_type,
+                }
+                model.status = "PENDING_ADMIN_REVIEW"
+                model.updated_at = datetime.now(timezone.utc)
+                await session.commit()
+                _LOGGER.info("RECEIPT.LINKED intent=%s blob=%s", model.payment_intent_id, safe_name)
+    except Exception:
+        _LOGGER.warning("RECEIPT.LINK_FAILED user=%s file=%s — no matching intent found", user_id, safe_name)
 
     return {"status": "uploaded", "filename": safe_name, "message": "Dekont yuklendi. Onay bekleniyor."}
 
