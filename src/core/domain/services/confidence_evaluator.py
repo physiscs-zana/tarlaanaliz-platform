@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/services/confidence_evaluator.py
 # DESC: YZ confidence değerlendirme ve expert escalation kararı (KR-019).
 # KR-019 v1.2.0: Worker fail-closed seviyeleri ile hizalanmış eşikler.
@@ -39,11 +40,13 @@ class EscalationReason(str, Enum):
 
 # KR-019 canonical severity boosters: these reasons indicate severe model
 # uncertainty beyond what confidence score alone captures.
-_SEVERITY_BOOSTING_REASONS: frozenset[EscalationReason] = frozenset({
-    EscalationReason.OOD_DETECTED,
-    EscalationReason.HIGH_EPISTEMIC,
-    EscalationReason.EXPERT_RE_TRIGGER,
-})
+_SEVERITY_BOOSTING_REASONS: frozenset[EscalationReason] = frozenset(
+    {
+        EscalationReason.OOD_DETECTED,
+        EscalationReason.HIGH_EPISTEMIC,
+        EscalationReason.EXPERT_RE_TRIGGER,
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -51,7 +54,7 @@ class ConfidenceThresholds:
     """Güven skoru eşik değerleri — KR-019 fail-closed seviyeleri ile hizalı.
 
     Worker fail-closed mapping:
-      ≥ auto_accept (global_floor) → FULL_REPORT   → EscalationLevel.NONE
+      ≥ auto_accept (0.80)         → FULL_REPORT   → EscalationLevel.NONE
       ≥ standard    (0.45)         → PARTIAL_REPORT → EscalationLevel.STANDARD
       ≥ priority    (0.25)         → INDICES_ONLY   → EscalationLevel.PRIORITY
       < priority    (< 0.25)       → NO_RESULT      → EscalationLevel.CRITICAL
@@ -61,10 +64,10 @@ class ConfidenceThresholds:
     - Tüm değerler 0.0 ile 1.0 arasında olmalıdır.
     """
 
-    auto_accept: float = 0.65  # KR-019 global_floor — dynamic_threshold minimum
-    standard: float = 0.45     # PARTIAL_REPORT sınırı
-    priority: float = 0.25     # INDICES_ONLY sınırı
-    critical: float = 0.10     # NO_RESULT alt sınırı (< 0.25 tamamı CRITICAL)
+    auto_accept: float = 0.80  # KR-019 global_floor v1.2.0 — cross-repo sync
+    standard: float = 0.45  # PARTIAL_REPORT sınırı
+    priority: float = 0.25  # INDICES_ONLY sınırı
+    critical: float = 0.10  # NO_RESULT alt sınırı (< 0.25 tamamı CRITICAL)
 
     def __post_init__(self) -> None:
         for name, val in [
@@ -83,13 +86,13 @@ class ConfidenceThresholds:
         """Crop-specific dynamic threshold ile oluşturur.
 
         Worker'ın config/dynamic_thresholds.yaml'ından okunan crop × analysis_type
-        bazlı eşik değeri auto_accept olarak kullanılır. global_floor (0.65) altına
+        bazlı eşik değeri auto_accept olarak kullanılır. global_floor (0.80) altına
         inemez (KR-019 güvencesi).
 
         Args:
             dynamic_threshold: Crop-specific threshold (e.g., 0.82 for pamuk.disease).
         """
-        floor = 0.65  # KR-019 global_floor
+        floor = 0.80  # KR-019 global_floor v1.2.0
         effective = max(dynamic_threshold, floor)
         return cls(auto_accept=effective)
 
@@ -118,7 +121,7 @@ class ConfidenceEvaluator:
     Eşik hizalaması (KR-019 v1.2.0):
       Worker ResultMode        | Platform EscalationLevel | Eşik
       ─────────────────────────┼──────────────────────────┼──────
-      FULL_REPORT              | NONE                     | ≥ dynamic_threshold (min 0.65)
+      FULL_REPORT              | NONE                     | ≥ dynamic_threshold (min 0.80)
       PARTIAL_REPORT           | STANDARD                 | 0.45 – dynamic_threshold
       INDICES_ONLY             | PRIORITY                 | 0.25 – 0.45
       NO_RESULT                | CRITICAL                 | < 0.25
