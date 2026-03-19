@@ -36,6 +36,11 @@ class FieldModel(Base):
     area_m2: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     area_donum: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     crop_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    field_code: Mapped[str] = mapped_column(
+        String(8), nullable=False, unique=True,
+        server_default=text("LPAD(nextval('field_code_seq')::text, 8, '0')"),
+        comment="8-digit human-readable field code for payment flows",
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))

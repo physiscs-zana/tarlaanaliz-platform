@@ -14,6 +14,7 @@ interface IbanInfo {
 
 interface FieldItem {
   field_id: string;
+  field_code: string;
   field_name: string;
   area_ha: number;
   crop_type: string | null;
@@ -172,9 +173,9 @@ export default function FarmerPaymentsPage() {
           </select>
           {selectedField && (
             <div className="flex items-center gap-2 text-xs text-slate-500">
-              <span>Tarla ID:</span>
-              <code className="bg-slate-50 px-2 py-1 rounded">{selectedField.field_id}</code>
-              <CopyButton text={selectedField.field_id} />
+              <span>Tarla Kodu:</span>
+              <code className="bg-slate-50 px-2 py-1 rounded">{selectedField.field_code}</code>
+              <CopyButton text={selectedField.field_code} />
             </div>
           )}
         </div>
@@ -201,9 +202,9 @@ export default function FarmerPaymentsPage() {
           </div>
 
           <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 space-y-1">
-            <p className="font-medium">Havale aciklamasina Tarla ID numaranizi yaziniz.</p>
+            <p className="font-medium">Havale aciklamasina Tarla Kodunuzu yaziniz.</p>
             {selectedField && (
-              <p>Tarla ID: <code className="bg-amber-100 px-1 rounded">{selectedField.field_id.slice(0, 8)}...</code></p>
+              <p>Tarla Kodu: <code className="bg-amber-100 px-1 rounded">{selectedField.field_code}</code></p>
             )}
           </div>
 

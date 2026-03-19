@@ -19,6 +19,7 @@ interface PricingConfig {
   bank_name: string;
   recipient: string;
   crops: CropPrice[];
+  last_updated?: string;
 }
 
 const DEFAULT_CONFIG: PricingConfig = {
@@ -72,6 +73,7 @@ export default function PriceManagementPage() {
         body: JSON.stringify(config),
       });
       if (res.ok) {
+        await fetchConfig();
         setMessage({ type: "ok", text: "Ayarlar kaydedildi. Degisiklikler ciftci sayfalarinda gorunur." });
         setTimeout(() => setMessage(null), 5000);
       } else {
@@ -105,6 +107,11 @@ export default function PriceManagementPage() {
         >
           {saving ? "Kaydediliyor..." : "Tum Ayarlari Kaydet"}
         </button>
+        {config.last_updated && (
+          <p className="text-xs text-slate-400">
+            Son guncelleme: {new Date(config.last_updated).toLocaleString("tr-TR")}
+          </p>
+        )}
       </div>
 
       {message && (

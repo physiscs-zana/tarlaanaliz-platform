@@ -47,6 +47,7 @@ class Field:
     updated_at: datetime
     crop_type: Optional[str] = None
     crop_type_updated_at: Optional[date] = None
+    field_code: Optional[str] = None
     geometry: Optional[Dict[str, Any]] = None
 
     # ------------------------------------------------------------------

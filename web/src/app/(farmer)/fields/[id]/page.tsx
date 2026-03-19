@@ -9,6 +9,7 @@ import { getApiBaseUrl, getTokenFromCookie } from "@/lib/api";
 
 interface FieldDetail {
   field_id: string;
+  field_code: string;
   field_name: string;
   parcel_ref: string;
   area_ha: number;
@@ -40,6 +41,7 @@ export default function FieldDetailPage() {
   const [requestSent, setRequestSent] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [priceError, setPriceError] = useState(false);
 
   const fetchField = useCallback(async () => {
     const token = getTokenFromCookie();
@@ -60,12 +62,25 @@ export default function FieldDetailPage() {
     if (!token) return;
     try {
       const baseUrl = getApiBaseUrl();
-      const res = await fetch(`${baseUrl}/pricing/crops`, { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) {
-        const data = (await res.json()) as { crops: CropPrice[] };
-        setCropPrices(data.crops ?? []);
+      const res = await fetch(`${baseUrl}/pricing/crops`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        setPriceError(true);
+        return;
       }
-    } catch { /* ignore */ }
+      const data = (await res.json()) as { crops: CropPrice[] };
+      const crops = data.crops ?? [];
+      if (crops.length === 0) {
+        setPriceError(true);
+        return;
+      }
+      setCropPrices(crops);
+      setPriceError(false);
+    } catch {
+      setPriceError(true);
+    }
   }, []);
 
   useEffect(() => { fetchField(); fetchPrices(); }, [fetchField, fetchPrices]);
@@ -92,10 +107,13 @@ export default function FieldDetailPage() {
 
   // Price calculation — per 10m² precision (1 ha = 10000 m², 1 unit = 10 m²)
   const cropPrice = cropPrices.find((c) => c.code === field.crop_type);
+  const priceReady = cropPrices.length > 0 && cropPrice != null;
   const areaHa = field.area_ha;
   const areaM2 = areaHa * 10000;
   const totalScans = planType === "single" ? 1 : Math.max(1, Math.floor((seasonWeeks * 7) / scanInterval));
-  const pricePerHa = planType === "single" ? (cropPrice?.single_price ?? 250) : (cropPrice?.seasonal_price ?? 120);
+  const pricePerHa = priceReady
+    ? (planType === "single" ? cropPrice.single_price : cropPrice.seasonal_price)
+    : 0;
   // Calculate per 10m² then round to nearest lira
   const pricePerM2 = pricePerHa / 10000;
   const unitArea = Math.ceil(areaM2 / 10) * 10; // round up to nearest 10 m²
@@ -165,6 +183,7 @@ export default function FieldDetailPage() {
       <div className="rounded-lg border border-slate-200 bg-white p-5">
         <h2 className="mb-4 text-sm font-semibold text-slate-600">Tarla Bilgileri</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div><p className="text-xs text-slate-400">Tarla Kodu</p><p className="font-medium text-slate-900">{field.field_code}</p></div>
           <div><p className="text-xs text-slate-400">Il</p><p className="font-medium text-slate-900">{province}</p></div>
           <div><p className="text-xs text-slate-400">Ilce</p><p className="font-medium text-slate-900">{district}</p></div>
           <div><p className="text-xs text-slate-400">Mahalle / Koy</p><p className="font-medium text-slate-900">{village}</p></div>
@@ -231,6 +250,20 @@ export default function FieldDetailPage() {
             </div>
           )}
 
+          {/* Fiyat uyarilari */}
+          {!priceReady && !priceError && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+              {!field.crop_type
+                ? "Bu tarla icin bitki turu belirtilmemis. Fiyat hesaplanamaz."
+                : "Bu bitki turu icin fiyat bilgisi bulunamadi."}
+            </div>
+          )}
+          {priceError && (
+            <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+              Fiyat bilgisi alinamadi. Lutfen sayfayi yenileyin.
+            </div>
+          )}
+
           {/* Fiyat hesabi */}
           <div className="rounded-lg border border-slate-200 bg-white p-4">
             <div className="flex items-center justify-between">
@@ -254,7 +287,7 @@ export default function FieldDetailPage() {
 
           <button
             onClick={handleRequest}
-            disabled={submitting}
+            disabled={submitting || !priceReady || priceError}
             className="w-full rounded-lg bg-emerald-600 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
           >
             {submitting ? "Olusturuluyor..." : `Analiz Talebi Olustur — ${totalPrice.toLocaleString("tr-TR")} TL`}

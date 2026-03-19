@@ -34,6 +34,7 @@ class FieldRepositoryImpl(FieldRepository):
             created_at=model.created_at,
             updated_at=model.updated_at,
             crop_type=model.crop_type,
+            field_code=model.field_code,
             geometry=None,  # geometry stored as PostGIS, simplified for MVP
         )
 
