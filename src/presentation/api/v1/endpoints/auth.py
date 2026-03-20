@@ -18,6 +18,8 @@ import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field, field_validator
 
+_AUTH_LOGGER = logging.getLogger("api.auth")
+
 from src.infrastructure.security.jwt_handler import JWTHandler, JWTSettings
 
 LOGGER = logging.getLogger("api.auth")
@@ -176,9 +178,10 @@ class _InMemoryPhonePinAuthService:
                     result = await session.execute(sa_select(UserModel).where(UserModel.phone == phone))
                     model = result.scalar_one_or_none()
                     if model and model.roles:
-                        all_roles = [r.role for r in model.roles]
-        except Exception:
-            pass  # DB not available, fall back to env credentials
+                        all_roles = [str(r.role) for r in model.roles]
+                    _AUTH_LOGGER.info("AUTH.ROLES_LOADED phone=%s roles=%s", phone, all_roles)
+        except Exception as exc:
+            _AUTH_LOGGER.error("AUTH.DB_FAILED phone=%s error=%s", phone, exc)
 
         if user is not None:
             if not bcrypt.checkpw(pin.encode(), user.pin_hash.encode()):

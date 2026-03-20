@@ -478,6 +478,12 @@ def require_roles(required_roles: list[str]) -> Callable[..., CurrentUser]:
 
     def dependency(user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
         if not set(required_roles).intersection(user.roles):
+            logger.warning(
+                "RBAC.DENIED user=%s user_roles=%s required=%s",
+                user.user_id,
+                user.roles,
+                required_roles,
+            )
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
         return user
 
