@@ -7,10 +7,13 @@
 
 from __future__ import annotations
 
+import logging
+import os
 import time
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
@@ -396,6 +399,59 @@ async def refund_payment(
     except Exception as exc:
         _observe(request, metrics, started, status.HTTP_500_INTERNAL_SERVER_ERROR)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error") from exc
+
+
+_RECEIPT_DIR_PATHS = ("/app/data/receipts", "data/receipts")
+_RECEIPT_LOGGER = logging.getLogger("api.admin_payments")
+
+
+def _find_receipt_path(blob_id: str) -> str | None:
+    """Locate receipt file on disk. Returns absolute path or None."""
+    # Prevent path traversal
+    safe_name = os.path.basename(blob_id)
+    if safe_name != blob_id or ".." in blob_id:
+        return None
+    for base in _RECEIPT_DIR_PATHS:
+        candidate = os.path.join(base, safe_name)
+        if os.path.isfile(candidate):
+            return candidate
+    return None
+
+
+_CONTENT_TYPE_MAP: dict[str, str] = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+    ".pdf": "application/pdf",
+}
+
+
+@router.get("/receipts/{blob_id}")
+async def view_receipt(
+    blob_id: str,
+    request: Request,
+    user: CurrentUser = Depends(require_roles(["CENTRAL_ADMIN", "BILLING_ADMIN"])),
+) -> FileResponse:
+    """KR-033: Admin dekont görüntüleme — dosyayı disk'ten serve eder."""
+    file_path = _find_receipt_path(blob_id)
+    if file_path is None:
+        raise HTTPException(status_code=404, detail="Dekont dosyasi bulunamadi")
+
+    ext = os.path.splitext(blob_id)[1].lower()
+    media_type = _CONTENT_TYPE_MAP.get(ext, "application/octet-stream")
+
+    _RECEIPT_LOGGER.info(
+        "RECEIPT.VIEWED admin=%s blob=%s",
+        user.user_id,
+        blob_id,
+    )
+
+    return FileResponse(
+        path=file_path,
+        media_type=media_type,
+        filename=blob_id,
+    )
 
 
 __all__ = ["router"]
