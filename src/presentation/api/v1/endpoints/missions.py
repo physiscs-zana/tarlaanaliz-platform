@@ -86,7 +86,29 @@ async def create_mission(request: Request, payload: MissionCreateRequest) -> Mis
 
             # KR-033: Auto-create payment_intent when mission is created
             from src.infrastructure.persistence.sqlalchemy.models.payment_intent_model import PaymentIntentModel
+            from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel
             import sqlalchemy as sa
+
+            # Calculate price from field area and pricing config
+            amount_kurus = 0
+            try:
+                field_result = await session.execute(
+                    sa.select(FieldModel.area_m2, FieldModel.crop_type).where(FieldModel.field_id == field_id)
+                )
+                field_row = field_result.one_or_none()
+                if field_row:
+                    from src.presentation.api.v1.endpoints.admin_pricing import _read_config
+
+                    cfg = _read_config()
+                    crops = cfg.get("crops", [])
+                    crop_code = payload.crop_type or (field_row.crop_type if field_row.crop_type else "PAMUK")
+                    crop_cfg = next((c for c in crops if c.get("code") == crop_code), None)
+                    if crop_cfg:
+                        area_ha = float(field_row.area_m2) / 10000
+                        price_per_ha = crop_cfg.get("single_price", 250)
+                        amount_kurus = round(area_ha * price_per_ha * 100)
+            except Exception as exc:
+                _LOGGER.warning("MISSION.PRICE_CALC_FAILED field=%s error=%s", field_id, exc)
 
             # Look up price_snapshot if exists (best-effort, nullable FK)
             ps_row = None
@@ -102,7 +124,7 @@ async def create_mission(request: Request, payload: MissionCreateRequest) -> Mis
                 payer_user_id=user_id,
                 target_type="MISSION",
                 target_id=mission_id,
-                amount_kurus=0,  # Will be set by pricing flow
+                amount_kurus=amount_kurus,
                 currency="TRY",
                 method="IBAN_TRANSFER",
                 status="PAYMENT_PENDING",

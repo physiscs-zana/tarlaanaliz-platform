@@ -176,11 +176,15 @@ function PaymentTable({
   title,
   emptyMsg,
   onViewReceipt,
+  onApprove,
+  onReject,
 }: {
   payments: PaymentItem[];
   title: string;
   emptyMsg: string;
   onViewReceipt: (p: PaymentItem) => void;
+  onApprove: (p: PaymentItem) => void;
+  onReject: (p: PaymentItem) => void;
 }) {
   if (payments.length === 0) {
     return (
@@ -203,6 +207,7 @@ function PaymentTable({
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Durum</th>
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">SLA</th>
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Tarih</th>
+            <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Islem</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-50">
@@ -242,6 +247,32 @@ function PaymentTable({
                   )}
                 </td>
                 <td className="px-3 py-2 text-xs text-slate-500">{new Date(p.created_at).toLocaleDateString("tr-TR")}</td>
+                <td className="px-3 py-2">
+                  {(p.status === "PENDING_ADMIN_REVIEW" || p.status === "PAYMENT_PENDING") && p.receipt_blob_id ? (
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => onApprove(p)}
+                        className="rounded bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-700 transition"
+                      >
+                        Onayla
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onReject(p)}
+                        className="rounded bg-rose-600 px-2 py-1 text-xs font-medium text-white hover:bg-rose-700 transition"
+                      >
+                        Reddet
+                      </button>
+                    </div>
+                  ) : p.status === "PAID" ? (
+                    <span className="text-xs text-emerald-600 font-medium">Onaylandi</span>
+                  ) : p.status === "REJECTED" ? (
+                    <span className="text-xs text-rose-600 font-medium">Reddedildi</span>
+                  ) : (
+                    <span className="text-xs text-slate-400">{"\u2014"}</span>
+                  )}
+                </td>
               </tr>
             );
           })}
@@ -311,6 +342,52 @@ export default function AdminPaymentsPage() {
     }
   }, []);
 
+  const handleApprove = useCallback(async (p: PaymentItem) => {
+    const note = prompt("Onay notu (zorunlu):");
+    if (!note || note.trim().length === 0) return;
+    const token = getTokenFromCookie();
+    if (!token) return;
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/admin/payments/intents/${p.intent_id}/mark-paid`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ admin_note: note.trim() }),
+      });
+      if (res.ok) {
+        setPayments((prev) => prev.map((x) => (x.intent_id === p.intent_id ? { ...x, status: "PAID" } : x)));
+      } else {
+        const body = await res.json().catch(() => ({}));
+        alert((body as { detail?: string }).detail || "Onay basarisiz.");
+      }
+    } catch {
+      alert("Baglanti hatasi.");
+    }
+  }, []);
+
+  const handleReject = useCallback(async (p: PaymentItem) => {
+    const reason = prompt("Red nedeni (zorunlu):");
+    if (!reason || reason.trim().length < 3) { alert("Red nedeni en az 3 karakter olmali."); return; }
+    const token = getTokenFromCookie();
+    if (!token) return;
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/admin/payments/intents/${p.intent_id}/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      if (res.ok) {
+        setPayments((prev) => prev.map((x) => (x.intent_id === p.intent_id ? { ...x, status: "REJECTED" } : x)));
+      } else {
+        const body = await res.json().catch(() => ({}));
+        alert((body as { detail?: string }).detail || "Red basarisiz.");
+      }
+    } catch {
+      alert("Baglanti hatasi.");
+    }
+  }, []);
+
   const fetchPayments = useCallback(async () => {
     const token = getTokenFromCookie();
     if (!token) { setLoading(false); return; }
@@ -341,11 +418,11 @@ export default function AdminPaymentsPage() {
       <div className="space-y-6">
         <div className="space-y-2">
           <h2 className="text-sm font-semibold text-slate-700">Havale / EFT</h2>
-          <PaymentTable payments={eftPayments} title="EFT" emptyMsg="Bekleyen EFT odemesi yok." onViewReceipt={openReceipt} />
+          <PaymentTable payments={eftPayments} title="EFT" emptyMsg="Bekleyen EFT odemesi yok." onViewReceipt={openReceipt} onApprove={handleApprove} onReject={handleReject} />
         </div>
         <div className="space-y-2">
           <h2 className="text-sm font-semibold text-slate-700">Kredi Karti</h2>
-          <PaymentTable payments={cardPayments} title="Kredi Karti" emptyMsg="Kredi karti odemesi henuz aktif degil." onViewReceipt={openReceipt} />
+          <PaymentTable payments={cardPayments} title="Kredi Karti" emptyMsg="Kredi karti odemesi henuz aktif degil." onViewReceipt={openReceipt} onApprove={handleApprove} onReject={handleReject} />
         </div>
       </div>
 
