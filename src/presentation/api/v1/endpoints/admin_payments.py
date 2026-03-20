@@ -220,21 +220,79 @@ async def mark_paid(
             model.admin_note = payload.admin_note
             model.updated_at = datetime.now(timezone.utc)
 
-            # KR-033: Update linked mission status when payment is approved
+            # KR-033 + KR-015: Auto-dispatch pilot after payment approval
             if model.target_type == "MISSION" and model.target_id:
                 from src.infrastructure.persistence.sqlalchemy.models.mission_model import MissionModel
+                from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel
+                from src.infrastructure.persistence.sqlalchemy.models.pilot_model import (
+                    MissionAssignmentModel,
+                    PilotModel,
+                    PilotServiceAreaModel,
+                )
 
                 mission_result = await session.execute(
                     select(MissionModel).where(MissionModel.mission_id == model.target_id)
                 )
                 mission = mission_result.scalar_one_or_none()
+
                 if mission and mission.status == "PLANNED":
-                    mission.status = "ASSIGNED"
-                    _RECEIPT_LOGGER.warning(
-                        "MISSION.AUTO_ASSIGNED mission=%s after payment=%s approved",
-                        model.target_id,
-                        payment_id,
+                    # Look up field province for region matching
+                    field_province = None
+                    field_area_donum = 0
+                    field_result = await session.execute(
+                        select(FieldModel.province, FieldModel.area_donum).where(
+                            FieldModel.field_id == mission.field_id
+                        )
                     )
+                    field_row = field_result.one_or_none()
+                    if field_row:
+                        field_province = field_row.province
+                        field_area_donum = int(field_row.area_donum)
+
+                    # Find eligible pilots: active + matching province via service_areas
+                    assigned_pilot_id = None
+                    if field_province:
+                        pilot_stmt = (
+                            select(PilotModel)
+                            .join(PilotServiceAreaModel, PilotModel.pilot_id == PilotServiceAreaModel.pilot_id)
+                            .where(PilotModel.is_active.is_(True))
+                            .where(PilotServiceAreaModel.province == field_province)
+                            .order_by(PilotModel.reliability_score.desc())
+                        )
+                        pilot_result = await session.execute(pilot_stmt)
+                        eligible_pilots = pilot_result.scalars().unique().all()
+
+                        # Pick first pilot with enough capacity
+                        for pilot in eligible_pilots:
+                            if pilot.daily_capacity_donum >= field_area_donum:
+                                assigned_pilot_id = pilot.pilot_id
+                                # Create mission_assignment record
+                                assignment = MissionAssignmentModel(
+                                    mission_id=model.target_id,
+                                    pilot_id=pilot.pilot_id,
+                                    assignment_type="SYSTEM_SEED",
+                                    is_current=True,
+                                )
+                                session.add(assignment)
+                                break
+
+                    # Update mission status
+                    mission.status = "ASSIGNED"
+                    if assigned_pilot_id:
+                        _RECEIPT_LOGGER.warning(
+                            "MISSION.AUTO_DISPATCHED mission=%s pilot=%s payment=%s province=%s",
+                            model.target_id,
+                            assigned_pilot_id,
+                            payment_id,
+                            field_province,
+                        )
+                    else:
+                        _RECEIPT_LOGGER.warning(
+                            "MISSION.ASSIGNED_NO_PILOT mission=%s payment=%s province=%s — no eligible pilot found",
+                            model.target_id,
+                            payment_id,
+                            field_province,
+                        )
 
             await session.commit()
 
