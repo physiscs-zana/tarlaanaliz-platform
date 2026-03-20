@@ -124,6 +124,9 @@ class PaymentIntentResponse(BaseModel):
     created_at: datetime
     receipt_blob_id: str | None = None
     payer_display_name: str | None = None
+    payer_phone: str | None = None
+    payer_province: str | None = None
+    payer_district: str | None = None
     payment_ref: str | None = None
     sla_deadline: str | None = None
     sla_overdue: bool = False

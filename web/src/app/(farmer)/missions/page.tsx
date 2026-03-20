@@ -12,15 +12,38 @@ interface Mission {
   field_id: string;
   mission_date: string;
   status: string;
+  crop_type: string | null;
+  analysis_type: string | null;
   pilot_id: string | null;
 }
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   PLANNED: { label: "Planlandi", className: "bg-blue-100 text-blue-800" },
+  ASSIGNED: { label: "Atandi", className: "bg-indigo-100 text-indigo-800" },
+  ACKED: { label: "Kabul Edildi", className: "bg-cyan-100 text-cyan-800" },
   IN_PROGRESS: { label: "Devam Ediyor", className: "bg-amber-100 text-amber-800" },
+  FLOWN: { label: "Ucus Tamamlandi", className: "bg-teal-100 text-teal-800" },
+  UPLOADED: { label: "Yuklendi", className: "bg-violet-100 text-violet-800" },
+  ANALYZING: { label: "Analiz Ediliyor", className: "bg-purple-100 text-purple-800" },
+  DONE: { label: "Tamamlandi", className: "bg-emerald-100 text-emerald-800" },
   COMPLETED: { label: "Tamamlandi", className: "bg-emerald-100 text-emerald-800" },
   FAILED: { label: "Basarisiz", className: "bg-rose-100 text-rose-800" },
   CANCELLED: { label: "Iptal Edildi", className: "bg-slate-100 text-slate-600" },
+};
+
+const CROP_LABELS: Record<string, string> = {
+  PAMUK: "Pamuk",
+  BUGDAY: "Bugday",
+  MISIR: "Misir",
+  COTTON: "Pamuk",
+  WHEAT: "Bugday",
+  CORN: "Misir",
+};
+
+const ANALYSIS_LABELS: Record<string, string> = {
+  MULTISPECTRAL: "Multispektral",
+  THERMAL: "Termal",
+  RGB: "RGB",
 };
 
 export default function FarmerMissionsPage() {
@@ -58,7 +81,7 @@ export default function FarmerMissionsPage() {
 
   return (
     <section className="space-y-4">
-      <h1 className="text-2xl font-semibold">Analizler</h1>
+      <h1 className="text-2xl font-semibold">Analizlerim</h1>
 
       {error && (
         <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</div>
@@ -68,22 +91,28 @@ export default function FarmerMissionsPage() {
         <div className="py-12 text-center text-sm text-slate-500">Yukleniyor...</div>
       ) : missions.length === 0 ? (
         <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 py-16 text-center">
-          <p className="text-lg font-medium text-slate-500">HENUZ VERI-BILGI BULUNMAMAKTADIR</p>
+          <p className="text-lg font-medium text-slate-500">HENUZ ANALIZ TALEBI BULUNMAMAKTADIR</p>
           <p className="mt-2 text-sm text-slate-400">Tarlaniz icin analiz talebi olusturdugunuzda burada listelenecektir.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {missions.map((m) => {
             const statusInfo = STATUS_LABELS[m.status] ?? { label: m.status, className: "bg-slate-100 text-slate-600" };
+            const cropLabel = m.crop_type ? (CROP_LABELS[m.crop_type] ?? m.crop_type) : null;
+            const analysisLabel = m.analysis_type ? (ANALYSIS_LABELS[m.analysis_type] ?? m.analysis_type) : null;
             return (
-              <div key={m.mission_id} className="rounded-lg border border-slate-200 bg-white p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-900">Analiz #{m.mission_id.slice(0, 8)}</p>
-                  <p className="text-xs text-slate-500">Tarih: {m.mission_date}</p>
+              <div key={m.mission_id} className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-slate-900">Analiz #{m.mission_id.slice(0, 8)}</p>
+                  <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusInfo.className}`}>
+                    {statusInfo.label}
+                  </span>
                 </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusInfo.className}`}>
-                  {statusInfo.label}
-                </span>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                  <span>Tarih: {m.mission_date}</span>
+                  {cropLabel && <span>Urun: {cropLabel}</span>}
+                  {analysisLabel && <span>Analiz Tipi: {analysisLabel}</span>}
+                </div>
               </div>
             );
           })}

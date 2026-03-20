@@ -25,6 +25,8 @@ class MissionResponse(BaseModel):
     field_id: str
     mission_date: date
     status: str
+    crop_type: str | None = None
+    analysis_type: str | None = None
     pilot_id: str | None = None
     subscription_id: str | None = None
 
@@ -134,6 +136,8 @@ async def list_missions(request: Request) -> list[MissionResponse]:
             field_id=str(m.field_id),
             mission_date=(m.planned_at or m.created_at).date(),
             status=m.status,
+            crop_type=m.crop_type,
+            analysis_type=m.analysis_type,
         )
         for m in models
     ]
