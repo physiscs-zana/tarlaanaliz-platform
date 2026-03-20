@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getApiBaseUrl, getTokenFromCookie } from "@/lib/api";
 
 interface PaymentItem {
@@ -24,6 +24,17 @@ interface PaymentItem {
   sla_overdue: boolean;
 }
 
+interface ReceiptModalState {
+  open: boolean;
+  loading: boolean;
+  error: string | null;
+  blobUrl: string | null;
+  blobId: string | null;
+  isPdf: boolean;
+  payerName: string | null;
+  paymentRef: string | null;
+}
+
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   PENDING_RECEIPT: { label: "Dekont Bekleniyor", className: "bg-amber-50 text-amber-700" },
   PENDING_ADMIN_REVIEW: { label: "Admin Onay Bekliyor", className: "bg-blue-50 text-blue-700" },
@@ -40,14 +51,137 @@ function formatAmount(kurus: number): string {
 
 function maskPhone(phone: string | null): string {
   if (!phone) return "\u2014";
-  // Show first 4 and last 2 digits: 0532***78
   if (phone.length >= 10) {
     return phone.slice(0, 4) + "***" + phone.slice(-2);
   }
   return phone;
 }
 
-function PaymentTable({ payments, title, emptyMsg }: { payments: PaymentItem[]; title: string; emptyMsg: string }) {
+/* ─── Receipt Modal ─── */
+
+function ReceiptModal({
+  state,
+  onClose,
+}: {
+  readonly state: ReceiptModalState;
+  readonly onClose: () => void;
+}) {
+  const [zoom, setZoom] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!state.open) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [state.open, onClose]);
+
+  // Reset zoom on new receipt
+  useEffect(() => { setZoom(1); }, [state.blobUrl]);
+
+  if (!state.open) return null;
+
+  const handleDownload = () => {
+    if (!state.blobUrl || !state.blobId) return;
+    const a = document.createElement("a");
+    a.href = state.blobUrl;
+    a.download = state.blobId;
+    a.click();
+  };
+
+  const zoomIn = () => setZoom((z) => Math.min(z + 0.25, 3));
+  const zoomOut = () => setZoom((z) => Math.max(z - 0.25, 0.5));
+  const zoomReset = () => setZoom(1);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="relative mx-4 flex max-h-[90vh] w-full max-w-4xl flex-col rounded-xl bg-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
+          <div>
+            <h3 className="text-base font-semibold text-slate-900">Dekont Goruntuleme</h3>
+            <p className="text-xs text-slate-500">
+              {state.payerName ?? ""} {state.paymentRef ? `— ${state.paymentRef}` : ""}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Zoom controls */}
+            {!state.isPdf && state.blobUrl && (
+              <div className="flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1">
+                <button type="button" onClick={zoomOut} className="text-sm text-slate-600 hover:text-slate-900 px-1" title="Kucult">−</button>
+                <button type="button" onClick={zoomReset} className="text-xs text-slate-500 hover:text-slate-900 px-1 min-w-[3rem] text-center" title="Sifirla">
+                  {Math.round(zoom * 100)}%
+                </button>
+                <button type="button" onClick={zoomIn} className="text-sm text-slate-600 hover:text-slate-900 px-1" title="Buyut">+</button>
+              </div>
+            )}
+            {/* Download */}
+            {state.blobUrl && (
+              <button
+                type="button"
+                onClick={handleDownload}
+                className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 transition"
+              >
+                Indir
+              </button>
+            )}
+            {/* Close */}
+            <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-2 py-1 text-sm text-slate-500 hover:bg-slate-50 transition" title="Kapat">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div ref={containerRef} className="flex-1 overflow-auto bg-slate-100 p-4">
+          {state.loading && (
+            <div className="flex h-64 items-center justify-center text-sm text-slate-500">Dekont yukleniyor...</div>
+          )}
+          {state.error && (
+            <div className="flex h-64 items-center justify-center text-sm text-rose-600">{state.error}</div>
+          )}
+          {state.blobUrl && !state.loading && !state.error && (
+            state.isPdf ? (
+              <iframe
+                src={state.blobUrl}
+                title="Dekont PDF"
+                className="h-[70vh] w-full rounded border border-slate-200 bg-white"
+              />
+            ) : (
+              <div className="flex justify-center overflow-auto">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={state.blobUrl}
+                  alt="Dekont"
+                  className="rounded border border-slate-200 shadow-sm transition-transform duration-150"
+                  style={{ transform: `scale(${zoom})`, transformOrigin: "top center" }}
+                />
+              </div>
+            )
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Payment Table ─── */
+
+function PaymentTable({
+  payments,
+  title,
+  emptyMsg,
+  onViewReceipt,
+}: {
+  payments: PaymentItem[];
+  title: string;
+  emptyMsg: string;
+  onViewReceipt: (p: PaymentItem) => void;
+}) {
   if (payments.length === 0) {
     return (
       <div className="rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 py-8 text-center">
@@ -84,7 +218,13 @@ function PaymentTable({ payments, title, emptyMsg }: { payments: PaymentItem[]; 
                 <td className="px-3 py-2 text-xs font-medium">{formatAmount(p.amount)}</td>
                 <td className="px-3 py-2">
                   {p.receipt_blob_id ? (
-                    <span className="inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Yuklendi</span>
+                    <button
+                      type="button"
+                      onClick={() => onViewReceipt(p)}
+                      className="inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 underline hover:bg-emerald-100 transition cursor-pointer"
+                    >
+                      Goruntule
+                    </button>
                   ) : (
                     <span className="inline-block rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">Bekleniyor</span>
                   )}
@@ -111,10 +251,65 @@ function PaymentTable({ payments, title, emptyMsg }: { payments: PaymentItem[]; 
   );
 }
 
+/* ─── Page ─── */
+
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState<PaymentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [modal, setModal] = useState<ReceiptModalState>({
+    open: false,
+    loading: false,
+    error: null,
+    blobUrl: null,
+    blobId: null,
+    isPdf: false,
+    payerName: null,
+    paymentRef: null,
+  });
+
+  const closeModal = useCallback(() => {
+    setModal((prev) => {
+      if (prev.blobUrl) URL.revokeObjectURL(prev.blobUrl);
+      return { open: false, loading: false, error: null, blobUrl: null, blobId: null, isPdf: false, payerName: null, paymentRef: null };
+    });
+  }, []);
+
+  const openReceipt = useCallback(async (p: PaymentItem) => {
+    if (!p.receipt_blob_id) return;
+    const token = getTokenFromCookie();
+    if (!token) return;
+
+    const isPdf = p.receipt_blob_id.toLowerCase().endsWith(".pdf");
+
+    setModal({
+      open: true,
+      loading: true,
+      error: null,
+      blobUrl: null,
+      blobId: p.receipt_blob_id,
+      isPdf,
+      payerName: p.payer_display_name,
+      paymentRef: p.payment_ref,
+    });
+
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/admin/payments/receipts/${encodeURIComponent(p.receipt_blob_id)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        setModal((prev) => ({ ...prev, loading: false, error: "Dekont dosyasi yuklenemedi." }));
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setModal((prev) => ({ ...prev, loading: false, blobUrl: url }));
+    } catch {
+      setModal((prev) => ({ ...prev, loading: false, error: "Baglanti hatasi." }));
+    }
+  }, []);
 
   const fetchPayments = useCallback(async () => {
     const token = getTokenFromCookie();
@@ -146,11 +341,11 @@ export default function AdminPaymentsPage() {
       <div className="space-y-6">
         <div className="space-y-2">
           <h2 className="text-sm font-semibold text-slate-700">Havale / EFT</h2>
-          <PaymentTable payments={eftPayments} title="EFT" emptyMsg="Bekleyen EFT odemesi yok." />
+          <PaymentTable payments={eftPayments} title="EFT" emptyMsg="Bekleyen EFT odemesi yok." onViewReceipt={openReceipt} />
         </div>
         <div className="space-y-2">
           <h2 className="text-sm font-semibold text-slate-700">Kredi Karti</h2>
-          <PaymentTable payments={cardPayments} title="Kredi Karti" emptyMsg="Kredi karti odemesi henuz aktif degil." />
+          <PaymentTable payments={cardPayments} title="Kredi Karti" emptyMsg="Kredi karti odemesi henuz aktif degil." onViewReceipt={openReceipt} />
         </div>
       </div>
 
@@ -160,6 +355,9 @@ export default function AdminPaymentsPage() {
           <p className="mt-1 text-sm text-slate-400">Ciftciler odeme olusturduklarinda burada gorunecektir.</p>
         </div>
       )}
+
+      {/* Receipt Viewer Modal */}
+      <ReceiptModal state={modal} onClose={closeModal} />
     </section>
   );
 }
