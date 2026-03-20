@@ -219,6 +219,23 @@ async def mark_paid(
             model.approved_at = model.paid_at
             model.admin_note = payload.admin_note
             model.updated_at = datetime.now(timezone.utc)
+
+            # KR-033: Update linked mission status when payment is approved
+            if model.target_type == "MISSION" and model.target_id:
+                from src.infrastructure.persistence.sqlalchemy.models.mission_model import MissionModel
+
+                mission_result = await session.execute(
+                    select(MissionModel).where(MissionModel.mission_id == model.target_id)
+                )
+                mission = mission_result.scalar_one_or_none()
+                if mission and mission.status == "PLANNED":
+                    mission.status = "ASSIGNED"
+                    _RECEIPT_LOGGER.warning(
+                        "MISSION.AUTO_ASSIGNED mission=%s after payment=%s approved",
+                        model.target_id,
+                        payment_id,
+                    )
+
             await session.commit()
 
         audit.publish(

@@ -470,9 +470,32 @@ async def simple_upload_receipt(
             else:
                 # No existing intent — create one with receipt already attached
                 import sqlalchemy as sa
+                from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel
 
                 payment_intent_id = _uuid.uuid4()
                 payment_ref = f"PAY-{now.strftime('%Y%m%d')}-{_uuid.uuid4().hex[:6].upper()}"
+
+                # Calculate price from field area and pricing config
+                amount_kurus = 0
+                if field_uuid:
+                    try:
+                        from src.presentation.api.v1.endpoints.admin_pricing import _read_config
+
+                        field_result = await session.execute(
+                            sa.select(FieldModel.area_m2, FieldModel.crop_type).where(FieldModel.field_id == field_uuid)
+                        )
+                        field_row = field_result.one_or_none()
+                        if field_row:
+                            cfg = _read_config()
+                            crops = cfg.get("crops", [])
+                            crop_code = field_row.crop_type or "PAMUK"
+                            crop_cfg = next((c for c in crops if c.get("code") == crop_code), None)
+                            if crop_cfg:
+                                area_ha = float(field_row.area_m2) / 10000
+                                price_per_ha = crop_cfg.get("single_price", 250)
+                                amount_kurus = round(area_ha * price_per_ha * 100)
+                    except Exception as exc:
+                        _LOGGER.warning("RECEIPT.PRICE_CALC_FAILED field=%s error=%s", field_uuid, exc)
 
                 # Look up price_snapshot if exists
                 ps_result = await session.execute(sa.text("SELECT price_snapshot_id FROM price_snapshots LIMIT 1"))
@@ -483,7 +506,7 @@ async def simple_upload_receipt(
                     payer_user_id=payer_uuid,
                     target_type="MISSION",
                     target_id=field_uuid or _uuid.uuid4(),
-                    amount_kurus=0,  # Will be set by admin during review
+                    amount_kurus=amount_kurus,
                     currency="TRY",
                     method="IBAN_TRANSFER",
                     status="PENDING_ADMIN_REVIEW",

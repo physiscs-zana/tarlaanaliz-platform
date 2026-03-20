@@ -42,7 +42,23 @@ class MissionModel(Base):
         nullable=False,
     )
     analysis_type: Mapped[str] = mapped_column(String(50), nullable=False, default="MULTISPECTRAL")
-    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default=text("'PLANNED'"))
+    status: Mapped[str] = mapped_column(
+        ENUM(
+            "PLANNED",
+            "ASSIGNED",
+            "ACKED",
+            "FLOWN",
+            "UPLOADED",
+            "ANALYZING",
+            "DONE",
+            "FAILED",
+            "CANCELLED",
+            name="mission_status",
+            create_type=False,
+        ),
+        nullable=False,
+        server_default=text("'PLANNED'"),
+    )
     planned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     flown_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
