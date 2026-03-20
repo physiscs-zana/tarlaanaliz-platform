@@ -24,10 +24,13 @@ logger = logging.getLogger(__name__)
 class PaymentStatus(str, Enum):
     """Payment states for KR-033 flow (HTTP-layer projection)."""
 
+    PAYMENT_PENDING = "PAYMENT_PENDING"
     PENDING_RECEIPT = "PENDING_RECEIPT"
     PENDING_ADMIN_REVIEW = "PENDING_ADMIN_REVIEW"
-    REJECTED = "REJECTED"
     PAID = "PAID"  # KR-033: set only after manual admin approval.
+    REJECTED = "REJECTED"
+    CANCELLED = "CANCELLED"
+    REFUNDED = "REFUNDED"
 
 
 # NOTE: Matches core.domain.value_objects.qc_status.QCStatus exactly.
