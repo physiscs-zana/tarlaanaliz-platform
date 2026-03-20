@@ -56,7 +56,7 @@ function CopyButton({ text }: { readonly text: string }) {
   );
 }
 
-function ReceiptUpload({ fieldId }: { readonly fieldId: string }) {
+function ReceiptUpload({ fieldId, onUploadSuccess }: { readonly fieldId: string; readonly onUploadSuccess?: () => void }) {
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -89,6 +89,7 @@ function ReceiptUpload({ fieldId }: { readonly fieldId: string }) {
 
       if (res.ok) {
         setResult({ type: 'ok', text: 'Dekont yuklendi. Merkez Yonetim tarafindan onaylanacaktir.' });
+        onUploadSuccess?.();
       } else {
         const body = await res.json().catch(() => ({}));
         setResult({ type: 'err', text: (body as { detail?: string }).detail || 'Yuklenemedi.' });
@@ -229,6 +230,21 @@ export default function FarmerPaymentsPage() {
     setReceiptsLoading(false);
   }, []);
 
+  const refreshReceipts = useCallback(async () => {
+    const token = getTokenFromCookie();
+    if (!token) return;
+    const baseUrl = getApiBaseUrl();
+    try {
+      const res = await fetch(`${baseUrl}/payments/my-status`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { payments: MyReceipt[] };
+        setReceipts(data.payments ?? []);
+      }
+    } catch { /* noop */ }
+  }, []);
+
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const selectedField = fields.find((f) => f.field_id === selectedFieldId);
@@ -302,7 +318,7 @@ export default function FarmerPaymentsPage() {
 
           {/* Dekont Yukleme */}
           {selectedFieldId && (
-            <ReceiptUpload fieldId={selectedFieldId} />
+            <ReceiptUpload fieldId={selectedFieldId} onUploadSuccess={refreshReceipts} />
           )}
 
           {/* Kredi karti uyarisi */}
