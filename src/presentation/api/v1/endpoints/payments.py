@@ -428,7 +428,9 @@ async def simple_upload_receipt(
                 await session.commit()
                 _LOGGER.info(
                     "RECEIPT.CREATED_INTENT intent=%s user=%s blob=%s",
-                    payment_intent_id, payer_uuid, safe_name,
+                    payment_intent_id,
+                    payer_uuid,
+                    safe_name,
                 )
     except Exception as exc:
         _LOGGER.error("RECEIPT.LINK_FAILED user=%s file=%s error=%s", user_id, safe_name, exc)

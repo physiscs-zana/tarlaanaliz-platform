@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/infrastructure/persistence/sqlalchemy/models/subscription_model.py
 # DESC: Subscription ORM modeli; subscriptions tablosunu ve KR-015/KR-027 alanlarını tanımlar.
 # SSOT: KR-027 (abonelik planlayici), KR-015-5 (tarama takvimi + reschedule token), KR-033 (odeme)
@@ -59,8 +60,14 @@ class SubscriptionModel(Base):
     # --- Temel alanlar (KR-027) ---
     crop_type: Mapped[str] = mapped_column(
         ENUM(
-            "PAMUK", "ANTEP_FISTIGI", "MISIR", "BUGDAY",
-            "AYCICEGI", "UZUM", "ZEYTIN", "KIRMIZI_MERCIMEK",
+            "PAMUK",
+            "ANTEP_FISTIGI",
+            "MISIR",
+            "BUGDAY",
+            "AYCICEGI",
+            "UZUM",
+            "ZEYTIN",
+            "KIRMIZI_MERCIMEK",
             name="crop_type",
             create_type=False,
         ),
