@@ -121,7 +121,9 @@ async def create_mission(request: Request, payload: MissionCreateRequest) -> Mis
 
             await session.commit()
 
-        _LOGGER.info("MISSION.CREATED mission=%s user=%s field=%s intent=%s", mission_id, user_id, field_id, payment_intent_id)
+        _LOGGER.info(
+            "MISSION.CREATED mission=%s user=%s field=%s intent=%s", mission_id, user_id, field_id, payment_intent_id
+        )
 
     except HTTPException:
         raise

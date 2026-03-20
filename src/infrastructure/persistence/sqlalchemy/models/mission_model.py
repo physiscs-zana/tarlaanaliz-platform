@@ -28,8 +28,14 @@ class MissionModel(Base):
     )
     crop_type: Mapped[str] = mapped_column(
         ENUM(
-            "PAMUK", "ANTEP_FISTIGI", "MISIR", "BUGDAY",
-            "AYCICEGI", "UZUM", "ZEYTIN", "KIRMIZI_MERCIMEK",
+            "PAMUK",
+            "ANTEP_FISTIGI",
+            "MISIR",
+            "BUGDAY",
+            "AYCICEGI",
+            "UZUM",
+            "ZEYTIN",
+            "KIRMIZI_MERCIMEK",
             name="crop_type",
             create_type=False,
         ),
