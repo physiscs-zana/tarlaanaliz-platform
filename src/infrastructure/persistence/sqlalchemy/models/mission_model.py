@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, String, text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ENUM, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.infrastructure.persistence.sqlalchemy.base import Base
@@ -26,7 +26,15 @@ class MissionModel(Base):
     requested_by_user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False
     )
-    crop_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    crop_type: Mapped[str] = mapped_column(
+        ENUM(
+            "PAMUK", "ANTEP_FISTIGI", "MISIR", "BUGDAY",
+            "AYCICEGI", "UZUM", "ZEYTIN", "KIRMIZI_MERCIMEK",
+            name="crop_type",
+            create_type=False,
+        ),
+        nullable=False,
+    )
     analysis_type: Mapped[str] = mapped_column(String(50), nullable=False, default="MULTISPECTRAL")
     status: Mapped[str] = mapped_column(String(20), nullable=False, server_default=text("'PLANNED'"))
     planned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

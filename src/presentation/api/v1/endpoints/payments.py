@@ -357,31 +357,81 @@ async def simple_upload_receipt(
 
     _LOGGER.info("RECEIPT.UPLOADED user=%s field=%s file=%s size=%d", user_id, field_id, safe_name, len(content))
 
-    # Update matching payment_intent with receipt_blob_id (find by payer + PAYMENT_PENDING status)
+    # Update matching payment_intent with receipt_blob_id, or create one if none exists
+    now = datetime.now(UTC)
+    receipt_meta = {
+        "filename": file.filename,
+        "size": len(content),
+        "content_type": file.content_type,
+    }
     try:
+        payer_uuid = _uuid.UUID(str(user_id))
+    except (ValueError, AttributeError):
+        _LOGGER.warning("RECEIPT.INVALID_USER_ID user=%s file=%s", user_id, safe_name)
+        return {"status": "uploaded", "filename": safe_name, "message": "Dekont yuklendi. Onay bekleniyor."}
+
+    try:
+        field_uuid: _uuid.UUID | None = None
+        try:
+            field_uuid = _uuid.UUID(field_id)
+        except ValueError:
+            pass
+
         async with get_async_session() as session:
+            # Try to find existing PAYMENT_PENDING intent for this user
             stmt = (
                 select(PaymentIntentModel)
-                .where(PaymentIntentModel.payer_user_id == _uuid.UUID(str(user_id)))
-                .where(PaymentIntentModel.status == "PAYMENT_PENDING")
+                .where(PaymentIntentModel.payer_user_id == payer_uuid)
+                .where(PaymentIntentModel.status.in_(["PAYMENT_PENDING", "PENDING_RECEIPT"]))
                 .order_by(PaymentIntentModel.created_at.desc())
                 .limit(1)
             )
             result = await session.execute(stmt)
             model = result.scalar_one_or_none()
+
             if model is not None:
+                # Link receipt to existing intent
                 model.receipt_blob_id = safe_name
-                model.receipt_meta = {
-                    "filename": file.filename,
-                    "size": len(content),
-                    "content_type": file.content_type,
-                }
+                model.receipt_meta = receipt_meta
                 model.status = "PENDING_ADMIN_REVIEW"
-                model.updated_at = datetime.now(UTC)
+                model.updated_at = now
                 await session.commit()
                 _LOGGER.info("RECEIPT.LINKED intent=%s blob=%s", model.payment_intent_id, safe_name)
-    except Exception:
-        _LOGGER.warning("RECEIPT.LINK_FAILED user=%s file=%s — no matching intent found", user_id, safe_name)
+            else:
+                # No existing intent — create one with receipt already attached
+                import sqlalchemy as sa
+
+                payment_intent_id = _uuid.uuid4()
+                payment_ref = f"PAY-{now.strftime('%Y%m%d')}-{_uuid.uuid4().hex[:6].upper()}"
+
+                # Look up price_snapshot if exists
+                ps_result = await session.execute(sa.text("SELECT price_snapshot_id FROM price_snapshots LIMIT 1"))
+                ps_row = ps_result.scalar_one_or_none()
+
+                new_intent = PaymentIntentModel(
+                    payment_intent_id=payment_intent_id,
+                    payer_user_id=payer_uuid,
+                    target_type="MISSION",
+                    target_id=field_uuid or _uuid.uuid4(),
+                    amount_kurus=0,  # Will be set by admin during review
+                    currency="TRY",
+                    method="IBAN_TRANSFER",
+                    status="PENDING_ADMIN_REVIEW",
+                    payment_ref=payment_ref,
+                    price_snapshot_id=ps_row,
+                    receipt_blob_id=safe_name,
+                    receipt_meta=receipt_meta,
+                    created_at=now,
+                    updated_at=now,
+                )
+                session.add(new_intent)
+                await session.commit()
+                _LOGGER.info(
+                    "RECEIPT.CREATED_INTENT intent=%s user=%s blob=%s",
+                    payment_intent_id, payer_uuid, safe_name,
+                )
+    except Exception as exc:
+        _LOGGER.error("RECEIPT.LINK_FAILED user=%s file=%s error=%s", user_id, safe_name, exc)
 
     return {"status": "uploaded", "filename": safe_name, "message": "Dekont yuklendi. Onay bekleniyor."}
 
