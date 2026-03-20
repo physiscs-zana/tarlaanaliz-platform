@@ -8,6 +8,11 @@ from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldMo
 from src.infrastructure.persistence.sqlalchemy.models.mission_model import MissionModel
 from src.infrastructure.persistence.sqlalchemy.models.payment_intent_model import PaymentIntentModel
 from src.infrastructure.persistence.sqlalchemy.models.price_snapshot_model import PriceSnapshotModel
+from src.infrastructure.persistence.sqlalchemy.models.pilot_model import (
+    MissionAssignmentModel,
+    PilotModel,
+    PilotServiceAreaModel,
+)
 
 __all__ = [
     "UserModel",
@@ -16,4 +21,7 @@ __all__ = [
     "MissionModel",
     "PaymentIntentModel",
     "PriceSnapshotModel",
+    "PilotModel",
+    "PilotServiceAreaModel",
+    "MissionAssignmentModel",
 ]

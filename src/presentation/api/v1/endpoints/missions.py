@@ -100,13 +100,18 @@ async def create_mission(request: Request, payload: MissionCreateRequest) -> Mis
                     from src.presentation.api.v1.endpoints.admin_pricing import _read_config
 
                     cfg = _read_config()
-                    crops = cfg.get("crops", [])
+                    crops_raw = cfg.get("crops")
                     crop_code = payload.crop_type or (field_row.crop_type if field_row.crop_type else "PAMUK")
-                    crop_cfg = next((c for c in crops if c.get("code") == crop_code), None)
-                    if crop_cfg:
-                        area_ha = float(field_row.area_m2) / 10000
-                        price_per_ha = crop_cfg.get("single_price", 250)
-                        amount_kurus = round(area_ha * price_per_ha * 100)
+                    if isinstance(crops_raw, list):
+                        crop_cfg = next(
+                            (c for c in crops_raw if isinstance(c, dict) and c.get("code") == crop_code),
+                            None,
+                        )
+                        if isinstance(crop_cfg, dict):
+                            area_ha = float(field_row.area_m2) / 10000
+                            price_val = crop_cfg.get("single_price", 250)
+                            price_per_ha = float(price_val) if isinstance(price_val, (int, float)) else 250.0
+                            amount_kurus = round(area_ha * price_per_ha * 100)
             except Exception as exc:
                 _LOGGER.warning("MISSION.PRICE_CALC_FAILED field=%s error=%s", field_id, exc)
 

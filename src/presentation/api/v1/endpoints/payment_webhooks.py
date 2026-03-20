@@ -91,16 +91,103 @@ async def receive_provider_webhook(
 ) -> PaymentWebhookResponse:
     raw_body = await request.body()
     result = service.process(payload=payload, signature=x_provider_signature, raw_body=raw_body)
-    # KR-033 §8: PAYMENT.WEBHOOK_PAID audit event
-    if result.accepted:
+    # KR-033 §8: PAYMENT.WEBHOOK_PAID — update intent to PAID + auto-dispatch pilot
+    if result.accepted and payload.event_type in ("payment.success", "payment.completed", "PAID"):
         corr_id = getattr(request.state, "corr_id", None)
-        LOGGER.info(
-            "PAYMENT.WEBHOOK_PAID",
-            extra={
-                "event": "PAYMENT.WEBHOOK_PAID",
-                "provider_event_id": payload.provider_event_id,
-                "payment_intent_id": payload.payment_intent_id,
-                "corr_id": corr_id,
-            },
+        LOGGER.warning(
+            "PAYMENT.WEBHOOK_PAID intent=%s event=%s",
+            payload.payment_intent_id,
+            payload.event_type,
         )
+        try:
+            import uuid as _uuid
+            from datetime import datetime, timezone
+
+            from sqlalchemy import select as sa_select
+            from sqlalchemy.orm import selectinload
+
+            from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel
+            from src.infrastructure.persistence.sqlalchemy.models.mission_model import MissionModel
+            from src.infrastructure.persistence.sqlalchemy.models.payment_intent_model import PaymentIntentModel
+            from src.infrastructure.persistence.sqlalchemy.models.pilot_model import (
+                MissionAssignmentModel,
+                PilotModel,
+                PilotServiceAreaModel,
+            )
+            from src.infrastructure.persistence.sqlalchemy.session import get_async_session
+
+            async with get_async_session() as session:
+                # Find and update payment intent
+                intent_result = await session.execute(
+                    sa_select(PaymentIntentModel).where(
+                        PaymentIntentModel.payment_intent_id == _uuid.UUID(payload.payment_intent_id)
+                    )
+                )
+                intent = intent_result.scalar_one_or_none()
+                if intent and intent.status != "PAID":
+                    now = datetime.now(timezone.utc)
+                    intent.status = "PAID"
+                    intent.paid_at = now
+                    intent.updated_at = now
+
+                    # Auto-dispatch pilot for linked mission
+                    if intent.target_type == "MISSION" and intent.target_id:
+                        mission_result = await session.execute(
+                            sa_select(MissionModel).where(MissionModel.mission_id == intent.target_id)
+                        )
+                        mission = mission_result.scalar_one_or_none()
+
+                        if mission and mission.status == "PLANNED":
+                            field_province = None
+                            field_area_donum = 0
+                            field_result = await session.execute(
+                                sa_select(FieldModel.province, FieldModel.area_donum).where(
+                                    FieldModel.field_id == mission.field_id
+                                )
+                            )
+                            field_row = field_result.one_or_none()
+                            if field_row:
+                                field_province = field_row.province
+                                field_area_donum = int(field_row.area_donum)
+
+                            assigned_pilot_id = None
+                            if field_province:
+                                pilot_stmt = (
+                                    sa_select(PilotModel)
+                                    .join(
+                                        PilotServiceAreaModel,
+                                        PilotModel.pilot_id == PilotServiceAreaModel.pilot_id,
+                                    )
+                                    .where(PilotModel.is_active.is_(True))
+                                    .where(PilotServiceAreaModel.province == field_province)
+                                    .order_by(PilotModel.reliability_score.desc())
+                                )
+                                pilot_result = await session.execute(pilot_stmt)
+                                eligible_pilots = pilot_result.scalars().unique().all()
+
+                                for pilot in eligible_pilots:
+                                    if pilot.daily_capacity_donum >= field_area_donum:
+                                        assigned_pilot_id = pilot.pilot_id
+                                        session.add(
+                                            MissionAssignmentModel(
+                                                mission_id=intent.target_id,
+                                                pilot_id=pilot.pilot_id,
+                                                assignment_type="SYSTEM_SEED",
+                                                is_current=True,
+                                            )
+                                        )
+                                        break
+
+                            mission.status = "ASSIGNED"
+                            LOGGER.warning(
+                                "WEBHOOK.AUTO_DISPATCHED mission=%s pilot=%s province=%s",
+                                intent.target_id,
+                                assigned_pilot_id,
+                                field_province,
+                            )
+
+                    await session.commit()
+        except Exception as exc:
+            LOGGER.error("WEBHOOK.DISPATCH_FAILED intent=%s error=%s", payload.payment_intent_id, exc)
+
     return result
