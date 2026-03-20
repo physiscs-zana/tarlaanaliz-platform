@@ -452,13 +452,9 @@ def get_current_user(request: Request) -> CurrentUser:
     if user_state is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
 
-    # JWT middleware sets user as AuthenticatedUser dataclass; convert to dict for Pydantic
+    # JWT middleware sets user as AuthenticatedUser dataclass + roles/permissions on request.state
     if isinstance(user_state, dict):
         user_dict = user_state
-    elif hasattr(user_state, "__dataclass_fields__"):
-        from dataclasses import asdict
-
-        user_dict = asdict(user_state)
     else:
         user_dict = {
             "user_id": getattr(user_state, "user_id", None) or getattr(user_state, "subject", None) or "",
