@@ -14,7 +14,7 @@ import uuid
 from datetime import date, datetime
 
 from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ENUM, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.infrastructure.persistence.sqlalchemy.base import Base
@@ -57,7 +57,15 @@ class SubscriptionModel(Base):
     )
 
     # --- Temel alanlar (KR-027) ---
-    crop_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    crop_type: Mapped[str] = mapped_column(
+        ENUM(
+            "PAMUK", "ANTEP_FISTIGI", "MISIR", "BUGDAY",
+            "AYCICEGI", "UZUM", "ZEYTIN", "KIRMIZI_MERCIMEK",
+            name="crop_type",
+            create_type=False,
+        ),
+        nullable=False,
+    )
     analysis_type: Mapped[str] = mapped_column(String(50), nullable=False)
     interval_days: Mapped[int] = mapped_column(Integer, nullable=False)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
