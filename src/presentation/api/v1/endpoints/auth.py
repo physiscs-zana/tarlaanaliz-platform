@@ -179,7 +179,7 @@ class _InMemoryPhonePinAuthService:
                     model = result.scalar_one_or_none()
                     if model and model.roles:
                         all_roles = [str(r.role) for r in model.roles]
-                    _AUTH_LOGGER.info("AUTH.ROLES_LOADED phone=%s roles=%s", phone, all_roles)
+                    _AUTH_LOGGER.warning("AUTH.ROLES_LOADED phone=%s roles=%s", phone, all_roles)
         except Exception as exc:
             _AUTH_LOGGER.error("AUTH.DB_FAILED phone=%s error=%s", phone, exc)
 
