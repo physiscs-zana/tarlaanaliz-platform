@@ -288,6 +288,76 @@ def upload_receipt(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error") from exc
 
 
+@router.get("/my-status")
+async def get_my_payment_status(
+    request: Request,
+    user: CurrentUser = Depends(get_current_user),
+) -> dict[str, object]:
+    """Farmer payment status summary + analysis schedule (KR-033).
+
+    Returns all payment intents for the current user with status tracking
+    and estimated analysis start dates.
+    """
+    user_id = _uuid.UUID(user.user_id)
+
+    intents: list[dict[str, object]] = []
+    try:
+        async with get_async_session() as session:
+            result = await session.execute(
+                select(PaymentIntentModel)
+                .where(PaymentIntentModel.payer_user_id == user_id)
+                .order_by(PaymentIntentModel.created_at.desc())
+            )
+            models = result.scalars().all()
+
+            for m in models:
+                # Determine status message and analysis schedule
+                status_msg = ""
+                analysis_info = None
+                if m.status == "PAYMENT_PENDING":
+                    status_msg = "Odeme bekleniyor. Lutfen EFT/havale yapip dekontu yukleyiniz."
+                elif m.status == "PENDING_ADMIN_REVIEW":
+                    status_msg = "Dekontunuz inceleniyor. En gec 1 is gunu icinde onaylanacaktir."
+                elif m.status == "PAID":
+                    status_msg = "Odemeniz onaylandi. Analiz surecine alindiniz."
+                    analysis_info = {
+                        "message": "Analiz tahmini baslangic: odeme onayi sonrasi 3-7 is gunu.",
+                        "estimated_days": 7,
+                        "approved_at": m.approved_at.isoformat() if m.approved_at else None,
+                    }
+                elif m.status == "REJECTED":
+                    status_msg = f"Odemeniz reddedildi. Neden: {m.rejected_reason or 'Belirtilmedi'}"
+                elif m.status == "CANCELLED":
+                    status_msg = "Odeme iptal edildi."
+                elif m.status == "REFUNDED":
+                    status_msg = "Iadeniz gerceklestirildi."
+
+                intents.append(
+                    {
+                        "intent_id": str(m.payment_intent_id),
+                        "payment_ref": m.payment_ref,
+                        "amount_tl": m.amount_kurus / 100.0,
+                        "method": m.method,
+                        "status": m.status,
+                        "status_message": status_msg,
+                        "receipt_uploaded": m.receipt_blob_id is not None,
+                        "created_at": m.created_at.isoformat(),
+                        "analysis_schedule": analysis_info,
+                    }
+                )
+    except Exception:
+        pass
+
+    return {
+        "user_id": str(user_id),
+        "payments": intents,
+        "analysis_calendar": {
+            "note": "Analiz, odeme onayi sonrasi planlanan ucus takvime gore baslar.",
+            "typical_turnaround_days": "3-7 is gunu (ucus + islem)",
+        },
+    }
+
+
 @router.get("/{intent_id}", response_model=PaymentIntentResponse)
 def get_payment_intent(
     intent_id: UUID,
@@ -436,77 +506,6 @@ async def simple_upload_receipt(
         _LOGGER.error("RECEIPT.LINK_FAILED user=%s file=%s error=%s", user_id, safe_name, exc)
 
     return {"status": "uploaded", "filename": safe_name, "message": "Dekont yuklendi. Onay bekleniyor."}
-
-
-@router.get("/my-status")
-async def get_my_payment_status(
-    request: Request,
-    user: CurrentUser = Depends(get_current_user),
-) -> dict[str, object]:
-    """Farmer payment status summary + analysis schedule (KR-033).
-
-    Returns all payment intents for the current user with status tracking
-    and estimated analysis start dates.
-    """
-    user_id = _uuid.UUID(user.user_id)
-
-    intents: list[dict[str, object]] = []
-    try:
-        async with get_async_session() as session:
-            result = await session.execute(
-                select(PaymentIntentModel)
-                .where(PaymentIntentModel.payer_user_id == user_id)
-                .order_by(PaymentIntentModel.created_at.desc())
-            )
-            models = result.scalars().all()
-
-            for m in models:
-                # Determine status message and analysis schedule
-                status_msg = ""
-                analysis_info = None
-                if m.status == "PAYMENT_PENDING":
-                    status_msg = "Odeme bekleniyor. Lutfen EFT/havale yapip dekontu yukleyiniz."
-                elif m.status == "PENDING_ADMIN_REVIEW":
-                    status_msg = "Dekontunuz inceleniyor. En gec 1 is gunu icinde onaylanacaktir."
-                elif m.status == "PAID":
-                    status_msg = "Odemeniz onaylandi. Analiz surecine alindiniz."
-                    # Estimated analysis schedule: 3-7 business days after approval
-                    analysis_info = {
-                        "message": "Analiz tahmini baslangic: odeme onayi sonrasi 3-7 is gunu.",
-                        "estimated_days": 7,
-                        "approved_at": m.approved_at.isoformat() if m.approved_at else None,
-                    }
-                elif m.status == "REJECTED":
-                    status_msg = f"Odemeniz reddedildi. Neden: {m.rejected_reason or 'Belirtilmedi'}"
-                elif m.status == "CANCELLED":
-                    status_msg = "Odeme iptal edildi."
-                elif m.status == "REFUNDED":
-                    status_msg = "Iadeniz gerceklestirildi."
-
-                intents.append(
-                    {
-                        "intent_id": str(m.payment_intent_id),
-                        "payment_ref": m.payment_ref,
-                        "amount_tl": m.amount_kurus / 100.0,
-                        "method": m.method,
-                        "status": m.status,
-                        "status_message": status_msg,
-                        "receipt_uploaded": m.receipt_blob_id is not None,
-                        "created_at": m.created_at.isoformat(),
-                        "analysis_schedule": analysis_info,
-                    }
-                )
-    except Exception:
-        pass
-
-    return {
-        "user_id": str(user_id),
-        "payments": intents,
-        "analysis_calendar": {
-            "note": "Analiz, odeme onayi sonrasi planlanan ucus takvime gore baslar.",
-            "typical_turnaround_days": "3-7 is gunu (ucus + islem)",
-        },
-    }
 
 
 __all__ = ["router"]
