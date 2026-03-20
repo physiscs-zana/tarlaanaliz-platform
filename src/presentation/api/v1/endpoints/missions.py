@@ -100,7 +100,7 @@ async def create_mission(request: Request, payload: MissionCreateRequest) -> Mis
                     from src.presentation.api.v1.endpoints.admin_pricing import _read_config
 
                     cfg = _read_config()
-                    crops = cfg.get("crops", [])
+                    crops: list[dict[str, object]] = list(cfg.get("crops", []))  # type: ignore[arg-type]
                     crop_code = payload.crop_type or (field_row.crop_type if field_row.crop_type else "PAMUK")
                     crop_cfg = next((c for c in crops if c.get("code") == crop_code), None)
                     if crop_cfg:

@@ -487,7 +487,7 @@ async def simple_upload_receipt(
                         field_row = field_result.one_or_none()
                         if field_row:
                             cfg = _read_config()
-                            crops = cfg.get("crops", [])
+                            crops: list[dict[str, object]] = list(cfg.get("crops", []))  # type: ignore[arg-type]
                             crop_code = field_row.crop_type or "PAMUK"
                             crop_cfg = next((c for c in crops if c.get("code") == crop_code), None)
                             if crop_cfg:
