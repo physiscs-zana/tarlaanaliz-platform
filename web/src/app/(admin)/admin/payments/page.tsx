@@ -16,6 +16,9 @@ interface PaymentItem {
   created_at: string;
   receipt_blob_id: string | null;
   payer_display_name: string | null;
+  payer_phone: string | null;
+  payer_province: string | null;
+  payer_district: string | null;
   payment_ref: string | null;
   sla_deadline: string | null;
   sla_overdue: boolean;
@@ -35,6 +38,15 @@ function formatAmount(kurus: number): string {
   return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(kurus / 100);
 }
 
+function maskPhone(phone: string | null): string {
+  if (!phone) return "\u2014";
+  // Show first 4 and last 2 digits: 0532***78
+  if (phone.length >= 10) {
+    return phone.slice(0, 4) + "***" + phone.slice(-2);
+  }
+  return phone;
+}
+
 function PaymentTable({ payments, title, emptyMsg }: { payments: PaymentItem[]; title: string; emptyMsg: string }) {
   if (payments.length === 0) {
     return (
@@ -44,12 +56,14 @@ function PaymentTable({ payments, title, emptyMsg }: { payments: PaymentItem[]; 
     );
   }
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+    <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
       <table className="w-full text-sm">
         <thead className="border-b border-slate-100 bg-slate-50">
           <tr>
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Referans</th>
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Ciftci</th>
+            <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Telefon</th>
+            <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Il / Ilce</th>
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Tutar</th>
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Dekont</th>
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Durum</th>
@@ -60,10 +74,13 @@ function PaymentTable({ payments, title, emptyMsg }: { payments: PaymentItem[]; 
         <tbody className="divide-y divide-slate-50">
           {payments.map((p) => {
             const si = STATUS_LABELS[p.status] ?? { label: p.status, className: "bg-slate-100 text-slate-600" };
+            const location = [p.payer_province, p.payer_district].filter(Boolean).join(" / ");
             return (
               <tr key={p.intent_id} className="hover:bg-slate-50">
                 <td className="px-3 py-2 font-mono text-xs">{p.payment_ref ?? p.intent_id.slice(0, 8)}</td>
                 <td className="px-3 py-2 text-xs text-slate-700">{p.payer_display_name ?? "\u2014"}</td>
+                <td className="px-3 py-2 text-xs text-slate-600">{maskPhone(p.payer_phone)}</td>
+                <td className="px-3 py-2 text-xs text-slate-600">{location || "\u2014"}</td>
                 <td className="px-3 py-2 text-xs font-medium">{formatAmount(p.amount)}</td>
                 <td className="px-3 py-2">
                   {p.receipt_blob_id ? (
@@ -126,7 +143,7 @@ export default function AdminPaymentsPage() {
       <h1 className="text-2xl font-semibold">Odeme Inceleme</h1>
       {error && <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</div>}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="space-y-6">
         <div className="space-y-2">
           <h2 className="text-sm font-semibold text-slate-700">Havale / EFT</h2>
           <PaymentTable payments={eftPayments} title="EFT" emptyMsg="Bekleyen EFT odemesi yok." />

@@ -92,6 +92,14 @@ def _model_to_response(m: PaymentIntentModel) -> PaymentIntentResponse:
         sla_deadline = deadline.isoformat()
         sla_overdue = datetime.now(timezone.utc) > deadline
 
+    payer_phone = None
+    payer_province = None
+    payer_district = None
+    if m.payer:
+        payer_phone = m.payer.phone
+        payer_province = m.payer.province
+        payer_district = m.payer.district
+
     return PaymentIntentResponse(
         intent_id=m.payment_intent_id,
         status=PaymentStatus(m.status)
@@ -104,6 +112,9 @@ def _model_to_response(m: PaymentIntentModel) -> PaymentIntentResponse:
         created_at=m.created_at,
         receipt_blob_id=m.receipt_blob_id,
         payer_display_name=payer_name,
+        payer_phone=payer_phone,
+        payer_province=payer_province,
+        payer_district=payer_district,
         payment_ref=m.payment_ref,
         sla_deadline=sla_deadline,
         sla_overdue=sla_overdue,
