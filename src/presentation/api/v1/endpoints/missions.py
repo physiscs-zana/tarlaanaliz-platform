@@ -89,7 +89,7 @@ async def create_mission(request: Request, payload: MissionCreateRequest) -> Mis
             from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel
             import sqlalchemy as sa
 
-            # Calculate price from field area and pricing config
+            # KR-022: Calculate price via domain PricebookCalculator
             amount_kurus = 0
             try:
                 field_result = await session.execute(
@@ -97,21 +97,10 @@ async def create_mission(request: Request, payload: MissionCreateRequest) -> Mis
                 )
                 field_row = field_result.one_or_none()
                 if field_row:
-                    from src.presentation.api.v1.endpoints.admin_pricing import _read_config
+                    from src.application.services.pricing_service import calculate_single_price
 
-                    cfg = _read_config()
-                    crops_raw = cfg.get("crops")
                     crop_code = payload.crop_type or (field_row.crop_type if field_row.crop_type else "PAMUK")
-                    if isinstance(crops_raw, list):
-                        crop_cfg = next(
-                            (c for c in crops_raw if isinstance(c, dict) and c.get("code") == crop_code),
-                            None,
-                        )
-                        if isinstance(crop_cfg, dict):
-                            area_ha = float(field_row.area_m2) / 10000
-                            price_val = crop_cfg.get("single_price", 250)
-                            price_per_ha = float(price_val) if isinstance(price_val, (int, float)) else 250.0
-                            amount_kurus = round(area_ha * price_per_ha * 100)
+                    amount_kurus = calculate_single_price(field_id, crop_code, float(field_row.area_m2))
             except Exception as exc:
                 _LOGGER.warning("MISSION.PRICE_CALC_FAILED field=%s error=%s", field_id, exc)
 
