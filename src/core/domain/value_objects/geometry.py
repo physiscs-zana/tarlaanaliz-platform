@@ -13,9 +13,9 @@ if TYPE_CHECKING:
     from shapely.geometry import shape as shapely_shape
 
 try:
-    from shapely.geometry import MultiPolygon, Point, Polygon  # noqa: F811
-    from shapely.geometry import mapping as shapely_mapping  # noqa: F811
-    from shapely.geometry import shape as shapely_shape  # noqa: F811
+    from shapely.geometry import MultiPolygon, Point, Polygon
+    from shapely.geometry import mapping as shapely_mapping
+    from shapely.geometry import shape as shapely_shape
 
     _HAS_SHAPELY = True
 except ImportError:
