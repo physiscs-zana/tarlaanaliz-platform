@@ -198,6 +198,47 @@ async def get_my_capacity(request: Request) -> dict[str, object]:
     return {"work_days": [], "daily_capacity_donum": 2750, "locked": False}
 
 
+class PilotMissionResponse(BaseModel):
+    """Mission assigned to pilot via mission_assignments."""
+
+    mission_id: str
+    field_id: str
+    mission_date: str
+    status: str
+    crop_type: str | None = None
+    analysis_type: str | None = None
+
+
+@router.get("/me/missions", response_model=list[PilotMissionResponse])
+async def get_my_missions(request: Request) -> list[PilotMissionResponse]:
+    """Return missions assigned to the authenticated pilot."""
+    user_id = _get_pilot_user_id(request)
+    from sqlalchemy import select
+    from src.infrastructure.persistence.sqlalchemy.repositories.mission_repository_impl import MissionRepositoryImpl
+
+    async with get_async_session() as session:
+        # Resolve user_id → pilot_id
+        pilot_result = await session.execute(select(PilotModel).where(PilotModel.user_id == user_id))
+        pilot = pilot_result.scalar_one_or_none()
+        if pilot is None:
+            return []
+
+        repo = MissionRepositoryImpl(session)
+        models = await repo.list_by_pilot_id(pilot.pilot_id)
+
+    return [
+        PilotMissionResponse(
+            mission_id=str(m.mission_id),
+            field_id=str(m.field_id),
+            mission_date=(m.planned_at or m.created_at).date().isoformat(),
+            status=m.status,
+            crop_type=m.crop_type,
+            analysis_type=m.analysis_type,
+        )
+        for m in models
+    ]
+
+
 @router.put("/me/capacity")
 async def update_my_capacity(request: Request, payload: PilotCapacityUpdateRequest) -> dict[str, object]:
     """KR-015: Save pilot capacity (one-time). Creates pilot record if needed."""
