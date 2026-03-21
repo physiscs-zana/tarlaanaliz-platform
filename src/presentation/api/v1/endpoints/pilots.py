@@ -125,16 +125,154 @@ async def create_pilot(request: Request, payload: PilotCreateRequest) -> PilotRe
     )
 
 
-@router.get("/me/capacity", response_model=PilotCapacityResponse)
-async def get_my_capacity(request: Request) -> PilotCapacityResponse:
-    """KR-015: Default work days Mon-Sat, 2750 donum/day."""
+class PilotCapacityUpdateRequest(BaseModel):
+    work_days: list[str] = Field(min_length=1, max_length=6)
+    daily_capacity_donum: int = Field(ge=2500, le=3000)
+
+
+class PilotDroneResponse(BaseModel):
+    drone_model: str = ""
+    drone_serial: str = ""
+    sensor_type: str = ""
+    locked: bool = False
+
+
+class PilotDroneUpdateRequest(BaseModel):
+    drone_model: str = Field(min_length=1, max_length=100)
+    drone_serial: str = Field(min_length=1, max_length=100)
+    sensor_type: str = Field(default="", max_length=100)
+
+
+def _get_pilot_user_id(request: Request) -> _uuid.UUID:
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    return PilotCapacityResponse(
-        work_days=["Pazartesi", "Sali", "Carsamba", "Persembe", "Cuma", "Cumartesi"],
-        daily_capacity_donum=2750,
+    uid = getattr(user, "user_id", None) or getattr(user, "subject", None)
+    if not uid:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    return _uuid.UUID(str(uid))
+
+
+@router.get("/me/capacity")
+async def get_my_capacity(request: Request) -> dict[str, object]:
+    """KR-015: Get pilot's capacity — from pilots table if exists, else defaults."""
+    user_id = _get_pilot_user_id(request)
+    from sqlalchemy import select
+    from src.infrastructure.persistence.sqlalchemy.models.pilot_model import PilotModel
+
+    async with get_async_session() as session:
+        result = await session.execute(select(PilotModel).where(PilotModel.user_id == user_id))
+        pilot = result.scalar_one_or_none()
+
+    if pilot:
+        return {
+            "work_days": pilot.work_days or [],
+            "daily_capacity_donum": pilot.daily_capacity_donum,
+            "locked": len(pilot.work_days or []) > 0,
+        }
+
+    return {"work_days": [], "daily_capacity_donum": 2750, "locked": False}
+
+
+@router.put("/me/capacity")
+async def update_my_capacity(request: Request, payload: PilotCapacityUpdateRequest) -> dict[str, object]:
+    """KR-015: Save pilot capacity (one-time). Creates pilot record if needed."""
+    user_id = _get_pilot_user_id(request)
+    from sqlalchemy import select
+    from src.infrastructure.persistence.sqlalchemy.models.pilot_model import PilotModel
+
+    async with get_async_session() as session:
+        result = await session.execute(select(PilotModel).where(PilotModel.user_id == user_id))
+        pilot = result.scalar_one_or_none()
+
+        if pilot:
+            if len(pilot.work_days or []) > 0:
+                raise HTTPException(
+                    status_code=409, detail="Plan zaten kaydedildi. Degisiklik icin Central Admin'e basvurun."
+                )
+            pilot.work_days = payload.work_days
+            pilot.daily_capacity_donum = payload.daily_capacity_donum
+            pilot.updated_at = datetime.now(timezone.utc)
+        else:
+            # Auto-create pilot record
+            pilot = PilotModel(
+                user_id=user_id,
+                drone_model="",
+                drone_serial_no=f"AUTO-{_uuid.uuid4().hex[:8]}",
+                province="",
+                work_days=payload.work_days,
+                daily_capacity_donum=payload.daily_capacity_donum,
+            )
+            session.add(pilot)
+        await session.commit()
+
+    LOGGER.warning(
+        "PILOT.CAPACITY_SAVED user=%s days=%s capacity=%d", user_id, payload.work_days, payload.daily_capacity_donum
     )
+    return {"work_days": payload.work_days, "daily_capacity_donum": payload.daily_capacity_donum, "locked": True}
+
+
+@router.get("/me/drone")
+async def get_my_drone(request: Request) -> dict[str, object]:
+    """Get pilot's drone info from pilots table."""
+    user_id = _get_pilot_user_id(request)
+    from sqlalchemy import select
+    from src.infrastructure.persistence.sqlalchemy.models.pilot_model import PilotModel
+
+    async with get_async_session() as session:
+        result = await session.execute(select(PilotModel).where(PilotModel.user_id == user_id))
+        pilot = result.scalar_one_or_none()
+
+    if pilot and pilot.drone_model:
+        return {
+            "drone_model": pilot.drone_model,
+            "drone_serial": pilot.drone_serial_no,
+            "sensor_type": "",
+            "locked": True,
+        }
+
+    return {"drone_model": "", "drone_serial": "", "sensor_type": "", "locked": False}
+
+
+@router.put("/me/drone")
+async def update_my_drone(request: Request, payload: PilotDroneUpdateRequest) -> dict[str, object]:
+    """Save pilot drone info (one-time). Creates pilot record if needed."""
+    user_id = _get_pilot_user_id(request)
+    from sqlalchemy import select
+    from src.infrastructure.persistence.sqlalchemy.models.pilot_model import PilotModel
+
+    async with get_async_session() as session:
+        result = await session.execute(select(PilotModel).where(PilotModel.user_id == user_id))
+        pilot = result.scalar_one_or_none()
+
+        if pilot:
+            if pilot.drone_model and pilot.drone_model != "":
+                raise HTTPException(
+                    status_code=409,
+                    detail="Drone bilgileri zaten kaydedildi. Degisiklik icin Central Admin'e basvurun.",
+                )
+            pilot.drone_model = payload.drone_model
+            pilot.drone_serial_no = payload.drone_serial
+            pilot.updated_at = datetime.now(timezone.utc)
+        else:
+            pilot = PilotModel(
+                user_id=user_id,
+                drone_model=payload.drone_model,
+                drone_serial_no=payload.drone_serial,
+                province="",
+                work_days=[],
+                daily_capacity_donum=2750,
+            )
+            session.add(pilot)
+        await session.commit()
+
+    LOGGER.warning("PILOT.DRONE_SAVED user=%s model=%s serial=%s", user_id, payload.drone_model, payload.drone_serial)
+    return {
+        "drone_model": payload.drone_model,
+        "drone_serial": payload.drone_serial,
+        "sensor_type": payload.sensor_type,
+        "locked": True,
+    }
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
