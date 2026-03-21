@@ -29,8 +29,8 @@ export default function PilotPlannerPage() {
         if (data.work_days && data.work_days.length > 0) {
           setSelectedDays(new Set(data.work_days));
           setCapacity(data.daily_capacity_donum);
-          setLocked(data.locked ?? true);
         }
+        setLocked(data.locked === true);
       }
     } catch { /* ignore */ } finally { setLoading(false); }
   }, []);
