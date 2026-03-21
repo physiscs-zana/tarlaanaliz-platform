@@ -210,92 +210,100 @@ async def create_subscription(
     # --- 4. Calculate total scans ---
     total_scans = max(1, (payload.end_date - payload.start_date).days // payload.interval_days)
 
-    async with get_async_session() as session:
-        # --- 5. Look up the field to get area_m2 and verify existence ---
-        field_result = await session.execute(select(FieldModel).where(FieldModel.field_id == field_uuid))
-        field_row: FieldModel | None = field_result.scalars().first()
-        if field_row is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Field not found: {payload.field_id}",
-            )
+    try:
+        async with get_async_session() as session:
+            # --- 5. Look up the field to get area_m2 and verify existence ---
+            field_result = await session.execute(select(FieldModel).where(FieldModel.field_id == field_uuid))
+            field_row: FieldModel | None = field_result.scalars().first()
+            if field_row is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Field not found: {payload.field_id}",
+                )
 
-        area_m2: Decimal = field_row.area_m2
+            area_m2_raw = field_row.area_m2
+            if area_m2_raw is None:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Tarla alani (area_m2) tanimlanmamis. Lutfen tarla bilgilerini guncelleyin.",
+                )
+            area_m2: Decimal = Decimal(str(area_m2_raw))
 
-        # --- 6. Calculate price ---
-        try:
-            from src.application.services.pricing_service import calculate_subscription_price
+            # --- 6. Calculate price ---
+            try:
+                from src.application.services.pricing_service import calculate_subscription_price
 
-            amount_kurus: int = calculate_subscription_price(
-                field_id=field_uuid,
+                amount_kurus: int = calculate_subscription_price(
+                    field_id=field_uuid,
+                    crop_type=payload.crop_type,
+                    area_m2=float(area_m2),
+                    total_analyses=total_scans,
+                )
+            except Exception as price_exc:
+                logger.warning(
+                    "PRICING_SERVICE_FAILED: falling back to inline calc field_id=%s crop=%s error=%s",
+                    field_uuid,
+                    payload.crop_type,
+                    price_exc,
+                )
+                amount_kurus = _calculate_price_inline(payload.crop_type, area_m2, total_scans)
+
+            # --- 7. Create a price snapshot for this subscription ---
+            now = datetime.now(timezone.utc)
+            snapshot_id = uuid4()
+            price_snapshot = PriceSnapshotModel(
+                price_snapshot_id=snapshot_id,
                 crop_type=payload.crop_type,
-                area_m2=float(area_m2),
-                total_analyses=total_scans,
+                analysis_type="SEASONAL",
+                unit_price_kurus=amount_kurus,
+                currency="TRY",
+                effective_from=now,
             )
-        except (ImportError, ModuleNotFoundError):
-            logger.warning(
-                "PRICING_SERVICE_UNAVAILABLE: falling back to inline calculation for field_id=%s crop=%s",
-                field_uuid,
-                payload.crop_type,
+            session.add(price_snapshot)
+            await session.flush()
+
+            # --- 8. Create SubscriptionModel ---
+            subscription_id = uuid4()
+            subscription = SubscriptionModel(
+                subscription_id=subscription_id,
+                farmer_user_id=user_id,
+                field_id=field_uuid,
+                price_snapshot_id=snapshot_id,
+                crop_type=payload.crop_type,
+                analysis_type="SEASONAL",
+                interval_days=payload.interval_days,
+                start_date=payload.start_date,
+                end_date=payload.end_date,
+                next_due_at=datetime.combine(payload.start_date, datetime.min.time()).replace(tzinfo=timezone.utc),
+                status="PENDING_PAYMENT",
+                reschedule_tokens_remaining=2,
+                plan_type=payload.plan_code,
+                reschedule_tokens_per_season=2,
             )
-            amount_kurus = _calculate_price_inline(payload.crop_type, area_m2, total_scans)
+            session.add(subscription)
+            await session.flush()
 
-        # --- 7. Create a price snapshot for this subscription ---
-        now = datetime.now(timezone.utc)
-        snapshot_id = uuid4()
-        price_snapshot = PriceSnapshotModel(
-            price_snapshot_id=snapshot_id,
-            crop_type=payload.crop_type,
-            analysis_type="SEASONAL",
-            unit_price_kurus=amount_kurus,
-            currency="TRY",
-            effective_from=now,
-        )
-        session.add(price_snapshot)
-        await session.flush()  # ensure snapshot_id is available for FK
+            # --- 9. Create PaymentIntentModel ---
+            payment_intent_id = uuid4()
+            payment_ref = f"PAY-{now:%Y%m%d}-{uuid4().hex[:6].upper()}"
+            payment_intent = PaymentIntentModel(
+                payment_intent_id=payment_intent_id,
+                payer_user_id=user_id,
+                target_type="SUBSCRIPTION",
+                target_id=subscription_id,
+                amount_kurus=amount_kurus,
+                currency="TRY",
+                method="IBAN_TRANSFER",
+                status="PAYMENT_PENDING",
+                payment_ref=payment_ref,
+                price_snapshot_id=snapshot_id,
+            )
+            session.add(payment_intent)
 
-        # --- 8. Create SubscriptionModel ---
-        subscription_id = uuid4()
-        subscription = SubscriptionModel(
-            subscription_id=subscription_id,
-            farmer_user_id=user_id,
-            field_id=field_uuid,
-            price_snapshot_id=snapshot_id,
-            crop_type=payload.crop_type,
-            analysis_type="SEASONAL",
-            interval_days=payload.interval_days,
-            start_date=payload.start_date,
-            end_date=payload.end_date,
-            next_due_at=datetime.combine(payload.start_date, datetime.min.time()).replace(tzinfo=timezone.utc),
-            status="PENDING_PAYMENT",
-            reschedule_tokens_remaining=2,
-            plan_type=payload.plan_code,
-            reschedule_tokens_per_season=2,
-        )
-        session.add(subscription)
-        await session.flush()
+            # --- 10. Link payment_intent back to subscription ---
+            subscription.payment_intent_id = payment_intent_id
 
-        # --- 9. Create PaymentIntentModel ---
-        payment_intent_id = uuid4()
-        payment_ref = f"PAY-{now:%Y%m%d}-{uuid4().hex[:6].upper()}"
-        payment_intent = PaymentIntentModel(
-            payment_intent_id=payment_intent_id,
-            payer_user_id=user_id,
-            target_type="SUBSCRIPTION",
-            target_id=subscription_id,
-            amount_kurus=amount_kurus,
-            currency="TRY",
-            method="IBAN_TRANSFER",
-            status="PAYMENT_PENDING",
-            payment_ref=payment_ref,
-            price_snapshot_id=snapshot_id,
-        )
-        session.add(payment_intent)
-
-        # --- 10. Link payment_intent back to subscription ---
-        subscription.payment_intent_id = payment_intent_id
-
-        await session.commit()
+            await session.commit()
 
         logger.warning(
             "SUBSCRIPTION_CREATED: subscription_id=%s user_id=%s field_id=%s amount_kurus=%d scans=%d payment_ref=%s",
@@ -319,6 +327,19 @@ async def create_subscription(
             payment_intent_id=str(payment_intent_id),
             amount_kurus=amount_kurus,
         )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error(
+            "SUBSCRIPTION.CREATE_FAILED user=%s field=%s error=%s",
+            user_id,
+            payload.field_id,
+            exc,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Abonelik olusturulamadi. Lutfen tekrar deneyin.",
+        ) from exc
 
 
 # KR-027 §API: GET /subscriptions — kullanıcının aboneliklerini listele
