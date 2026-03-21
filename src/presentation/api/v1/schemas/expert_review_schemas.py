@@ -1,12 +1,12 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
 # PATH: src/presentation/api/v1/schemas/expert_review_schemas.py
-# DESC: Expert review request/response schema.
-# TODO: Implement this file.
+# DESC: Expert review request/response schema (KR-019, KR-029).
 
 from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -16,44 +16,64 @@ class SchemaBase(BaseModel):
     model_config = ConfigDict(extra="forbid", from_attributes=True)
 
 
-class ExpertReviewDecision(str, Enum):
-    approve = "approve"
-    reject = "reject"
-    needs_more_data = "needs_more_data"
+class ExpertReviewStatus(str, Enum):
+    PENDING = "PENDING"
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
+    REJECTED = "REJECTED"
 
 
-class ExpertReviewCreateRequest(SchemaBase):
-    # KR-081: review submission contract is explicit at API boundary.
-    analysis_job_id: UUID | None = None
-    mission_id: UUID | None = None
-    decision: ExpertReviewDecision
-    notes: str | None = Field(default=None, max_length=1000)
-    labels: list[str] = Field(default_factory=list, max_length=25)
-
-    @model_validator(mode="after")
-    def validate_target(self) -> ExpertReviewCreateRequest:
-        if not self.analysis_job_id and not self.mission_id:
-            raise ValueError("Either analysis_job_id or mission_id must be provided")
-        return self
+class Verdict(str, Enum):
+    confirmed = "confirmed"
+    corrected = "corrected"
+    rejected = "rejected"
+    needs_more_expert = "needs_more_expert"
 
 
-class ExpertReviewUpdateRequest(SchemaBase):
-    decision: ExpertReviewDecision | None = None
-    notes: str | None = Field(default=None, max_length=1000)
-    labels: list[str] | None = Field(default=None, max_length=25)
+class TrainingGrade(str, Enum):
+    A = "A"
+    B = "B"
+    C = "C"
+    D = "D"
+    REJECT = "REJECT"
 
+
+# ---------------------------------------------------------------------------
+# Request schemas
+# ---------------------------------------------------------------------------
+
+class SubmitVerdictRequest(SchemaBase):
+    # KR-019: expert submits verdict and optional training grade for KR-029 feedback loop.
+    verdict: Verdict
+    training_grade: Optional[TrainingGrade] = None
+    grade_reason: Optional[str] = Field(default=None, max_length=200)
+
+
+class CreateExpertReviewRequest(SchemaBase):
+    # KR-019: admin/system assigns a review to an expert for a mission analysis result.
+    mission_id: UUID
+    expert_id: UUID
+    analysis_result_id: UUID
+
+
+# ---------------------------------------------------------------------------
+# Response schemas
+# ---------------------------------------------------------------------------
 
 class ExpertReviewResponse(SchemaBase):
-    id: UUID
-    analysis_job_id: UUID | None = None
-    mission_id: UUID | None = None
+    review_id: UUID
+    mission_id: UUID
     expert_id: UUID
-    decision: ExpertReviewDecision
-    notes: str | None = None
-    labels: list[str] = Field(default_factory=list)
+    analysis_result_id: UUID
+    status: ExpertReviewStatus
+    assigned_at: datetime
     created_at: datetime
-    updated_at: datetime
-    corr_id: str | None = Field(default=None, min_length=8, max_length=128)
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    verdict: Optional[str] = None
+    training_grade: Optional[str] = None
+    grade_reason: Optional[str] = None
+    corr_id: Optional[str] = Field(default=None, min_length=8, max_length=128)
 
 
 class PaginationMeta(SchemaBase):
@@ -66,4 +86,4 @@ class PaginationMeta(SchemaBase):
 class ExpertReviewListResponse(SchemaBase):
     items: list[ExpertReviewResponse] = Field(default_factory=list)
     pagination: PaginationMeta
-    corr_id: str | None = Field(default=None, min_length=8, max_length=128)
+    corr_id: Optional[str] = Field(default=None, min_length=8, max_length=128)

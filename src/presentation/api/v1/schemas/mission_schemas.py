@@ -1,78 +1,85 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
 # PATH: src/presentation/api/v1/schemas/mission_schemas.py
-# DESC: Mission request/response schema.
-# TODO: Implement this file.
+# DESC: Mission request/response schema (KR-028).
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import datetime
 from enum import Enum
+from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SchemaBase(BaseModel):
     model_config = ConfigDict(extra="forbid", from_attributes=True)
 
 
-class SensorType(str, Enum):
-    rgb = "RGB"
-    multispectral = "MS"
-
-
 class MissionStatus(str, Enum):
-    planned = "planned"
-    assigned = "assigned"
-    flown = "flown"
-    uploaded = "uploaded"
-    calibrated = "calibrated"
-    analyzed = "analyzed"
-    failed = "failed"
-    cancelled = "cancelled"
+    PLANNED = "PLANNED"
+    ASSIGNED = "ASSIGNED"
+    ACKED = "ACKED"
+    FLOWN = "FLOWN"
+    UPLOADED = "UPLOADED"
+    ANALYZING = "ANALYZING"
+    DONE = "DONE"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
 
 
-class FlightParamsSummary(SchemaBase):
-    altitude_m: float = Field(gt=0, le=500)
-    overlap_front_pct: int = Field(ge=10, le=95)
-    overlap_side_pct: int = Field(ge=10, le=95)
-    speed_mps: float = Field(gt=0, le=30)
+class CropType(str, Enum):
+    PAMUK = "PAMUK"
+    ANTEP_FISTIGI = "ANTEP_FISTIGI"
+    MISIR = "MISIR"
+    BUGDAY = "BUGDAY"
+    AYCICEGI = "AYCICEGI"
+    UZUM = "UZUM"
+    ZEYTIN = "ZEYTIN"
+    KIRMIZI_MERCIMEK = "KIRMIZI_MERCIMEK"
 
 
-class MissionCreateRequest(SchemaBase):
-    # KR-015: capacity/planning constraints are domain-enforced, not schema-enforced.
+# ---------------------------------------------------------------------------
+# Request schemas
+# ---------------------------------------------------------------------------
+
+class CreateMissionRequest(SchemaBase):
+    # KR-028: single analysis task for a field.
     field_id: UUID
-    planned_date: date
-    sensor_type: SensorType
-    flight_params: FlightParamsSummary
-    pilot_id: UUID | None = None
+    crop_type: CropType
+    analysis_type: str = Field(default="MULTISPECTRAL", min_length=2, max_length=50)
+    planned_at: Optional[datetime] = None
+    subscription_id: Optional[UUID] = None
 
 
-class MissionUpdateRequest(SchemaBase):
-    planned_date: date | None = None
-    sensor_type: SensorType | None = None
-    flight_params: FlightParamsSummary | None = None
-    pilot_id: UUID | None = None
-    status: MissionStatus | None = None
+class UpdateMissionRequest(SchemaBase):
+    status: Optional[MissionStatus] = None
+    pilot_id: Optional[UUID] = None
+    planned_at: Optional[datetime] = None
 
+
+# ---------------------------------------------------------------------------
+# Response schemas
+# ---------------------------------------------------------------------------
 
 class MissionResponse(SchemaBase):
-    id: UUID
+    mission_id: UUID
     field_id: UUID
-    pilot_id: UUID | None = None
+    requested_by_user_id: UUID
+    crop_type: str
+    analysis_type: str
     status: MissionStatus
-    sensor_type: SensorType
-    flight_params: FlightParamsSummary
-    planned_date: date
-    flown_at: datetime | None = None
-    uploaded_at: datetime | None = None
-    calibrated_at: datetime | None = None
-    analyzed_at: datetime | None = None
-    failed_at: datetime | None = None
-    cancelled_at: datetime | None = None
+    subscription_id: Optional[UUID] = None
+    payment_intent_id: Optional[UUID] = None
+    pilot_id: Optional[UUID] = None
+    price_snapshot_id: Optional[UUID] = None
+    planned_at: Optional[datetime] = None
+    due_at: Optional[datetime] = None
+    flown_at: Optional[datetime] = None
+    uploaded_at: Optional[datetime] = None
+    analyzed_at: Optional[datetime] = None
     created_at: datetime
-    updated_at: datetime
-    corr_id: str | None = Field(default=None, min_length=8, max_length=128)
+    corr_id: Optional[str] = Field(default=None, min_length=8, max_length=128)
 
 
 class PaginationMeta(SchemaBase):
@@ -83,23 +90,15 @@ class PaginationMeta(SchemaBase):
 
 
 class MissionListFilter(SchemaBase):
-    field_id: UUID | None = None
-    pilot_id: UUID | None = None
-    status: MissionStatus | None = None
-    sensor_type: SensorType | None = None
-    planned_date_from: date | None = None
-    planned_date_to: date | None = None
+    field_id: Optional[UUID] = None
+    pilot_id: Optional[UUID] = None
+    status: Optional[MissionStatus] = None
+    crop_type: Optional[CropType] = None
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=20, ge=1, le=200)
-
-    @model_validator(mode="after")
-    def validate_date_range(self) -> MissionListFilter:
-        if self.planned_date_from and self.planned_date_to and self.planned_date_from > self.planned_date_to:
-            raise ValueError("planned_date_from cannot be greater than planned_date_to")
-        return self
 
 
 class MissionListResponse(SchemaBase):
     items: list[MissionResponse] = Field(default_factory=list)
     pagination: PaginationMeta
-    corr_id: str | None = Field(default=None, min_length=8, max_length=128)
+    corr_id: Optional[str] = Field(default=None, min_length=8, max_length=128)

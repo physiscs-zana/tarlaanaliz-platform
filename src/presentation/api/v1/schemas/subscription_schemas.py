@@ -1,13 +1,12 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
 # PATH: src/presentation/api/v1/schemas/subscription_schemas.py
-# DESC: Subscription request/response schema.
-# TODO: Implement this file.
+# DESC: Subscription request/response schema (KR-027).
 
 from __future__ import annotations
 
-from datetime import datetime
-from decimal import Decimal
+from datetime import date, datetime
 from enum import Enum
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -17,60 +16,66 @@ class SchemaBase(BaseModel):
     model_config = ConfigDict(extra="forbid", from_attributes=True)
 
 
-class CurrencyCode(str, Enum):
-    try_ = "TRY"
-    usd = "USD"
-    eur = "EUR"
-
-
 class SubscriptionStatus(str, Enum):
-    pending = "pending"
-    active = "active"
-    expired = "expired"
-    cancelled = "cancelled"
+    PENDING_PAYMENT = "PENDING_PAYMENT"
+    ACTIVE = "ACTIVE"
+    PAUSED = "PAUSED"
+    CANCELLED = "CANCELLED"
 
 
-class SubscriptionLimits(SchemaBase):
-    max_donum: Decimal = Field(gt=0, max_digits=12, decimal_places=2)
-    max_jobs: int = Field(ge=1, le=10000)
+class SubscriptionPlanType(str, Enum):
+    SEASONAL = "SEASONAL"
 
 
-class SubscriptionCreateRequest(SchemaBase):
-    # KR-081: subscription wire contract is fixed for presentation API.
-    plan_id: UUID | None = None
-    season_package_id: UUID | None = None
-    field_id: UUID | None = None
-    starts_at: datetime
-    ends_at: datetime
-    price: Decimal | None = Field(default=None, ge=0, max_digits=12, decimal_places=2)
-    currency: CurrencyCode | None = None
+# ---------------------------------------------------------------------------
+# Request schemas
+# ---------------------------------------------------------------------------
+
+class CreateSubscriptionRequest(SchemaBase):
+    # KR-027: seasonal subscription for periodic mission generation.
+    field_id: UUID
+    crop_type: str = Field(min_length=2, max_length=64)
+    analysis_type: str = Field(default="MULTISPECTRAL", min_length=2, max_length=50)
+    interval_days: int = Field(ge=1, le=365)
+    start_date: date
+    end_date: date
 
     @model_validator(mode="after")
-    def validate_fields(self) -> SubscriptionCreateRequest:
-        if not self.plan_id and not self.season_package_id:
-            raise ValueError("Either plan_id or season_package_id must be provided")
-        if self.ends_at <= self.starts_at:
-            raise ValueError("ends_at must be greater than starts_at")
-        if (self.price is None) ^ (self.currency is None):
-            raise ValueError("price and currency must be provided together")
+    def validate_dates(self) -> CreateSubscriptionRequest:
+        if self.end_date <= self.start_date:
+            raise ValueError("end_date must be after start_date")
         return self
 
 
+class UpdateSubscriptionRequest(SchemaBase):
+    status: Optional[SubscriptionStatus] = None
+    interval_days: Optional[int] = Field(default=None, ge=1, le=365)
+    end_date: Optional[date] = None
+
+
+# ---------------------------------------------------------------------------
+# Response schemas
+# ---------------------------------------------------------------------------
+
 class SubscriptionResponse(SchemaBase):
-    id: UUID
-    owner_id: UUID
-    plan_id: UUID | None = None
-    season_package_id: UUID | None = None
-    field_id: UUID | None = None
-    starts_at: datetime
-    ends_at: datetime
+    subscription_id: UUID
+    farmer_user_id: UUID
+    field_id: UUID
+    crop_type: str
+    analysis_type: str
+    interval_days: int
+    start_date: date
+    end_date: date
+    next_due_at: Optional[datetime] = None
     status: SubscriptionStatus
-    limits: SubscriptionLimits
-    price: Decimal | None = None
-    currency: CurrencyCode | None = None
+    plan_type: SubscriptionPlanType = SubscriptionPlanType.SEASONAL
+    price_snapshot_id: Optional[UUID] = None
+    payment_intent_id: Optional[UUID] = None
+    reschedule_tokens_per_season: int = 2
+    reschedule_tokens_used: int = 0
     created_at: datetime
     updated_at: datetime
-    corr_id: str | None = Field(default=None, min_length=8, max_length=128)
+    corr_id: Optional[str] = Field(default=None, min_length=8, max_length=128)
 
 
 class PaginationMeta(SchemaBase):
@@ -83,4 +88,4 @@ class PaginationMeta(SchemaBase):
 class SubscriptionListResponse(SchemaBase):
     items: list[SubscriptionResponse] = Field(default_factory=list)
     pagination: PaginationMeta
-    corr_id: str | None = Field(default=None, min_length=8, max_length=128)
+    corr_id: Optional[str] = Field(default=None, min_length=8, max_length=128)
