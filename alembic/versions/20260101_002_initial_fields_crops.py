@@ -12,7 +12,13 @@ Create Date: 2026-01-01
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
-from geoalchemy2 import Geometry
+
+try:
+    from geoalchemy2 import Geometry
+except ImportError:
+    # geoalchemy2 su an devre disi (numpy CPU uyumsuzlugu).
+    # Bu migration zaten uygulanmis; Alembic sadece revision haritasi icin parse ediyor.
+    Geometry = None  # type: ignore[assignment,misc]
 
 # revision identifiers, used by Alembic.
 revision = "002"
