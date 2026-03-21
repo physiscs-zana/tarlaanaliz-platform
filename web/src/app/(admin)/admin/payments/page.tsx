@@ -49,11 +49,9 @@ function formatAmount(kurus: number): string {
   return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(kurus / 100);
 }
 
-function maskPhone(phone: string | null): string {
+function formatPhone(phone: string | null): string {
   if (!phone) return "\u2014";
-  if (phone.length >= 10) {
-    return phone.slice(0, 4) + "***" + phone.slice(-2);
-  }
+  // CENTRAL_ADMIN tam numarayi gormeli
   return phone;
 }
 
@@ -218,7 +216,7 @@ function PaymentTable({
               <tr key={p.intent_id} className="hover:bg-slate-50">
                 <td className="px-3 py-2 font-mono text-xs">{p.payment_ref ?? p.intent_id.slice(0, 8)}</td>
                 <td className="px-3 py-2 text-xs text-slate-700">{p.payer_display_name ?? "\u2014"}</td>
-                <td className="px-3 py-2 text-xs text-slate-600">{maskPhone(p.payer_phone)}</td>
+                <td className="px-3 py-2 text-xs text-slate-600">{formatPhone(p.payer_phone)}</td>
                 <td className="px-3 py-2 text-xs text-slate-600">{location || "\u2014"}</td>
                 <td className="px-3 py-2 text-xs font-medium">{formatAmount(p.amount)}</td>
                 <td className="px-3 py-2">

@@ -465,8 +465,38 @@ async def simple_upload_receipt(
                 model.receipt_meta = receipt_meta
                 model.status = "PENDING_ADMIN_REVIEW"
                 model.updated_at = now
+
+                # Recalculate price if amount is 0 (legacy intents)
+                if model.amount_kurus == 0 and field_uuid:
+                    try:
+                        from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel
+                        from src.presentation.api.v1.endpoints.admin_pricing import _read_config
+
+                        field_result = await session.execute(
+                            select(FieldModel.area_m2, FieldModel.crop_type).where(FieldModel.field_id == field_uuid)
+                        )
+                        field_row = field_result.one_or_none()
+                        if field_row:
+                            cfg = _read_config()
+                            crops_raw = cfg.get("crops")
+                            crop_code = field_row.crop_type or "PAMUK"
+                            if isinstance(crops_raw, list):
+                                crop_cfg = next(
+                                    (c for c in crops_raw if isinstance(c, dict) and c.get("code") == crop_code),
+                                    None,
+                                )
+                                if isinstance(crop_cfg, dict):
+                                    area_ha = float(field_row.area_m2) / 10000
+                                    price_val = crop_cfg.get("single_price", 250)
+                                    price_per_ha = float(price_val) if isinstance(price_val, (int, float)) else 250.0
+                                    model.amount_kurus = round(area_ha * price_per_ha * 100)
+                    except Exception as exc:
+                        _LOGGER.warning("RECEIPT.PRICE_RECALC_FAILED intent=%s error=%s", model.payment_intent_id, exc)
+
                 await session.commit()
-                _LOGGER.info("RECEIPT.LINKED intent=%s blob=%s", model.payment_intent_id, safe_name)
+                _LOGGER.info(
+                    "RECEIPT.LINKED intent=%s blob=%s amount=%d", model.payment_intent_id, safe_name, model.amount_kurus
+                )
             else:
                 # No existing intent — create one with receipt already attached
                 import sqlalchemy as sa
