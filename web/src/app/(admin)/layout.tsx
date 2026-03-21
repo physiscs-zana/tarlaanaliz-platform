@@ -13,8 +13,7 @@ interface AdminLayoutProps {
 }
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/analytics", label: "Analitik" },
+  { href: "/dashboard", label: "Genel Bakis" },
   { href: "/users", label: "Kullanicilar" },
   { href: "/expert-management", label: "Uzmanlar" },
   { href: "/pilots", label: "Pilotlar" },
@@ -22,8 +21,7 @@ const navItems = [
   { href: "/admin/payments", label: "Odemeler" },
   { href: "/admin/sla", label: "SLA" },
   { href: "/audit", label: "Denetim Kayitlari" },
-  { href: "/calibration", label: "Kalibrasyon" },
-  { href: "/qc", label: "Kalite Kontrol" },
+  { href: "/qc", label: "Izleme" },
   { href: "/il/dashboard", label: "Il Operatoru" },
   { href: "/il/metrics", label: "Il Metrikleri" },
   { href: "/api-keys", label: "API Anahtarlari" },
