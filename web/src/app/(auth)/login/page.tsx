@@ -27,7 +27,7 @@ export default function LoginPage() {
       const data = await login({ phone: phone.trim(), pin: pin.trim() });
       // useAuth.login() cookie + localStorage yazımını halleder.
       const roleHome: Record<string, string> = {
-        admin: "/analytics",
+        admin: "/dashboard",
         expert: "/queue",
         farmer: "/benim-sayfam",
         pilot: "/pilot/missions",

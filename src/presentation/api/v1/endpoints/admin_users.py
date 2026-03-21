@@ -9,10 +9,16 @@ import uuid as _uuid
 
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel
-from sqlalchemy import delete as sa_delete, select
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import select
+from sqlalchemy import update as sa_update
 from sqlalchemy.orm import selectinload
 
 from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel
+from src.infrastructure.persistence.sqlalchemy.models.mission_model import MissionModel
+from src.infrastructure.persistence.sqlalchemy.models.payment_intent_model import PaymentIntentModel
+from src.infrastructure.persistence.sqlalchemy.models.price_snapshot_model import PriceSnapshotModel
+from src.infrastructure.persistence.sqlalchemy.models.subscription_model import SubscriptionModel
 from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
 from src.infrastructure.persistence.sqlalchemy.models.user_role_model import UserRoleModel
 from src.infrastructure.persistence.sqlalchemy.session import get_async_session
@@ -103,7 +109,16 @@ async def list_users(request: Request) -> list[AdminUserResponse]:
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(request: Request, user_id: str) -> None:
-    """Delete a user (admin only)."""
+    """Delete a farmer user and all dependent records (admin only).
+
+    Deletion order (FK-safe):
+      1. Block if active/pending payment records exist (financial audit)
+      2. Block if completed payment records exist (RESTRICT constraint)
+      3. Delete missions referencing user's fields or requested by user
+      4. Delete subscriptions for user's fields or by user
+      5. SET NULL on nullable FK references (price_snapshots, granted_by, pilot assignment)
+      6. Delete user → CASCADE handles: fields, user_roles, experts, pilots
+    """
     _require_admin(request)
 
     try:
@@ -128,8 +143,47 @@ async def delete_user(request: Request, user_id: str) -> None:
                 detail="Admin ve operator hesaplari silinemez.",
             )
 
+        # --- Step 1-2: Check payment records (payer_user_id has ondelete=RESTRICT) ---
+        pay_result = await session.execute(select(PaymentIntentModel).where(PaymentIntentModel.payer_user_id == uid))
+        payments = pay_result.scalars().all()
+        if payments:
+            active_statuses = {"PAYMENT_PENDING", "PENDING_ADMIN_REVIEW"}
+            active_count = sum(1 for p in payments if p.status in active_statuses)
+            if active_count:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Bu ciftcinin {active_count} aktif/bekleyen odeme kaydi var. "
+                    f"Once odemeleri cozumleyin (onayla, reddet veya iptal edin).",
+                )
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Bu ciftcinin {len(payments)} odeme kaydi var. "
+                f"Odeme gecmisi olan ciftciler veri butunlugu icin silinemez.",
+            )
+
+        # --- Step 3-4: Collect user's field_ids for cascading cleanup ---
+        field_ids_result = await session.execute(select(FieldModel.field_id).where(FieldModel.user_id == uid))
+        field_ids = [row[0] for row in field_ids_result.all()]
+
+        # Delete missions referencing user or user's fields (no ondelete on FK)
+        await session.execute(sa_delete(MissionModel).where(MissionModel.requested_by_user_id == uid))
+        if field_ids:
+            await session.execute(sa_delete(MissionModel).where(MissionModel.field_id.in_(field_ids)))
+
+        # Delete subscriptions for user or user's fields (no ondelete on FK)
+        await session.execute(sa_delete(SubscriptionModel).where(SubscriptionModel.farmer_user_id == uid))
+        if field_ids:
+            await session.execute(sa_delete(SubscriptionModel).where(SubscriptionModel.field_id.in_(field_ids)))
+
+        # --- Step 5: SET NULL on nullable FK references ---
+        await session.execute(
+            sa_update(PriceSnapshotModel).where(PriceSnapshotModel.created_by == uid).values(created_by=None)
+        )
+        await session.execute(sa_update(UserRoleModel).where(UserRoleModel.granted_by == uid).values(granted_by=None))
+
+        # --- Step 6: Delete user (CASCADE handles fields, roles, expert, pilot) ---
         await session.execute(sa_delete(UserRoleModel).where(UserRoleModel.user_id == uid))
         await session.delete(user_model)
         await session.commit()
 
-    LOGGER.info("USER.DELETED user_id=%s", user_id)
+    LOGGER.warning("USER.DELETED user_id=%s by admin", user_id)

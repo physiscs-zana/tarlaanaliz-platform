@@ -49,8 +49,7 @@ export const routes = {
   billingRefunds: '/billing/refunds',
 
   // Admin routes
-  adminHome: '/analytics',
-  analytics: '/analytics',
+  adminHome: '/dashboard',
   audit: '/audit',
   auditViewer: '/audit-viewer',
   pricing: '/pricing',
@@ -58,7 +57,6 @@ export const routes = {
   adminSla: '/admin/sla',
   users: '/users',
   adminPayments: '/admin/payments',
-  calibration: '/calibration',
   qc: '/qc',
   apiKeys: '/api-keys',
   experts: '/experts',
@@ -79,10 +77,10 @@ export const PUBLIC_PATHS = new Set<string>([routes.login, routes.register, '/',
  */
 export const ROLE_PREFIXES: Record<string, readonly string[]> = {
   admin: [
-    routes.analytics, routes.audit, routes.auditViewer, routes.pricing,
+    routes.dashboard, routes.audit, routes.auditViewer, routes.pricing,
     routes.priceManagement, routes.adminSla, routes.users, routes.adminPayments,
-    routes.calibration, routes.qc, routes.apiKeys, routes.experts,
-    routes.expertManagement, routes.pilots, routes.dashboard,
+    routes.qc, routes.apiKeys, routes.experts,
+    routes.expertManagement, routes.pilots,
     // KR-083: İl Operatörü (admin grubunda, PII görmez)
     routes.ilDashboard, routes.ilMetrics,
     // KR-033: Billing Admin

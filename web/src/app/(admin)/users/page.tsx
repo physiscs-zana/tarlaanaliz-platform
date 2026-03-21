@@ -88,10 +88,16 @@ export default function AdminUsersPage() {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok || res.status === 204) {
-        setUsers((prev) => prev.filter((u) => u.user_id !== userId));
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        const detail = (body as Record<string, string> | null)?.detail ?? "Ciftci silinemedi.";
+        setError(detail);
+        return;
       }
-    } catch { /* ignore */ }
+      setUsers((prev) => prev.filter((u) => u.user_id !== userId));
+    } catch {
+      setError("Baglanti hatasi.");
+    }
   };
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
