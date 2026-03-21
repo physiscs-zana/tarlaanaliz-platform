@@ -81,7 +81,14 @@ class SubscriptionModel(Base):
 
     # --- Durum (KR-027 kanonik abonelik durumlari) ---
     status: Mapped[str] = mapped_column(
-        String(32),
+        ENUM(
+            "PENDING_PAYMENT",
+            "ACTIVE",
+            "PAUSED",
+            "CANCELLED",
+            name="subscription_status",
+            create_type=False,
+        ),
         nullable=False,
         server_default="PENDING_PAYMENT",
     )
