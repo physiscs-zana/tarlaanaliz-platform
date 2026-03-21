@@ -184,6 +184,7 @@ async def list_missions(request: Request) -> list[MissionResponse]:
             status=m.status,
             crop_type=m.crop_type,
             analysis_type=m.analysis_type,
+            subscription_id=str(m.subscription_id) if m.subscription_id else None,
         )
         for m in models
     ]

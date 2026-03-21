@@ -3,10 +3,11 @@
 
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getApiBaseUrl, getTokenFromCookie } from "@/lib/api";
 
+/* ------- Types ------- */
 interface Mission {
   mission_id: string;
   field_id: string;
@@ -15,11 +16,15 @@ interface Mission {
   crop_type: string | null;
   analysis_type: string | null;
   pilot_id: string | null;
+  subscription_id: string | null;
 }
 
+/* ------- Constants ------- */
+const PENDING_STATUSES = new Set(["PLANNED"]);
+
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-  PLANNED: { label: "Planlandi", className: "bg-blue-100 text-blue-800" },
-  ASSIGNED: { label: "Atandi", className: "bg-indigo-100 text-indigo-800" },
+  PLANNED: { label: "Odeme Bekleniyor", className: "bg-amber-100 text-amber-800" },
+  ASSIGNED: { label: "Pilot Atandi", className: "bg-indigo-100 text-indigo-800" },
   ACKED: { label: "Kabul Edildi", className: "bg-cyan-100 text-cyan-800" },
   IN_PROGRESS: { label: "Devam Ediyor", className: "bg-amber-100 text-amber-800" },
   FLOWN: { label: "Ucus Tamamlandi", className: "bg-teal-100 text-teal-800" },
@@ -33,8 +38,13 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
 
 const CROP_LABELS: Record<string, string> = {
   PAMUK: "Pamuk",
-  BUGDAY: "Bugday",
+  ANTEP_FISTIGI: "Antep Fistigi",
   MISIR: "Misir",
+  BUGDAY: "Bugday",
+  AYCICEGI: "Aycicegi",
+  UZUM: "Uzum",
+  ZEYTIN: "Zeytin",
+  KIRMIZI_MERCIMEK: "Kirmizi Mercimek",
   COTTON: "Pamuk",
   WHEAT: "Bugday",
   CORN: "Misir",
@@ -42,10 +52,41 @@ const CROP_LABELS: Record<string, string> = {
 
 const ANALYSIS_LABELS: Record<string, string> = {
   MULTISPECTRAL: "Multispektral",
+  SEASONAL: "Sezonluk",
   THERMAL: "Termal",
   RGB: "RGB",
+  FULL: "Tam Analiz",
 };
 
+/* ------- Mission Card ------- */
+function MissionCard({ m }: { m: Mission }) {
+  const statusInfo = STATUS_LABELS[m.status] ?? { label: m.status, className: "bg-slate-100 text-slate-600" };
+  const cropLabel = m.crop_type ? (CROP_LABELS[m.crop_type] ?? m.crop_type) : null;
+  const analysisLabel = m.analysis_type ? (ANALYSIS_LABELS[m.analysis_type] ?? m.analysis_type) : null;
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-semibold text-slate-900">Analiz #{m.mission_id.slice(0, 8)}</p>
+          {m.subscription_id && (
+            <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600">Sezonluk</span>
+          )}
+        </div>
+        <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusInfo.className}`}>
+          {statusInfo.label}
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+        <span>Tarih: {m.mission_date}</span>
+        {cropLabel && <span>Urun: {cropLabel}</span>}
+        {analysisLabel && <span>Analiz: {analysisLabel}</span>}
+      </div>
+    </div>
+  );
+}
+
+/* ------- Page ------- */
 export default function FarmerMissionsPage() {
   const router = useRouter();
   const [missions, setMissions] = useState<Mission[]>([]);
@@ -79,8 +120,21 @@ export default function FarmerMissionsPage() {
 
   useEffect(() => { fetchMissions(); }, [fetchMissions]);
 
+  const { paid, pending } = useMemo(() => {
+    const p: Mission[] = [];
+    const a: Mission[] = [];
+    for (const m of missions) {
+      if (PENDING_STATUSES.has(m.status)) {
+        p.push(m);
+      } else {
+        a.push(m);
+      }
+    }
+    return { pending: p, paid: a };
+  }, [missions]);
+
   return (
-    <section className="space-y-4">
+    <section className="space-y-6">
       <h1 className="text-2xl font-semibold">Analizlerim</h1>
 
       {error && (
@@ -95,27 +149,22 @@ export default function FarmerMissionsPage() {
           <p className="mt-2 text-sm text-slate-400">Tarlaniz icin analiz talebi olusturdugunuzda burada listelenecektir.</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {missions.map((m) => {
-            const statusInfo = STATUS_LABELS[m.status] ?? { label: m.status, className: "bg-slate-100 text-slate-600" };
-            const cropLabel = m.crop_type ? (CROP_LABELS[m.crop_type] ?? m.crop_type) : null;
-            const analysisLabel = m.analysis_type ? (ANALYSIS_LABELS[m.analysis_type] ?? m.analysis_type) : null;
-            return (
-              <div key={m.mission_id} className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-slate-900">Analiz #{m.mission_id.slice(0, 8)}</p>
-                  <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusInfo.className}`}>
-                    {statusInfo.label}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                  <span>Tarih: {m.mission_date}</span>
-                  {cropLabel && <span>Urun: {cropLabel}</span>}
-                  {analysisLabel && <span>Analiz Tipi: {analysisLabel}</span>}
-                </div>
-              </div>
-            );
-          })}
+        <div className="space-y-6">
+          {/* Odenmiş / Aktif analizler */}
+          {paid.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-emerald-700">Aktif Analizler ({paid.length})</h2>
+              {paid.map((m) => <MissionCard key={m.mission_id} m={m} />)}
+            </div>
+          )}
+
+          {/* Odeme bekleyen talepler */}
+          {pending.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-amber-700">Odeme Bekleyen Talepler ({pending.length})</h2>
+              {pending.map((m) => <MissionCard key={m.mission_id} m={m} />)}
+            </div>
+          )}
         </div>
       )}
     </section>

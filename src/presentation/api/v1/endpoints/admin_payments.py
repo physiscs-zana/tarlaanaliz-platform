@@ -297,6 +297,92 @@ async def mark_paid(
                             field_province,
                         )
 
+            # KR-027 + KR-033: Activate subscription and create first mission after payment
+            elif model.target_type == "SUBSCRIPTION" and model.target_id:
+                from src.infrastructure.persistence.sqlalchemy.models.subscription_model import SubscriptionModel
+                from src.infrastructure.persistence.sqlalchemy.models.mission_model import MissionModel
+                from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel
+                from src.infrastructure.persistence.sqlalchemy.models.pilot_model import (
+                    MissionAssignmentModel,
+                    PilotModel,
+                    PilotServiceAreaModel,
+                )
+                import uuid as _uuid
+
+                sub_result = await session.execute(
+                    select(SubscriptionModel).where(SubscriptionModel.subscription_id == model.target_id)
+                )
+                subscription = sub_result.scalar_one_or_none()
+
+                if subscription and subscription.status == "PENDING_PAYMENT":
+                    subscription.status = "ACTIVE"
+
+                    # Create the first mission from subscription data
+                    first_mission_id = _uuid.uuid4()
+                    planned_at = subscription.next_due_at or datetime.combine(
+                        subscription.start_date, datetime.min.time()
+                    ).replace(tzinfo=timezone.utc)
+
+                    first_mission = MissionModel(
+                        mission_id=first_mission_id,
+                        field_id=subscription.field_id,
+                        requested_by_user_id=subscription.farmer_user_id,
+                        subscription_id=subscription.subscription_id,
+                        payment_intent_id=model.payment_intent_id,
+                        crop_type=subscription.crop_type,
+                        analysis_type=subscription.analysis_type or "MULTISPECTRAL",
+                        status="ASSIGNED",
+                        planned_at=planned_at,
+                        created_at=datetime.now(timezone.utc),
+                    )
+                    session.add(first_mission)
+
+                    # Auto-dispatch pilot (same logic as MISSION flow)
+                    field_result = await session.execute(
+                        select(FieldModel.province, FieldModel.area_donum).where(
+                            FieldModel.field_id == subscription.field_id
+                        )
+                    )
+                    field_row = field_result.one_or_none()
+                    assigned_pilot_id = None
+                    field_province = None
+
+                    if field_row:
+                        field_province = field_row.province
+                        field_area_donum = int(field_row.area_donum)
+
+                        if field_province:
+                            pilot_stmt = (
+                                select(PilotModel)
+                                .join(PilotServiceAreaModel, PilotModel.pilot_id == PilotServiceAreaModel.pilot_id)
+                                .where(PilotModel.is_active.is_(True))
+                                .where(PilotServiceAreaModel.province == field_province)
+                                .order_by(PilotModel.reliability_score.desc())
+                            )
+                            pilot_result = await session.execute(pilot_stmt)
+                            eligible_pilots = pilot_result.scalars().unique().all()
+
+                            for pilot in eligible_pilots:
+                                if pilot.daily_capacity_donum >= field_area_donum:
+                                    assigned_pilot_id = pilot.pilot_id
+                                    assignment = MissionAssignmentModel(
+                                        mission_id=first_mission_id,
+                                        pilot_id=pilot.pilot_id,
+                                        assignment_type="SYSTEM_SEED",
+                                        is_current=True,
+                                    )
+                                    session.add(assignment)
+                                    break
+
+                    _RECEIPT_LOGGER.warning(
+                        "SUBSCRIPTION.ACTIVATED sub=%s mission=%s pilot=%s payment=%s province=%s",
+                        model.target_id,
+                        first_mission_id,
+                        assigned_pilot_id,
+                        payment_id,
+                        field_province,
+                    )
+
             await session.commit()
 
         audit.publish(
