@@ -487,7 +487,11 @@ async def simple_upload_receipt(
                                 )
                                 if isinstance(crop_cfg, dict):
                                     area_ha = float(field_row.area_m2) / 10000
-                                    price_val = crop_cfg.get("single_price", 250)
+                                    # Use seasonal_price for SUBSCRIPTION, single_price for MISSION
+                                    price_key = (
+                                        "seasonal_price" if model.target_type == "SUBSCRIPTION" else "single_price"
+                                    )
+                                    price_val = crop_cfg.get(price_key, crop_cfg.get("single_price", 250))
                                     price_per_ha = float(price_val) if isinstance(price_val, (int, float)) else 250.0
                                     model.amount_kurus = round(area_ha * price_per_ha * 100)
                     except Exception as exc:
