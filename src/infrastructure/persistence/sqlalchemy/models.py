@@ -15,7 +15,11 @@ from src.infrastructure.persistence.sqlalchemy.models.user_model import UserMode
 from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel  # noqa: F401
 from src.infrastructure.persistence.sqlalchemy.models.mission_model import MissionModel  # noqa: F401
 from src.infrastructure.persistence.sqlalchemy.models.subscription_model import SubscriptionModel  # noqa: F401
-from src.infrastructure.persistence.sqlalchemy.models.pilot_model import PilotModel, PilotServiceAreaModel, MissionAssignmentModel  # noqa: F401
+from src.infrastructure.persistence.sqlalchemy.models.pilot_model import (
+    PilotModel,
+    PilotServiceAreaModel,
+    MissionAssignmentModel,
+)  # noqa: F401
 from src.infrastructure.persistence.sqlalchemy.models.payment_intent_model import PaymentIntentModel  # noqa: F401
 from src.infrastructure.persistence.sqlalchemy.models.price_snapshot_model import PriceSnapshotModel  # noqa: F401
 

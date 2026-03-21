@@ -125,7 +125,5 @@ class AnalysisResultRepositoryImpl(AnalysisResultRepository):
 
     async def delete(self, result_id: uuid.UUID) -> None:
         """AnalysisResult sil."""
-        await self._session.execute(
-            sa_delete(AnalysisResultModel).where(AnalysisResultModel.result_id == result_id)
-        )
+        await self._session.execute(sa_delete(AnalysisResultModel).where(AnalysisResultModel.result_id == result_id))
         await self._session.flush()

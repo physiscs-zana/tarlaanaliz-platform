@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
@@ -35,7 +36,7 @@ class DatasetModel(Base):
     )
     status: Mapped[str] = mapped_column(String(50), nullable=False, server_default=text("'RAW_INGESTED'"))
     sha256_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    manifest: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    manifest: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     av1_report_uri: Mapped[str | None] = mapped_column(String(500), nullable=True)
     av2_report_uri: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_calibrated: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))

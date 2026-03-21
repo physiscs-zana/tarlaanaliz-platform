@@ -28,6 +28,7 @@ class GeoJSONMultiPolygon(SchemaBase):
 # Request schemas
 # ---------------------------------------------------------------------------
 
+
 class ParcelLookupRequest(SchemaBase):
     # KR-013: cadastral parcel lookup by province/district/village/ada/parsel.
     province: str = Field(min_length=2, max_length=64)
@@ -45,6 +46,7 @@ class ParcelLookupRequest(SchemaBase):
 # ---------------------------------------------------------------------------
 # Response schemas
 # ---------------------------------------------------------------------------
+
 
 class ParcelResponse(SchemaBase):
     province: str

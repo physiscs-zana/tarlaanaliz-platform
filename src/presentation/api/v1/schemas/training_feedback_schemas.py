@@ -36,6 +36,7 @@ class TrainingGrade(str, Enum):
 # Response schemas
 # ---------------------------------------------------------------------------
 
+
 class TrainingFeedbackResponse(SchemaBase):
     # KR-029: training feedback export — review data + verdict + grade for ML pipeline.
     feedback_id: UUID

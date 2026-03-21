@@ -81,9 +81,7 @@ class ExpertRepositoryImpl(ExpertRepository):
 
     async def find_by_user_id(self, user_id: uuid.UUID) -> Optional[Expert]:
         """user_id ile Expert getir."""
-        result = await self._session.execute(
-            select(ExpertModel).where(ExpertModel.user_id == user_id)
-        )
+        result = await self._session.execute(select(ExpertModel).where(ExpertModel.user_id == user_id))
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
@@ -108,9 +106,9 @@ class ExpertRepositoryImpl(ExpertRepository):
     async def list_by_specialization(self, specialization: str) -> List[Expert]:
         """Belirli uzmanlik alanindaki uzmanlari getir (PostgreSQL ARRAY contains)."""
         result = await self._session.execute(
-            select(ExpertModel).where(
-                ExpertModel.specialization.contains([specialization])
-            ).order_by(ExpertModel.created_at.desc())
+            select(ExpertModel)
+            .where(ExpertModel.specialization.contains([specialization]))
+            .order_by(ExpertModel.created_at.desc())
         )
         return [self._to_entity(m) for m in result.scalars().all()]
 

@@ -36,6 +36,7 @@ class WebhookEventType(str, Enum):
 # Request schemas (webhook payloads)
 # ---------------------------------------------------------------------------
 
+
 class PaymentWebhookPayload(SchemaBase):
     # KR-033: webhook payload from payment provider.
     event_id: str = Field(min_length=3, max_length=128)
@@ -53,6 +54,7 @@ class PaymentWebhookPayload(SchemaBase):
 # ---------------------------------------------------------------------------
 # Response schemas
 # ---------------------------------------------------------------------------
+
 
 class WebhookAckResponse(SchemaBase):
     received: bool

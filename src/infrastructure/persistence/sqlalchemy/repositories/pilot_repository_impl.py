@@ -47,7 +47,7 @@ class PilotRepositoryImpl(PilotRepository):
 
         # PilotServiceAreaModel'den province_list olustur
         province_list: List[str] = []
-        if hasattr(model, 'service_areas') and model.service_areas:
+        if hasattr(model, "service_areas") and model.service_areas:
             province_list = list({sa.province for sa in model.service_areas})
 
         return Pilot(
@@ -119,9 +119,7 @@ class PilotRepositoryImpl(PilotRepository):
 
     async def find_by_user_id(self, user_id: uuid.UUID) -> Optional[Pilot]:
         """user_id ile Pilot getir."""
-        result = await self._session.execute(
-            select(PilotModel).where(PilotModel.user_id == user_id)
-        )
+        result = await self._session.execute(select(PilotModel).where(PilotModel.user_id == user_id))
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
@@ -147,10 +145,12 @@ class PilotRepositoryImpl(PilotRepository):
     async def list_active_by_province(self, province: str) -> List[Pilot]:
         """Belirli bir ildeki aktif pilotlari getir (gorev atamasi icin)."""
         result = await self._session.execute(
-            select(PilotModel).where(
+            select(PilotModel)
+            .where(
                 PilotModel.province == province,
                 PilotModel.is_active.is_(True),
-            ).order_by(PilotModel.reliability_score.desc())
+            )
+            .order_by(PilotModel.reliability_score.desc())
         )
         return [self._to_entity(m) for m in result.scalars().all()]
 
