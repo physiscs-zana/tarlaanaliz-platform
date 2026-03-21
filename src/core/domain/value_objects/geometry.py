@@ -1,23 +1,25 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/value_objects/geometry.py
 # DESC: Geometry VO; polygon/point verileri Shapely ile sarmalama.
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
-try:
+if TYPE_CHECKING:
     from shapely.geometry import MultiPolygon, Point, Polygon
     from shapely.geometry import mapping as shapely_mapping
     from shapely.geometry import shape as shapely_shape
+
+try:
+    from shapely.geometry import MultiPolygon, Point, Polygon  # noqa: F811
+    from shapely.geometry import mapping as shapely_mapping  # noqa: F811
+    from shapely.geometry import shape as shapely_shape  # noqa: F811
+
+    _HAS_SHAPELY = True
 except ImportError:
-    # shapely su an devre disi (numpy CPU uyumsuzlugu).
-    # PostGIS entegrasyonu aktif edildiginde yeniden eklenecek.
-    MultiPolygon = None  # type: ignore[assignment,misc]
-    Point = None  # type: ignore[assignment,misc]
-    Polygon = None  # type: ignore[assignment,misc]
-    shapely_mapping = None  # type: ignore[assignment]
-    shapely_shape = None  # type: ignore[assignment]
+    _HAS_SHAPELY = False
 
 
 class GeometryError(Exception):
