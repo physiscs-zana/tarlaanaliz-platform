@@ -13,7 +13,7 @@ test.describe("expert journey smoke", () => {
     ]);
     await page.goto("/queue");
     await expect(
-      page.getByRole("heading", { name: "İnceleme Kuyruğu" }),
+      page.getByRole("heading", { name: "Inceleme Kuyrugu" }),
     ).toBeVisible();
   });
 });
