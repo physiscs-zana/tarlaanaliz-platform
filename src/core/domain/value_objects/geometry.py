@@ -6,9 +6,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, cast
 
-from shapely.geometry import MultiPolygon, Point, Polygon
-from shapely.geometry import mapping as shapely_mapping
-from shapely.geometry import shape as shapely_shape
+try:
+    from shapely.geometry import MultiPolygon, Point, Polygon
+    from shapely.geometry import mapping as shapely_mapping
+    from shapely.geometry import shape as shapely_shape
+except ImportError:
+    # shapely su an devre disi (numpy CPU uyumsuzlugu).
+    # PostGIS entegrasyonu aktif edildiginde yeniden eklenecek.
+    MultiPolygon = None  # type: ignore[assignment,misc]
+    Point = None  # type: ignore[assignment,misc]
+    Polygon = None  # type: ignore[assignment,misc]
+    shapely_mapping = None  # type: ignore[assignment]
+    shapely_shape = None  # type: ignore[assignment]
 
 
 class GeometryError(Exception):

@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import pytest
 
+shapely = pytest.importorskip("shapely", reason="shapely not installed — PostGIS tests skipped")
+
 from src.core.domain.value_objects.geometry import Geometry, GeometryError
 
 
