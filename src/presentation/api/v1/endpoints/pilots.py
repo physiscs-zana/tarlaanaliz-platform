@@ -14,6 +14,10 @@ from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from src.core.domain.entities.user import User, UserRole
+from src.infrastructure.persistence.sqlalchemy.models.pilot_model import (
+    PilotModel,
+    PilotServiceAreaModel,
+)
 from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
 from src.infrastructure.persistence.sqlalchemy.repositories.user_repository_impl import UserRepositoryImpl
 from src.infrastructure.persistence.sqlalchemy.session import get_async_session
@@ -113,9 +117,29 @@ async def create_pilot(request: Request, payload: PilotCreateRequest) -> PilotRe
         user_model = result.scalar_one_or_none()
         if user_model:
             user_model.display_name = payload.display_name
+
+        # Create PilotModel + PilotServiceAreaModel for auto-dispatch
+        pilot_id = _uuid.uuid4()
+        drone_serial = f"DRONE-{_uuid.uuid4().hex[:8].upper()}"
+        pilot = PilotModel(
+            pilot_id=pilot_id,
+            user_id=user.user_id,
+            province=payload.province,
+            drone_serial_no=drone_serial,
+        )
+        session.add(pilot)
+        await session.flush()
+
+        service_area = PilotServiceAreaModel(
+            service_area_id=_uuid.uuid4(),
+            pilot_id=pilot_id,
+            province=payload.province,
+            district="",
+        )
+        session.add(service_area)
         await session.commit()
 
-    LOGGER.info("PILOT.CREATED user_id=%s phone=%s", user.user_id, payload.phone[-4:])
+    LOGGER.warning("PILOT.CREATED user_id=%s pilot_id=%s province=%s", user.user_id, pilot_id, payload.province)
     return PilotResponse(
         user_id=str(user.user_id),
         phone=payload.phone,
