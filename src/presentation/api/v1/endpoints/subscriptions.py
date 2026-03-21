@@ -171,7 +171,8 @@ def _calculate_price_inline(crop_type: str, area_m2: Decimal, total_scans: int) 
     if isinstance(crops, list):
         for crop in crops:
             if isinstance(crop, dict) and crop.get("code") == crop_type:
-                seasonal_price = crop.get("seasonal_price", 120)  # type: ignore[assignment]
+                raw = crop.get("seasonal_price", 120)
+                seasonal_price = float(raw) if isinstance(raw, (int, float)) else 120
                 break
 
     area_ha = float(area_m2) / 10_000.0
@@ -228,8 +229,8 @@ async def create_subscription(
             amount_kurus: int = calculate_subscription_price(
                 field_id=field_uuid,
                 crop_type=payload.crop_type,
-                area_m2=area_m2,
-                total_scans=total_scans,
+                area_m2=float(area_m2),
+                total_analyses=total_scans,
             )
         except (ImportError, ModuleNotFoundError):
             logger.warning(
