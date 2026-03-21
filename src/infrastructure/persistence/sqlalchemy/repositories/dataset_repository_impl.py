@@ -124,9 +124,7 @@ class DatasetRepositoryImpl:
     async def get_by_mission_id(self, mission_id: UUID) -> list[Dataset]:
         """Bir mission'a ait tüm dataset'leri getir."""
         result = await self._session.execute(
-            select(DatasetModel)
-            .where(DatasetModel.mission_id == mission_id)
-            .order_by(DatasetModel.created_at.desc())
+            select(DatasetModel).where(DatasetModel.mission_id == mission_id).order_by(DatasetModel.created_at.desc())
         )
         return [self._to_entity(m) for m in result.scalars().all()]
 
@@ -167,9 +165,7 @@ class DatasetRepositoryImpl:
     ) -> None:
         """Sadece status alanını güncelle."""
         await self._session.execute(
-            update(DatasetModel)
-            .where(DatasetModel.dataset_id == dataset_id)
-            .values(status=new_status.value)
+            update(DatasetModel).where(DatasetModel.dataset_id == dataset_id).values(status=new_status.value)
         )
         await self._session.flush()
         logger.info(

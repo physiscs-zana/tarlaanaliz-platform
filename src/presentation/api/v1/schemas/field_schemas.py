@@ -30,6 +30,7 @@ class GeoJSONMultiPolygon(SchemaBase):
 # Request schemas
 # ---------------------------------------------------------------------------
 
+
 class CreateFieldRequest(SchemaBase):
     # KR-013: field registration with cadastral parcel reference.
     province: str = Field(min_length=2, max_length=64)
@@ -56,6 +57,7 @@ class UpdateFieldRequest(SchemaBase):
 # ---------------------------------------------------------------------------
 # Response schemas
 # ---------------------------------------------------------------------------
+
 
 class FieldResponse(SchemaBase):
     field_id: UUID

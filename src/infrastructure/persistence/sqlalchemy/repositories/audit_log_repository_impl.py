@@ -43,7 +43,7 @@ class AuditLogModel(Base):
     card_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     resource_type: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     resource_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
-    change_details: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    change_details: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     error_code: Mapped[str | None] = mapped_column(String(32), nullable=True)
     error_message: Mapped[str | None] = mapped_column(String(120), nullable=True)
     http_status: Mapped[int | None] = mapped_column(Integer, nullable=True)

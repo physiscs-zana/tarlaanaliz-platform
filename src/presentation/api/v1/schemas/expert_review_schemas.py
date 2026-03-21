@@ -42,6 +42,7 @@ class TrainingGrade(str, Enum):
 # Request schemas
 # ---------------------------------------------------------------------------
 
+
 class SubmitVerdictRequest(SchemaBase):
     # KR-019: expert submits verdict and optional training grade for KR-029 feedback loop.
     verdict: Verdict
@@ -59,6 +60,7 @@ class CreateExpertReviewRequest(SchemaBase):
 # ---------------------------------------------------------------------------
 # Response schemas
 # ---------------------------------------------------------------------------
+
 
 class ExpertReviewResponse(SchemaBase):
     review_id: UUID

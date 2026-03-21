@@ -31,6 +31,7 @@ class SubscriptionPlanType(str, Enum):
 # Request schemas
 # ---------------------------------------------------------------------------
 
+
 class CreateSubscriptionRequest(SchemaBase):
     # KR-027: seasonal subscription for periodic mission generation.
     field_id: UUID
@@ -56,6 +57,7 @@ class UpdateSubscriptionRequest(SchemaBase):
 # ---------------------------------------------------------------------------
 # Response schemas
 # ---------------------------------------------------------------------------
+
 
 class SubscriptionResponse(SchemaBase):
     subscription_id: UUID

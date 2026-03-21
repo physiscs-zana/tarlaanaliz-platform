@@ -138,7 +138,5 @@ class ExpertReviewRepositoryImpl(ExpertReviewRepository):
 
     async def delete(self, review_id: uuid.UUID) -> None:
         """ExpertReview sil."""
-        await self._session.execute(
-            sa_delete(ExpertReviewModel).where(ExpertReviewModel.review_id == review_id)
-        )
+        await self._session.execute(sa_delete(ExpertReviewModel).where(ExpertReviewModel.review_id == review_id))
         await self._session.flush()

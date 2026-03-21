@@ -28,13 +28,22 @@ def upgrade() -> None:
     # --- pricebook_entries: Fiyat tanimlari (KR-022) ---
     op.create_table(
         "pricebook_entries",
-        sa.Column("entry_id", postgresql.UUID(as_uuid=True), nullable=False, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "entry_id", postgresql.UUID(as_uuid=True), nullable=False, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column(
             "crop_type",
             postgresql.ENUM(
-                "PAMUK", "ANTEP_FISTIGI", "MISIR", "BUGDAY",
-                "AYCICEGI", "UZUM", "ZEYTIN", "KIRMIZI_MERCIMEK",
-                name="crop_type", create_type=False,
+                "PAMUK",
+                "ANTEP_FISTIGI",
+                "MISIR",
+                "BUGDAY",
+                "AYCICEGI",
+                "UZUM",
+                "ZEYTIN",
+                "KIRMIZI_MERCIMEK",
+                name="crop_type",
+                create_type=False,
             ),
             nullable=False,
         ),

@@ -28,11 +28,18 @@ def upgrade() -> None:
     # --- experts tablosu (KR-019) ---
     op.create_table(
         "experts",
-        sa.Column("expert_id", postgresql.UUID(as_uuid=True), nullable=False, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "expert_id", postgresql.UUID(as_uuid=True), nullable=False, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("province", sa.String(length=100), nullable=False),
         sa.Column("max_daily_quota", sa.Integer(), nullable=False),
-        sa.Column("specialization", postgresql.ARRAY(sa.String(length=50)), nullable=False, server_default=sa.text("'{}'::varchar[]")),
+        sa.Column(
+            "specialization",
+            postgresql.ARRAY(sa.String(length=50)),
+            nullable=False,
+            server_default=sa.text("'{}'::varchar[]"),
+        ),
         sa.Column("status", sa.String(length=32), nullable=False, server_default=sa.text("'ACTIVE'")),
         sa.Column("created_by_admin_user_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
@@ -48,7 +55,9 @@ def upgrade() -> None:
     # --- expert_reviews tablosu (KR-019, KR-029) ---
     op.create_table(
         "expert_reviews",
-        sa.Column("review_id", postgresql.UUID(as_uuid=True), nullable=False, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "review_id", postgresql.UUID(as_uuid=True), nullable=False, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("mission_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("expert_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("analysis_result_id", postgresql.UUID(as_uuid=True), nullable=False),
@@ -71,7 +80,9 @@ def upgrade() -> None:
     # --- analysis_results tablosu (KR-081, KR-025) ---
     op.create_table(
         "analysis_results",
-        sa.Column("result_id", postgresql.UUID(as_uuid=True), nullable=False, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "result_id", postgresql.UUID(as_uuid=True), nullable=False, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("analysis_job_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("mission_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("field_id", postgresql.UUID(as_uuid=True), nullable=False),
@@ -80,7 +91,12 @@ def upgrade() -> None:
         sa.Column("summary", sa.Text(), nullable=False),
         sa.Column("report_tier", sa.String(length=32), nullable=False, server_default=sa.text("'TEMEL'")),
         sa.Column("band_class", sa.String(length=32), nullable=False, server_default=sa.text("''")),
-        sa.Column("available_layers", postgresql.ARRAY(sa.String(length=50)), nullable=False, server_default=sa.text("'{}'::varchar[]")),
+        sa.Column(
+            "available_layers",
+            postgresql.ARRAY(sa.String(length=50)),
+            nullable=False,
+            server_default=sa.text("'{}'::varchar[]"),
+        ),
         sa.Column("thermal_summary", postgresql.JSONB(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.PrimaryKeyConstraint("result_id"),
@@ -94,7 +110,9 @@ def upgrade() -> None:
     # --- audit_logs tablosu (BOLUM 3, KR-062) ---
     op.create_table(
         "audit_logs",
-        sa.Column("audit_log_id", postgresql.UUID(as_uuid=True), nullable=False, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "audit_log_id", postgresql.UUID(as_uuid=True), nullable=False, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("event_type", sa.String(length=32), nullable=False),
         sa.Column("event_action", sa.String(length=32), nullable=False),
         sa.Column("outcome", sa.String(length=16), nullable=False),
@@ -123,7 +141,9 @@ def upgrade() -> None:
     # --- datasets tablosu (KR-072) ---
     op.create_table(
         "datasets",
-        sa.Column("dataset_id", postgresql.UUID(as_uuid=True), nullable=False, server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "dataset_id", postgresql.UUID(as_uuid=True), nullable=False, server_default=sa.text("gen_random_uuid()")
+        ),
         sa.Column("mission_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("field_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("status", sa.String(length=50), nullable=False, server_default=sa.text("'RAW_INGESTED'")),
@@ -136,7 +156,12 @@ def upgrade() -> None:
         sa.Column("result_uri", sa.String(length=500), nullable=True),
         sa.Column("signature", sa.Text(), nullable=True),
         sa.Column("quarantine_reason", sa.Text(), nullable=True),
-        sa.Column("available_bands", postgresql.ARRAY(sa.String(length=20)), nullable=False, server_default=sa.text("'{}'::varchar[]")),
+        sa.Column(
+            "available_bands",
+            postgresql.ARRAY(sa.String(length=20)),
+            nullable=False,
+            server_default=sa.text("'{}'::varchar[]"),
+        ),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.PrimaryKeyConstraint("dataset_id"),

@@ -89,9 +89,7 @@ class QCReportRepositoryImpl(QCReportRepository):
     async def list_by_status(self, status: QCStatus) -> List[QCReportRecord]:
         """Belirli durumdaki tum QC raporlarini getir."""
         result = await self._session.execute(
-            select(QCReportModel)
-            .where(QCReportModel.status == status.value)
-            .order_by(QCReportModel.created_at.desc())
+            select(QCReportModel).where(QCReportModel.status == status.value).order_by(QCReportModel.created_at.desc())
         )
         return [self._to_entity(m) for m in result.scalars().all()]
 
@@ -101,7 +99,5 @@ class QCReportRepositoryImpl(QCReportRepository):
 
     async def delete(self, qc_report_id: uuid.UUID) -> None:
         """QCReportRecord sil."""
-        await self._session.execute(
-            sa_delete(QCReportModel).where(QCReportModel.qc_report_id == qc_report_id)
-        )
+        await self._session.execute(sa_delete(QCReportModel).where(QCReportModel.qc_report_id == qc_report_id))
         await self._session.flush()

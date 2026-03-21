@@ -36,10 +36,14 @@ class PriceSnapshotRepositoryImpl(PriceSnapshotRepository):
             analysis_type=model.analysis_type,
             amount_kurus=model.unit_price_kurus,
             currency=model.currency,
-            effective_date=model.effective_from.date() if isinstance(model.effective_from, datetime) else model.effective_from,
+            effective_date=model.effective_from.date()
+            if isinstance(model.effective_from, datetime)
+            else model.effective_from,
             created_at=model.created_at,
             promotional_discount_percent=Decimal(str(model.discount_pct)) if model.discount_pct is not None else None,
-            effective_until=model.effective_to.date() if isinstance(model.effective_to, datetime) else model.effective_to,
+            effective_until=model.effective_to.date()
+            if isinstance(model.effective_to, datetime)
+            else model.effective_to,
             created_by_admin_user_id=model.created_by,
         )
 
@@ -86,9 +90,7 @@ class PriceSnapshotRepositoryImpl(PriceSnapshotRepository):
                 PriceSnapshotModel.analysis_type == analysis_type,
                 PriceSnapshotModel.effective_from <= as_of,
             )
-            .where(
-                (PriceSnapshotModel.effective_to.is_(None)) | (PriceSnapshotModel.effective_to >= as_of)
-            )
+            .where((PriceSnapshotModel.effective_to.is_(None)) | (PriceSnapshotModel.effective_to >= as_of))
             .order_by(PriceSnapshotModel.effective_from.desc())
             .limit(1)
         )

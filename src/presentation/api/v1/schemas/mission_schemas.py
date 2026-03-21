@@ -43,6 +43,7 @@ class CropType(str, Enum):
 # Request schemas
 # ---------------------------------------------------------------------------
 
+
 class CreateMissionRequest(SchemaBase):
     # KR-028: single analysis task for a field.
     field_id: UUID
@@ -61,6 +62,7 @@ class UpdateMissionRequest(SchemaBase):
 # ---------------------------------------------------------------------------
 # Response schemas
 # ---------------------------------------------------------------------------
+
 
 class MissionResponse(SchemaBase):
     mission_id: UUID

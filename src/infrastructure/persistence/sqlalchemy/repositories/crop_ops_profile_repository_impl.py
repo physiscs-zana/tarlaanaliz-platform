@@ -56,9 +56,7 @@ class CropOpsProfileRepositoryImpl(CropOpsProfileRepository):
 
     async def get_all(self) -> List[CropOpsProfile]:
         """Tum profilleri getir."""
-        result = await self._session.execute(
-            select(CropOpsProfileModel).order_by(CropOpsProfileModel.crop_type)
-        )
+        result = await self._session.execute(select(CropOpsProfileModel).order_by(CropOpsProfileModel.crop_type))
         return [m.to_domain() for m in result.scalars().all()]
 
     # ------------------------------------------------------------------

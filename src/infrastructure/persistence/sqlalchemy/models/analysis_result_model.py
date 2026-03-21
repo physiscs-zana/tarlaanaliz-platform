@@ -8,6 +8,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from typing import Any
 
 from sqlalchemy import DateTime, ForeignKey, Numeric, String, Text, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
@@ -38,12 +39,12 @@ class AnalysisResultModel(Base):
         UUID(as_uuid=True), ForeignKey("fields.field_id", ondelete="CASCADE"), nullable=False
     )
     overall_health_index: Mapped[Decimal] = mapped_column(Numeric(3, 2), nullable=False)
-    findings: Mapped[dict | list] = mapped_column(JSONB, nullable=False)
+    findings: Mapped[dict[str, Any] | list[Any]] = mapped_column(JSONB, nullable=False)
     summary: Mapped[str] = mapped_column(Text, nullable=False)
     report_tier: Mapped[str] = mapped_column(String(32), nullable=False, server_default=text("'TEMEL'"))
     band_class: Mapped[str] = mapped_column(String(32), nullable=False, server_default=text("''"))
     available_layers: Mapped[list[str]] = mapped_column(
         ARRAY(String(50)), nullable=False, server_default=text("'{}'::varchar[]")
     )
-    thermal_summary: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    thermal_summary: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))

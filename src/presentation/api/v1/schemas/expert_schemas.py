@@ -26,6 +26,7 @@ class ExpertStatus(str, Enum):
 # Request schemas
 # ---------------------------------------------------------------------------
 
+
 class CreateExpertRequest(SchemaBase):
     # KR-019: curated onboarding — admin creates expert with province and quota.
     user_id: UUID
@@ -44,6 +45,7 @@ class UpdateExpertRequest(SchemaBase):
 # ---------------------------------------------------------------------------
 # Response schemas
 # ---------------------------------------------------------------------------
+
 
 class ExpertResponse(SchemaBase):
     expert_id: UUID
