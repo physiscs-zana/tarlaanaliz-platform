@@ -8,6 +8,8 @@ import { getApiBaseUrl, getTokenFromCookie, decodeJwtPayload } from "@/lib/api";
 
 export default function PilotProfilePage() {
   const [phone, setPhone] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [province, setProvince] = useState("");
   const [droneModel, setDroneModel] = useState("");
   const [droneSerial, setDroneSerial] = useState("");
   const [sensorType, setSensorType] = useState("");
@@ -40,7 +42,9 @@ export default function PilotProfilePage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        const data = (await res.json()) as { drone_model?: string; drone_serial?: string; sensor_type?: string; locked?: boolean };
+        const data = (await res.json()) as { drone_model?: string; drone_serial?: string; sensor_type?: string; locked?: boolean; display_name?: string; province?: string };
+        if (data.display_name) setDisplayName(data.display_name);
+        if (data.province) setProvince(data.province);
         if (data.drone_model) {
           setDroneModel(data.drone_model);
           setDroneSerial(data.drone_serial ?? "");
@@ -114,7 +118,9 @@ export default function PilotProfilePage() {
     <section className="space-y-4">
       <h1 className="text-2xl font-semibold">Pilot Profili</h1>
       <div className="rounded-lg border border-slate-200 bg-white p-5 space-y-3">
+        {displayName && <div><span className="text-sm text-slate-500">Ad Soyad</span><p className="text-base font-medium">{displayName}</p></div>}
         <div><span className="text-sm text-slate-500">Telefon</span><p className="text-base font-medium">{maskPhone(phone)}</p></div>
+        {province && <div><span className="text-sm text-slate-500">Il</span><p className="text-base font-medium">{province}</p></div>}
       </div>
 
       {/* Drone Bilgileri */}

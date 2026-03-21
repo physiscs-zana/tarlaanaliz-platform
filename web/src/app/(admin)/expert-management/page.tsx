@@ -45,6 +45,7 @@ interface Expert {
   id: string;
   name: string;
   phone: string;
+  province: string;
   competencies: Competency[];
   reviewCount: number;
   slaRate: string;
@@ -153,6 +154,7 @@ export default function ExpertManagementPage() {
         id: e.user_id,
         name: e.display_name || e.phone,
         phone: e.phone,
+        province: e.province || "",
         competencies: parseExpertiseTags(e.expertise_tags ?? []),
         reviewCount: e.review_count ?? 0,
         slaRate: e.sla_rate ?? "—",
@@ -395,6 +397,7 @@ export default function ExpertManagementPage() {
                 <td className="px-4 py-2.5">
                   <p className="font-medium text-slate-900">{e.name}</p>
                   <p className="text-xs text-slate-400">{e.phone}</p>
+                  {e.province && <p className="text-xs text-slate-500">{e.province}</p>}
                 </td>
                 <td className="px-4 py-2.5">
                   <CompetencyTags competencies={e.competencies} />

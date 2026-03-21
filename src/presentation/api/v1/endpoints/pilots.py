@@ -214,24 +214,36 @@ async def update_my_capacity(request: Request, payload: PilotCapacityUpdateReque
 
 @router.get("/me/drone")
 async def get_my_drone(request: Request) -> dict[str, object]:
-    """Get pilot's drone info from pilots table."""
+    """Get pilot's drone info + profile from pilots table."""
     user_id = _get_pilot_user_id(request)
     from sqlalchemy import select
     from src.infrastructure.persistence.sqlalchemy.models.pilot_model import PilotModel
 
+    display_name = ""
+    province = ""
+
     async with get_async_session() as session:
+        # Get user display_name and province
+        user_result = await session.execute(select(UserModel).where(UserModel.user_id == user_id))
+        user_model = user_result.scalar_one_or_none()
+        if user_model:
+            display_name = user_model.display_name or f"{user_model.first_name} {user_model.last_name}".strip()
+            province = user_model.province or ""
+
         result = await session.execute(select(PilotModel).where(PilotModel.user_id == user_id))
         pilot = result.scalar_one_or_none()
 
+    base = {"display_name": display_name, "province": province}
     if pilot and pilot.drone_model:
         return {
+            **base,
             "drone_model": pilot.drone_model,
             "drone_serial": pilot.drone_serial_no,
             "sensor_type": "",
             "locked": True,
         }
 
-    return {"drone_model": "", "drone_serial": "", "sensor_type": "", "locked": False}
+    return {**base, "drone_model": "", "drone_serial": "", "sensor_type": "", "locked": False}
 
 
 @router.put("/me/drone")
