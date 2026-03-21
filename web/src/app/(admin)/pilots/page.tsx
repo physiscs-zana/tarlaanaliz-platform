@@ -47,6 +47,10 @@ export default function AdminPilotsPage() {
   const [addError, setAddError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
+  /* Edit province state */
+  const [editingPilot, setEditingPilot] = useState<string | null>(null);
+  const [editProvince, setEditProvince] = useState("");
+
   const fetchPilots = useCallback(async () => {
     const token = getTokenFromCookie();
     if (!token) return;
@@ -109,6 +113,29 @@ export default function AdminPilotsPage() {
       setAddError("Baglanti hatasi.");
     } finally {
       setAdding(false);
+    }
+  };
+
+  const handleUpdateProvince = async (userId: string) => {
+    if (!editProvince.trim()) return;
+    const token = getTokenFromCookie();
+    if (!token) return;
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/pilots/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ province: editProvince.trim() }),
+      });
+      if (!res.ok) {
+        setError("Il guncellenemedi.");
+        return;
+      }
+      setEditingPilot(null);
+      setEditProvince("");
+      await fetchPilots();
+    } catch {
+      setError("Baglanti hatasi.");
     }
   };
 
@@ -198,7 +225,23 @@ export default function AdminPilotsPage() {
                       <p className="font-medium text-slate-900">{p.displayName || p.phone}</p>
                     </td>
                     <td className="px-4 py-2.5 font-mono text-xs text-slate-700">{p.phone}</td>
-                    <td className="px-4 py-2.5 text-slate-600">{p.province}</td>
+                    <td className="px-4 py-2.5 text-slate-600">
+                      {editingPilot === p.userId ? (
+                        <div className="flex items-center gap-1">
+                          <input
+                            value={editProvince}
+                            onChange={(e) => setEditProvince(e.target.value)}
+                            className="w-28 rounded border border-slate-300 px-2 py-1 text-xs"
+                            placeholder="Il"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <button onClick={(e) => { e.stopPropagation(); handleUpdateProvince(p.userId); }} className="rounded bg-emerald-50 px-1.5 py-1 text-xs text-emerald-700 hover:bg-emerald-100">&#10003;</button>
+                          <button onClick={(e) => { e.stopPropagation(); setEditingPilot(null); }} className="rounded bg-slate-100 px-1.5 py-1 text-xs text-slate-500 hover:bg-slate-200">&#10005;</button>
+                        </div>
+                      ) : (
+                        <span className={p.province ? "" : "text-rose-500 font-medium"}>{p.province || "Belirtilmemis"}</span>
+                      )}
+                    </td>
                     <td className="px-4 py-2.5"><StatusBadge active={p.active} /></td>
                     <td className="px-4 py-2.5 text-xs text-slate-500">
                       {p.weeklyScans.length > 0
@@ -206,12 +249,20 @@ export default function AdminPilotsPage() {
                         : "Tarama yok"}
                     </td>
                     <td className="px-4 py-2.5">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDelete(p.userId); }}
-                        className="rounded bg-rose-50 px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-100"
-                      >
-                        Sil
-                      </button>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEditingPilot(p.userId); setEditProvince(p.province); }}
+                          className="rounded bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100"
+                        >
+                          Il
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(p.userId); }}
+                          className="rounded bg-rose-50 px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-100"
+                        >
+                          Sil
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   {expandedPilot === p.userId && p.weeklyScans.length > 0 && (

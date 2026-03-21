@@ -291,15 +291,34 @@ async def update_my_drone(request: Request, payload: PilotDroneUpdateRequest) ->
             pilot.drone_serial_no = payload.drone_serial
             pilot.updated_at = datetime.now(timezone.utc)
         else:
+            # Look up user province so pilot inherits correct region
+            user_result = await session.execute(select(UserModel).where(UserModel.user_id == user_id))
+            user_model = user_result.scalar_one_or_none()
+            user_province = user_model.province if user_model else ""
+
+            pilot_id = _uuid.uuid4()
             pilot = PilotModel(
+                pilot_id=pilot_id,
                 user_id=user_id,
                 drone_model=payload.drone_model,
                 drone_serial_no=payload.drone_serial,
-                province="",
+                province=user_province,
                 work_days=[],
                 daily_capacity_donum=2750,
             )
             session.add(pilot)
+            await session.flush()
+
+            # Auto-create service area for auto-dispatch
+            if user_province:
+                session.add(
+                    PilotServiceAreaModel(
+                        service_area_id=_uuid.uuid4(),
+                        pilot_id=pilot_id,
+                        province=user_province,
+                        district="",
+                    )
+                )
         await session.commit()
 
     LOGGER.warning("PILOT.DRONE_SAVED user=%s model=%s serial=%s", user_id, payload.drone_model, payload.drone_serial)
@@ -309,6 +328,71 @@ async def update_my_drone(request: Request, payload: PilotDroneUpdateRequest) ->
         "sensor_type": payload.sensor_type,
         "locked": True,
     }
+
+
+class PilotUpdateRequest(BaseModel):
+    """Admin updates pilot province — syncs PilotModel + PilotServiceAreaModel."""
+
+    province: str = Field(min_length=2, max_length=100)
+
+
+@router.patch("/{user_id}", response_model=PilotResponse)
+async def update_pilot(request: Request, user_id: str, payload: PilotUpdateRequest) -> PilotResponse:
+    """Update pilot province and service area (admin only)."""
+    _require_admin(request)
+    from sqlalchemy import select, delete as sa_delete
+
+    try:
+        uid = _uuid.UUID(user_id)
+    except ValueError as err:
+        raise HTTPException(status_code=422, detail="Invalid user_id") from err
+
+    async with get_async_session() as session:
+        # Update user province
+        user_result = await session.execute(select(UserModel).where(UserModel.user_id == uid))
+        user_model = user_result.scalar_one_or_none()
+        if user_model is None:
+            raise HTTPException(status_code=404, detail="Pilot not found")
+        user_model.province = payload.province
+
+        # Update or create PilotModel
+        pilot_result = await session.execute(select(PilotModel).where(PilotModel.user_id == uid))
+        pilot = pilot_result.scalar_one_or_none()
+        if pilot is None:
+            pilot_id = _uuid.uuid4()
+            pilot = PilotModel(
+                pilot_id=pilot_id,
+                user_id=uid,
+                province=payload.province,
+                drone_serial_no=f"DRONE-{_uuid.uuid4().hex[:8].upper()}",
+            )
+            session.add(pilot)
+            await session.flush()
+        else:
+            pilot_id = pilot.pilot_id
+            pilot.province = payload.province
+
+        # Replace service areas with new province
+        await session.execute(sa_delete(PilotServiceAreaModel).where(PilotServiceAreaModel.pilot_id == pilot_id))
+        session.add(
+            PilotServiceAreaModel(
+                service_area_id=_uuid.uuid4(),
+                pilot_id=pilot_id,
+                province=payload.province,
+                district="",
+            )
+        )
+        await session.commit()
+
+    LOGGER.warning("PILOT.UPDATED user_id=%s province=%s", user_id, payload.province)
+    return PilotResponse(
+        user_id=str(uid),
+        phone=user_model.phone,
+        display_name=user_model.display_name or "",
+        province=payload.province,
+        role=UserRole.PILOT.value,
+        active=user_model.is_active,
+    )
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
