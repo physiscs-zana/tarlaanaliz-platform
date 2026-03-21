@@ -32,7 +32,7 @@ dependencies = [
     "asyncpg>=0.30.0,<1",
     "psycopg2-binary>=2.9.9,<3",
     "alembic>=1.14.0,<2",
-    "geoalchemy2>=0.15.0,<1",
+    # "geoalchemy2>=0.15.0,<1",  # PostGIS — su an kullanilmiyor, ihtiyac olunca aktif et
 
     # --- Cache ---
     "redis>=5.2.0,<6",
@@ -53,7 +53,7 @@ dependencies = [
     "boto3>=1.35.0,<2",
 
     # --- Geospatial ---
-    "shapely>=2.0.6,<3",
+    # "shapely>=2.0.6,<3",  # numpy bagimli — su an kullanilmiyor, ihtiyac olunca aktif et
 
     # --- Observability ---
     "structlog>=24.4.0,<26",
