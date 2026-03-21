@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.domain.entities.mission import Mission, MissionStatus
 from src.infrastructure.persistence.sqlalchemy.models.mission_model import MissionModel
+from src.infrastructure.persistence.sqlalchemy.models.pilot_model import MissionAssignmentModel
 
 
 class MissionRepositoryImpl:
@@ -71,6 +72,17 @@ class MissionRepositoryImpl:
             .order_by(MissionModel.created_at.desc())
         )
         return list(result.scalars().all())
+
+    async def list_by_pilot_id(self, pilot_id: uuid.UUID) -> List[MissionModel]:
+        """Return missions assigned to a pilot via mission_assignments table."""
+        result = await self._session.execute(
+            select(MissionModel)
+            .join(MissionAssignmentModel, MissionModel.mission_id == MissionAssignmentModel.mission_id)
+            .where(MissionAssignmentModel.pilot_id == pilot_id)
+            .where(MissionAssignmentModel.is_current.is_(True))
+            .order_by(MissionModel.created_at.desc())
+        )
+        return list(result.scalars().unique().all())
 
     async def list_by_field_id(self, field_id: uuid.UUID) -> List[MissionModel]:
         result = await self._session.execute(

@@ -36,14 +36,13 @@ export default function PilotMissionsPage() {
     if (!token) { setLoading(false); return; }
     try {
       const baseUrl = getApiBaseUrl();
-      const res = await fetch(`${baseUrl}/missions`, {
+      const res = await fetch(`${baseUrl}/pilots/me/missions`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        const data = (await res.json()) as PilotMission[];
-        setMissions(data ?? []);
-      }
-    } catch { /* ignore */ } finally { setLoading(false); }
+      if (!res.ok) throw new Error("Gorevler yuklenemedi");
+      const data = (await res.json()) as PilotMission[];
+      setMissions(data ?? []);
+    } catch { setMissions([]); } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchMissions(); }, [fetchMissions]);
