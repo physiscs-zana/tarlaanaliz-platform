@@ -1,12 +1,13 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
 # PATH: src/presentation/api/v1/schemas/training_feedback_schemas.py
-# DESC: Training feedback request/response schema.
-# TODO: Implement this file.
+# DESC: Training feedback export schema (KR-029).
 
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal
 from enum import Enum
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -16,39 +17,52 @@ class SchemaBase(BaseModel):
     model_config = ConfigDict(extra="forbid", from_attributes=True)
 
 
-class FeedbackLabel(str, Enum):
-    healthy = "healthy"
-    stressed = "stressed"
-    diseased = "diseased"
-    weed = "weed"
-    uncertain = "uncertain"
+class Verdict(str, Enum):
+    confirmed = "confirmed"
+    corrected = "corrected"
+    rejected = "rejected"
+    needs_more_expert = "needs_more_expert"
 
 
-class FeedbackType(str, Enum):
-    confirm = "confirm"
-    correction = "correction"
-    reject = "reject"
+class TrainingGrade(str, Enum):
+    A = "A"
+    B = "B"
+    C = "C"
+    D = "D"
+    REJECT = "REJECT"
 
 
-class TrainingFeedbackCreateRequest(SchemaBase):
-    # KR-071/KR-081: feedback payload is constrained and one-way consumable contract.
-    model_id: str = Field(min_length=2, max_length=128)
-    model_version: str = Field(min_length=1, max_length=64)
-    sample_id: UUID
-    label: FeedbackLabel
-    feedback: FeedbackType
-    confidence: float = Field(ge=0, le=1)
-    notes: str | None = Field(default=None, max_length=1000)
-
+# ---------------------------------------------------------------------------
+# Response schemas
+# ---------------------------------------------------------------------------
 
 class TrainingFeedbackResponse(SchemaBase):
-    id: UUID
+    # KR-029: training feedback export — review data + verdict + grade for ML pipeline.
+    feedback_id: UUID
+    review_id: UUID
+    mission_id: UUID
     model_id: str
-    model_version: str
-    sample_id: UUID
-    label: FeedbackLabel
-    feedback: FeedbackType
-    confidence: float
-    actor_id: str = Field(min_length=4, max_length=32)
+    verdict: Verdict
+    training_grade: TrainingGrade
+    corrected_class: Optional[str] = None
+    notes: Optional[str] = None
+    time_spent_seconds: Optional[int] = Field(default=None, ge=0)
+    grade_reason: Optional[str] = Field(default=None, max_length=200)
+    expert_confidence: Optional[Decimal] = Field(default=None, ge=0, le=1, max_digits=4, decimal_places=3)
+    image_quality: Optional[Decimal] = Field(default=None, ge=0, le=1, max_digits=4, decimal_places=3)
+    no_conflict: Optional[bool] = None
     created_at: datetime
-    corr_id: str | None = Field(default=None, min_length=8, max_length=128)
+    corr_id: Optional[str] = Field(default=None, min_length=8, max_length=128)
+
+
+class PaginationMeta(SchemaBase):
+    page: int = Field(ge=1)
+    page_size: int = Field(ge=1, le=200)
+    total_items: int = Field(ge=0)
+    total_pages: int = Field(ge=0)
+
+
+class TrainingFeedbackListResponse(SchemaBase):
+    items: list[TrainingFeedbackResponse] = Field(default_factory=list)
+    pagination: PaginationMeta
+    corr_id: Optional[str] = Field(default=None, min_length=8, max_length=128)

@@ -1,14 +1,12 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.  # noqa: RUF003
 # PATH: src/presentation/api/v1/schemas/field_schemas.py
-# DESC: Field request/response schema.
-# TODO: Implement this file.
+# DESC: Field request/response schema (KR-013).
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
-from enum import Enum
-from typing import Literal
+from typing import Any, Dict, Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -16,17 +14,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 class SchemaBase(BaseModel):
     model_config = ConfigDict(extra="forbid", from_attributes=True)
-
-
-class CropType(str, Enum):
-    wheat = "wheat"
-    barley = "barley"
-    corn = "corn"
-    sunflower = "sunflower"
-    cotton = "cotton"
-    grape = "grape"
-    olive = "olive"
-    other = "other"
 
 
 class GeoJSONPolygon(SchemaBase):
@@ -39,47 +26,52 @@ class GeoJSONMultiPolygon(SchemaBase):
     coordinates: list[list[list[list[float]]]] = Field(min_length=1)
 
 
-class ParcelReference(SchemaBase):
-    il: str = Field(min_length=2, max_length=64)
-    ilce: str = Field(min_length=2, max_length=64)
-    ada: str = Field(min_length=1, max_length=32)
-    parsel: str = Field(min_length=1, max_length=32)
+# ---------------------------------------------------------------------------
+# Request schemas
+# ---------------------------------------------------------------------------
+
+class CreateFieldRequest(SchemaBase):
+    # KR-013: field registration with cadastral parcel reference.
+    province: str = Field(min_length=2, max_length=64)
+    district: str = Field(min_length=2, max_length=64)
+    village: str = Field(min_length=2, max_length=64)
+    block_no: str = Field(min_length=1, max_length=32, description="Ada numarasi")
+    parcel_no: str = Field(min_length=1, max_length=32, description="Parsel numarasi")
+    area_m2: Decimal = Field(gt=0, max_digits=14, decimal_places=2)
+    crop_type: Optional[str] = Field(default=None, min_length=2, max_length=64)
+    geometry: Optional[GeoJSONPolygon | GeoJSONMultiPolygon] = None
+
+    @field_validator("block_no", "parcel_no", mode="before")
+    @classmethod
+    def normalize_numeric_ref(cls, value: str | int) -> str:
+        return str(value).strip()
 
 
-class FieldCreateRequest(SchemaBase):
-    # KR-081: wire-level request contract is explicit.
-    name: str = Field(min_length=2, max_length=120)
-    crop_type: CropType
-    area_donum: Decimal = Field(gt=0, max_digits=12, decimal_places=2)
-    parcel_ref: ParcelReference
-    geometry: GeoJSONPolygon | GeoJSONMultiPolygon
-    notes: str | None = Field(default=None, max_length=1000)
+class UpdateFieldRequest(SchemaBase):
+    crop_type: Optional[str] = Field(default=None, min_length=2, max_length=64)
+    area_m2: Optional[Decimal] = Field(default=None, gt=0, max_digits=14, decimal_places=2)
+    geometry: Optional[GeoJSONPolygon | GeoJSONMultiPolygon] = None
 
 
-class FieldUpdateRequest(SchemaBase):
-    name: str | None = Field(default=None, min_length=2, max_length=120)
-    crop_type: CropType | None = None
-    area_donum: Decimal | None = Field(default=None, gt=0, max_digits=12, decimal_places=2)
-    notes: str | None = Field(default=None, max_length=1000)
-
-
-class GeometrySummary(SchemaBase):
-    geometry_type: Literal["Polygon", "MultiPolygon"]
-    coordinate_group_count: int = Field(ge=1)
-
+# ---------------------------------------------------------------------------
+# Response schemas
+# ---------------------------------------------------------------------------
 
 class FieldResponse(SchemaBase):
-    id: UUID
-    owner_id: UUID
-    name: str
-    crop_type: CropType
-    area_donum: Decimal
-    parcel_ref: ParcelReference
-    geometry_summary: GeometrySummary
-    notes: str | None = None
+    field_id: UUID
+    user_id: UUID
+    province: str
+    district: str
+    village: str
+    block_no: str
+    parcel_no: str
+    area_m2: Decimal
+    crop_type: Optional[str] = None
+    field_code: Optional[str] = None
+    is_active: bool
     created_at: datetime
     updated_at: datetime
-    corr_id: str | None = Field(default=None, min_length=8, max_length=128)
+    corr_id: Optional[str] = Field(default=None, min_length=8, max_length=128)
 
 
 class PaginationMeta(SchemaBase):
@@ -89,24 +81,16 @@ class PaginationMeta(SchemaBase):
     total_pages: int = Field(ge=0)
 
 
-class FieldListItem(SchemaBase):
-    id: UUID
-    name: str
-    crop_type: CropType
-    area_donum: Decimal
-    created_at: datetime
-    updated_at: datetime
-
-
 class FieldListResponse(SchemaBase):
-    items: list[FieldListItem] = Field(default_factory=list)
+    items: list[FieldResponse] = Field(default_factory=list)
     pagination: PaginationMeta
-    corr_id: str | None = Field(default=None, min_length=8, max_length=128)
+    corr_id: Optional[str] = Field(default=None, min_length=8, max_length=128)
 
 
 class FieldListFilter(SchemaBase):
-    owner_id: UUID | None = None
-    crop_type: CropType | None = None
+    user_id: Optional[UUID] = None
+    crop_type: Optional[str] = None
+    province: Optional[str] = None
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=20, ge=1, le=200)
 
