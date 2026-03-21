@@ -345,8 +345,8 @@ async def get_my_payment_status(
                         "analysis_schedule": analysis_info,
                     }
                 )
-    except Exception:
-        pass
+    except Exception as exc:
+        _LOGGER.error("MY_STATUS.QUERY_FAILED user=%s error=%s", user_id, exc)
 
     return {
         "user_id": str(user_id),
@@ -466,34 +466,26 @@ async def simple_upload_receipt(
                 model.status = "PENDING_ADMIN_REVIEW"
                 model.updated_at = now
 
-                # Recalculate price if amount is 0 (legacy intents)
+                # KR-022: Recalculate price via domain PricebookCalculator if 0
                 if model.amount_kurus == 0 and field_uuid:
                     try:
                         from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel
-                        from src.presentation.api.v1.endpoints.admin_pricing import _read_config
+                        from src.application.services.pricing_service import (
+                            calculate_single_price,
+                            calculate_subscription_price,
+                        )
 
                         field_result = await session.execute(
                             select(FieldModel.area_m2, FieldModel.crop_type).where(FieldModel.field_id == field_uuid)
                         )
                         field_row = field_result.one_or_none()
                         if field_row:
-                            cfg = _read_config()
-                            crops_raw = cfg.get("crops")
                             crop_code = field_row.crop_type or "PAMUK"
-                            if isinstance(crops_raw, list):
-                                crop_cfg = next(
-                                    (c for c in crops_raw if isinstance(c, dict) and c.get("code") == crop_code),
-                                    None,
-                                )
-                                if isinstance(crop_cfg, dict):
-                                    area_ha = float(field_row.area_m2) / 10000
-                                    # Use seasonal_price for SUBSCRIPTION, single_price for MISSION
-                                    price_key = (
-                                        "seasonal_price" if model.target_type == "SUBSCRIPTION" else "single_price"
-                                    )
-                                    price_val = crop_cfg.get(price_key, crop_cfg.get("single_price", 250))
-                                    price_per_ha = float(price_val) if isinstance(price_val, (int, float)) else 250.0
-                                    model.amount_kurus = round(area_ha * price_per_ha * 100)
+                            area = float(field_row.area_m2)
+                            if model.target_type == "SUBSCRIPTION":
+                                model.amount_kurus = calculate_subscription_price(field_uuid, crop_code, area, 1)
+                            else:
+                                model.amount_kurus = calculate_single_price(field_uuid, crop_code, area)
                     except Exception as exc:
                         _LOGGER.warning("RECEIPT.PRICE_RECALC_FAILED intent=%s error=%s", model.payment_intent_id, exc)
 
@@ -513,26 +505,15 @@ async def simple_upload_receipt(
                 amount_kurus = 0
                 if field_uuid:
                     try:
-                        from src.presentation.api.v1.endpoints.admin_pricing import _read_config
+                        from src.application.services.pricing_service import calculate_single_price
 
                         field_result = await session.execute(
                             sa.select(FieldModel.area_m2, FieldModel.crop_type).where(FieldModel.field_id == field_uuid)
                         )
                         field_row = field_result.one_or_none()
                         if field_row:
-                            cfg = _read_config()
-                            crops_raw = cfg.get("crops")
                             crop_code = field_row.crop_type or "PAMUK"
-                            if isinstance(crops_raw, list):
-                                crop_cfg = next(
-                                    (c for c in crops_raw if isinstance(c, dict) and c.get("code") == crop_code),
-                                    None,
-                                )
-                                if isinstance(crop_cfg, dict):
-                                    area_ha = float(field_row.area_m2) / 10000
-                                    price_val = crop_cfg.get("single_price", 250)
-                                    price_per_ha = float(price_val) if isinstance(price_val, (int, float)) else 250.0
-                                    amount_kurus = round(area_ha * price_per_ha * 100)
+                            amount_kurus = calculate_single_price(field_uuid, crop_code, float(field_row.area_m2))
                     except Exception as exc:
                         _LOGGER.warning("RECEIPT.PRICE_CALC_FAILED field=%s error=%s", field_uuid, exc)
 

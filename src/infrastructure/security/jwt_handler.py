@@ -19,7 +19,7 @@ class JWTSettings:
 
     secret_key: str
     algorithm: str = "HS256"
-    access_token_ttl_minutes: int = 480  # 8 saat — admin oturumu icin yeterli
+    access_token_ttl_minutes: int = 480  # 8 saat varsayilan; API_JWT_TTL_MINUTES env ile override
     issuer: str = "tarlaanaliz-platform"
     audience: str = "tarlaanaliz-api"
 

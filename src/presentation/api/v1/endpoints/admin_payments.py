@@ -212,6 +212,9 @@ async def mark_paid(
             model = result.scalar_one_or_none()
             if model is None:
                 raise HTTPException(status_code=404, detail="Payment intent not found")
+            if model.status == "PAID":
+                _observe(request, metrics, started, status.HTTP_200_OK)
+                return _model_to_response(model)  # Idempotent: already paid
 
             model.status = "PAID"
             model.paid_at = datetime.now(timezone.utc)

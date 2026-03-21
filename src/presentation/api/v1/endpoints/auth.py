@@ -122,7 +122,8 @@ _login_attempts: dict[str, _LoginAttemptRecord] = {}
 def _get_jwt_handler() -> JWTHandler:
     from src.presentation.api.settings import settings
 
-    return JWTHandler(JWTSettings(secret_key=settings.jwt.secret))
+    ttl = int(os.getenv("API_JWT_TTL_MINUTES", "480"))
+    return JWTHandler(JWTSettings(secret_key=settings.jwt.secret, access_token_ttl_minutes=ttl))
 
 
 @dataclass(slots=True)
