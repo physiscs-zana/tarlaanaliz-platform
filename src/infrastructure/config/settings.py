@@ -113,10 +113,7 @@ class Settings(BaseSettings):
         env = os.getenv("TARLA_ENVIRONMENT", os.getenv("APP_ENV", "development"))
         scheme = "amqps" if self.rabbitmq_tls else "amqp"
         if env == "production" and not self.rabbitmq_tls:
-            raise ValueError(
-                "CRITICAL: RabbitMQ TLS is required in production! "
-                "Set TARLA_RABBITMQ_TLS=true."
-            )
+            raise ValueError("CRITICAL: RabbitMQ TLS is required in production! Set TARLA_RABBITMQ_TLS=true.")
         password = self.rabbitmq_password.get_secret_value()
         return f"{scheme}://{self.rabbitmq_user}:{password}@{self.rabbitmq_host}:{self.rabbitmq_port}/{self.rabbitmq_vhost}"
 
