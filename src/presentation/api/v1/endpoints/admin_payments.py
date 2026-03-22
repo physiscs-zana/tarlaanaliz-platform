@@ -119,7 +119,7 @@ def _model_to_response(
         fi = field_info[str(m.target_id)]
         crop_type = str(fi.get("crop_type", "")) or None
         raw_area = fi.get("area_donum")
-        area_donum = float(raw_area) if raw_area is not None else None
+        area_donum = float(str(raw_area)) if raw_area is not None else None
         field_name = str(fi.get("field_name", "")) or None
 
     return PaymentIntentResponse(
@@ -195,10 +195,9 @@ async def list_payment_intents(
                 m_result = await session.execute(
                     select(
                         MissionModel.mission_id,
-                        MissionModel.field_id,
                         MissionModel.crop_type,
                         FieldModel.area_donum,
-                        FieldModel.field_name,
+                        FieldModel.field_code,
                     )
                     .join(FieldModel, MissionModel.field_id == FieldModel.field_id)
                     .where(MissionModel.mission_id.in_(mission_target_ids))
@@ -207,7 +206,7 @@ async def list_payment_intents(
                     field_info[str(row.mission_id)] = {
                         "crop_type": row.crop_type,
                         "area_donum": row.area_donum,
-                        "field_name": row.field_name,
+                        "field_name": row.field_code,
                     }
 
             # Subscription → field bilgisi
@@ -217,7 +216,7 @@ async def list_payment_intents(
                         SubscriptionModel.subscription_id,
                         SubscriptionModel.crop_type,
                         FieldModel.area_donum,
-                        FieldModel.field_name,
+                        FieldModel.field_code,
                     )
                     .join(FieldModel, SubscriptionModel.field_id == FieldModel.field_id)
                     .where(SubscriptionModel.subscription_id.in_(sub_target_ids))
@@ -226,7 +225,7 @@ async def list_payment_intents(
                     field_info[str(row.subscription_id)] = {
                         "crop_type": row.crop_type,
                         "area_donum": row.area_donum,
-                        "field_name": row.field_name,
+                        "field_name": row.field_code,
                     }
 
         records = [_model_to_response(m, field_info=field_info) for m in models]
