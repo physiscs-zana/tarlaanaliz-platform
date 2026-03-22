@@ -1,4 +1,5 @@
 # BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
+# KR-015-5: Open-Meteo WeatherAPIAdapter unit tests — WMO code mapping ve WeatherValidator.
 """Open-Meteo WeatherAPIAdapter unit tests — WMO code mapping and WeatherData."""
 
 from __future__ import annotations
