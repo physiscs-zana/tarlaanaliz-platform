@@ -18,10 +18,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Python bagimliliklari
-COPY pyproject.toml ./
+# Python bagimliliklari — SEC-FIX: requirements.lock ile deterministic build [H-20]
+COPY pyproject.toml requirements.lock ./
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir --prefix=/install .
+    && pip install --no-cache-dir --require-hashes --prefix=/install -r requirements.lock
 
 # ---------------------------------------------------------------------------
 # Stage 2: Runtime — minimal production image
