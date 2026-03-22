@@ -119,12 +119,10 @@ export default function HomePage() {
       <section className="py-10 sm:py-14">
         <div className="mx-auto max-w-6xl px-4">
           <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">
-            Tarlanızın &ldquo;check-up ve tahlilini&rdquo; yaptırın masrafınızı azaltın!
+            7 Katmanlı Yapay Zeka Analizi
           </h2>
           <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-slate-600 sm:text-base leading-relaxed">
-            Drone özel sensörlü kameralarla tarlanızı santimetresine kadar tarar.
             Görüntüler merkezdeki bilgisayarlarda yapay zeka ile işlenerek 7 farklı katmanda analiz edilir.
-            Hastalık, zararlı böcek, yabancı ot ve su eksikliğini insan gözünden en az bir hafta önce tespit eder.
             Gerekli durumda akademisyen yüksek ziraat mühendisleri kontroller yapar.
           </p>
           <div className="mt-6 grid items-center gap-6 lg:grid-cols-2">
