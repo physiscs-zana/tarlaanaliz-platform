@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/core/domain/entities/subscription.py
 # DESC: Subscription; fiyat snapshot (KR-022), reschedule token (KR-015-5).
 # SSOT: KR-027 (abonelik planlayici), KR-015-5 (tarama takvimi), KR-033 (odeme)
@@ -71,9 +72,7 @@ class Subscription:
             raise ValueError("analysis_type is required")
         allowed_intervals = (7, 10, 14, 17, 21)
         if self.interval_days not in allowed_intervals:
-            raise ValueError(
-                f"interval_days must be one of {allowed_intervals}, got {self.interval_days} (KR-027)"
-            )
+            raise ValueError(f"interval_days must be one of {allowed_intervals}, got {self.interval_days} (KR-027)")
         if self.end_date <= self.start_date:
             raise ValueError("end_date must be after start_date")
 
