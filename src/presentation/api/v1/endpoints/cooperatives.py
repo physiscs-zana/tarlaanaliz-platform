@@ -280,6 +280,60 @@ async def get_my_cooperative(request: Request) -> CooperativeResponse:
 
 
 # ---------------------------------------------------------------------------
+# 2b. GET /admin/cooperatives — Admin: tum kooperatifleri listele
+# ---------------------------------------------------------------------------
+
+
+@router.get("/admin/cooperatives")
+async def admin_list_cooperatives(request: Request) -> list[CooperativeResponse]:
+    """KR-014: Central Admin tum kooperatifleri listeler."""
+    _require_central_admin(request)
+
+    async with get_async_session() as session:
+        result = await session.execute(
+            select(CooperativeModel)
+            .options(selectinload(CooperativeModel.owner))
+            .order_by(CooperativeModel.created_at.desc())
+        )
+        coops = result.scalars().unique().all()
+
+        # Toplu uye sayisi
+        member_counts: dict[str, int] = {}
+        if coops:
+            coop_ids = [c.coop_id for c in coops]
+            mc_result = await session.execute(
+                select(CoopMembershipModel.coop_id, func.count())
+                .where(
+                    CoopMembershipModel.coop_id.in_(coop_ids),
+                    CoopMembershipModel.is_confirmed.is_(True),
+                )
+                .group_by(CoopMembershipModel.coop_id)
+            )
+            for cid, cnt in mc_result.all():
+                member_counts[str(cid)] = int(cnt)
+
+    responses: list[CooperativeResponse] = []
+    for c in coops:
+        owner_name = None
+        if c.owner:
+            owner_name = c.owner.display_name or f"{c.owner.first_name} {c.owner.last_name}".strip() or None
+        responses.append(
+            CooperativeResponse(
+                coop_id=str(c.coop_id),
+                name=c.name,
+                province=c.province,
+                district=c.district,
+                status=c.status,
+                owner_display_name=owner_name,
+                member_count=member_counts.get(str(c.coop_id), 0),
+                created_at=c.created_at.isoformat(),
+            )
+        )
+
+    return responses
+
+
+# ---------------------------------------------------------------------------
 # 3. POST /cooperatives/{coop_id}/approve — Central Admin onayi
 # ---------------------------------------------------------------------------
 
