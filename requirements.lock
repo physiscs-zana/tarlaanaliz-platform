@@ -1299,6 +1299,10 @@ uvicorn[standard]==0.42.0 \
     --hash=sha256:96c30f5c7abe6f74ae8900a70e92b85ad6613b745d4879eb9b16ccad15645359 \
     --hash=sha256:9b1f190ce15a2dd22e7758651d9b6d12df09a13d51ba5bf4fc33c383a48e1775
     # via tarlaanaliz-platform (pyproject.toml)
+uvloop==0.22.1 \
+    --hash=sha256:700e674a166ca5778255e0e1dc4e9d79ab2acc57b9171b79e65feba7184b3370 \
+    --hash=sha256:7b5b1ac819a3f946d3b2ee07f09149578ae76066d70b44df3fa990add49a82e4
+    # via uvicorn[standard]
 watchfiles==1.1.1 \
     --hash=sha256:00485f441d183717038ed2e887a7c868154f216877653121068107b227a2f64c \
     --hash=sha256:03fa0f5237118a0c5e496185cafa92878568b652a2e9a9382a5151b1a0380a43 \
