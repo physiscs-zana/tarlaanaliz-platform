@@ -22,6 +22,7 @@ const navItems = [
   { href: "/admin/sla", label: "SLA" },
   { href: "/audit", label: "Denetim Kayitlari" },
   { href: "/qc", label: "Izleme" },
+  { href: "/announcements", label: "Duyurular" },
   { href: "/il/dashboard", label: "Il Operatoru" },
   { href: "/il/metrics", label: "Il Metrikleri" },
   { href: "/api-keys", label: "API Anahtarlari" },
