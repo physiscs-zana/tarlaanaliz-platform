@@ -34,6 +34,12 @@ from src.infrastructure.persistence.sqlalchemy.models.weather_block_model import
 )
 from src.infrastructure.persistence.sqlalchemy.models.mission_segment_model import MissionSegmentModel
 from src.infrastructure.persistence.sqlalchemy.models.reschedule_request_model import RescheduleRequestModel
+from src.infrastructure.persistence.sqlalchemy.models.pilot_earning_model import (
+    PilotEarningModel,
+    PilotRateByProvinceModel,
+)
+from src.infrastructure.persistence.sqlalchemy.models.il_operator_model import IlOperatorProfitShareModel
+from src.infrastructure.persistence.sqlalchemy.models.announcement_model import AnnouncementModel
 
 __all__ = [
     "UserModel",
@@ -62,4 +68,8 @@ __all__ = [
     "WeatherBlockReportModel",
     "MissionSegmentModel",
     "RescheduleRequestModel",
+    "PilotEarningModel",
+    "PilotRateByProvinceModel",
+    "IlOperatorProfitShareModel",
+    "AnnouncementModel",
 ]

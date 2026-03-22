@@ -51,6 +51,8 @@ from src.presentation.api.v1.endpoints import (
     cooperatives_router,
     layer_registry_router,
     weather_blocks_router,
+    announcements_router,
+    pilot_earnings_router,
 )
 
 
@@ -286,6 +288,8 @@ def create_app() -> FastAPI:
     app.include_router(ingest_router, prefix="/api/v1")
     app.include_router(cooperatives_router, prefix="/api/v1")
     app.include_router(layer_registry_router, prefix="/api/v1")
+    app.include_router(announcements_router, prefix="/api/v1")
+    app.include_router(pilot_earnings_router, prefix="/api/v1")
 
     _register_exception_handlers(app)
     return app
