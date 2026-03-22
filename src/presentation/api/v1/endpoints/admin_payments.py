@@ -325,11 +325,17 @@ async def mark_paid(
                     # Find eligible pilots: active + matching province via service_areas
                     assigned_pilot_id = None
                     if field_province:
+                        # KR-016: Province eslestirme — case-insensitive + strip
+                        import sqlalchemy as sa
+
+                        field_province_normalized = field_province.strip().upper()
                         pilot_stmt = (
                             select(PilotModel)
                             .join(PilotServiceAreaModel, PilotModel.pilot_id == PilotServiceAreaModel.pilot_id)
                             .where(PilotModel.is_active.is_(True))
-                            .where(PilotServiceAreaModel.province == field_province)
+                            .where(
+                                sa.func.upper(sa.func.trim(PilotServiceAreaModel.province)) == field_province_normalized
+                            )
                             .order_by(PilotModel.reliability_score.desc())
                         )
                         pilot_result = await session.execute(pilot_stmt)
@@ -423,11 +429,15 @@ async def mark_paid(
                         field_area_donum = int(field_row.area_donum)
 
                         if field_province:
+                            # KR-016: Province eslestirme — case-insensitive + strip
+                            import sqlalchemy as sa
+
+                            fp_normalized = field_province.strip().upper()
                             pilot_stmt = (
                                 select(PilotModel)
                                 .join(PilotServiceAreaModel, PilotModel.pilot_id == PilotServiceAreaModel.pilot_id)
                                 .where(PilotModel.is_active.is_(True))
-                                .where(PilotServiceAreaModel.province == field_province)
+                                .where(sa.func.upper(sa.func.trim(PilotServiceAreaModel.province)) == fp_normalized)
                                 .order_by(PilotModel.reliability_score.desc())
                             )
                             pilot_result = await session.execute(pilot_stmt)

@@ -79,6 +79,22 @@ async def get_dashboard(request: Request) -> dict[str, Any]:
     except Exception:
         pass  # DB connection issue — return zeros
 
+    # KR-028: Pilotsuz ASSIGNED mission tespiti (orphan)
+    orphan_assigned = 0
+    try:
+        async with get_async_session() as session:
+            orphan_assigned = (
+                await session.execute(
+                    sa.text(
+                        "SELECT count(*) FROM missions m "
+                        "WHERE m.status = 'ASSIGNED' "
+                        "AND NOT EXISTS (SELECT 1 FROM mission_assignments ma WHERE ma.mission_id = m.mission_id AND ma.is_current = true)"
+                    )
+                )
+            ).scalar() or 0
+    except Exception:
+        pass
+
     return {
         "summary": {
             "total_fields": total_fields,
@@ -86,6 +102,12 @@ async def get_dashboard(request: Request) -> dict[str, Any]:
             "completed_analyses": completed_analyses,
             "pending_payments": pending_payments,
             "total_users": total_users,
+        },
+        "warnings": {
+            "orphan_assigned_missions": orphan_assigned,
+            "orphan_message": f"{orphan_assigned} gorev ASSIGNED durumunda ama pilot atanmamis"
+            if orphan_assigned > 0
+            else None,
         },
         "recent_activities": [],
     }
@@ -154,6 +176,119 @@ async def get_sla_metrics(request: Request) -> dict[str, Any]:
         "decision_sla_hours": 48,
         "compliance_rate": compliance_rate,
     }
+
+
+@router.get("/orphan-missions")
+async def list_orphan_missions(request: Request) -> list[dict[str, Any]]:
+    """KR-028: ASSIGNED durumunda olup pilot atanmamis mission'lari listele."""
+    _require_admin(request)
+
+    import sqlalchemy as sa
+
+    orphans: list[dict[str, Any]] = []
+    try:
+        async with get_async_session() as session:
+            result = await session.execute(
+                sa.text(
+                    "SELECT m.mission_id, m.field_id, m.crop_type, m.status, m.created_at, "
+                    "f.province, f.district, f.area_donum "
+                    "FROM missions m "
+                    "JOIN fields f ON m.field_id = f.field_id "
+                    "WHERE m.status = 'ASSIGNED' "
+                    "AND NOT EXISTS ("
+                    "  SELECT 1 FROM mission_assignments ma "
+                    "  WHERE ma.mission_id = m.mission_id AND ma.is_current = true"
+                    ") "
+                    "ORDER BY m.created_at DESC"
+                )
+            )
+            for row in result.all():
+                orphans.append(
+                    {
+                        "mission_id": str(row[0]),
+                        "field_id": str(row[1]),
+                        "crop_type": row[2],
+                        "status": row[3],
+                        "created_at": row[4].isoformat() if row[4] else None,
+                        "province": row[5],
+                        "district": row[6],
+                        "area_donum": float(row[7]) if row[7] else None,
+                    }
+                )
+    except Exception:
+        pass
+
+    return orphans
+
+
+@router.post("/assign-pilot")
+async def admin_assign_pilot(request: Request) -> dict[str, str]:
+    """KR-015: Admin manuel pilot atama — orphan mission'lari duzeltmek icin."""
+    _require_admin(request)
+
+    body = await request.json()
+    mission_id_str = body.get("mission_id")
+    pilot_id_str = body.get("pilot_id")
+
+    if not mission_id_str or not pilot_id_str:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=422, detail="mission_id ve pilot_id zorunlu")
+
+    import uuid
+
+    import sqlalchemy as sa
+
+    from src.infrastructure.persistence.sqlalchemy.models.mission_model import MissionModel
+    from src.infrastructure.persistence.sqlalchemy.models.pilot_model import MissionAssignmentModel
+
+    try:
+        mission_uuid = uuid.UUID(mission_id_str)
+        pilot_uuid = uuid.UUID(pilot_id_str)
+    except ValueError:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=422, detail="Gecersiz UUID")
+
+    async with get_async_session() as session:
+        # Mission kontrol
+        m_result = await session.execute(select(MissionModel).where(MissionModel.mission_id == mission_uuid))
+        mission = m_result.scalar_one_or_none()
+        if not mission:
+            from fastapi import HTTPException
+
+            raise HTTPException(status_code=404, detail="Mission bulunamadi")
+
+        # Mevcut atama var mi?
+        existing = await session.execute(
+            sa.text("SELECT 1 FROM mission_assignments WHERE mission_id = :mid AND is_current = true"),
+            {"mid": mission_uuid},
+        )
+        if existing.scalar_one_or_none():
+            return {"status": "already_assigned", "message": "Bu goreve zaten pilot atanmis."}
+
+        # Atama olustur
+        assignment = MissionAssignmentModel(
+            mission_id=mission_uuid,
+            pilot_id=pilot_uuid,
+            assignment_type="ADMIN_OVERRIDE",
+            is_current=True,
+        )
+        session.add(assignment)
+
+        # Status'u ASSIGNED'a cek (zaten ASSIGNED ise degisiklik yok)
+        if mission.status in ("PLANNED", "ASSIGNED"):
+            mission.status = "ASSIGNED"
+
+        await session.commit()
+
+    import logging
+
+    logging.getLogger("api.admin_dashboard").warning(
+        "MISSION.ADMIN_ASSIGNED mission=%s pilot=%s", mission_uuid, pilot_uuid
+    )
+
+    return {"status": "assigned", "message": "Pilot basariyla atandi."}
 
 
 __all__ = ["router"]
