@@ -65,4 +65,9 @@ class MissionModel(Base):
     uploaded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     analyzed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     price_snapshot_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    # KR-015: Sezonluk zamanlama penceresi ve atama meta verisi
+    schedule_window_start: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    schedule_window_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    assignment_source: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    assignment_reason: Mapped[str | None] = mapped_column(String(32), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
