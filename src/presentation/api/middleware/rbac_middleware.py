@@ -123,6 +123,36 @@ _ROUTE_ROLES: list[tuple[str, frozenset[str]]] = [
             }
         ),
     ),
+    # Cooperatives management (KR-014)
+    (
+        "/api/v1/cooperatives",
+        frozenset(
+            {
+                "FARMER_SINGLE",
+                "FARMER_MEMBER",
+                "COOP_OWNER",
+                "COOP_ADMIN",
+                "COOP_AGRONOMIST",
+                "COOP_VIEWER",
+                "CENTRAL_ADMIN",
+            }
+        ),
+    ),
+    # Cooperative member/invite operations (KR-014)
+    (
+        "/api/v1/coop/",
+        frozenset(
+            {
+                "FARMER_SINGLE",
+                "FARMER_MEMBER",
+                "COOP_OWNER",
+                "COOP_ADMIN",
+                "COOP_AGRONOMIST",
+                "COOP_VIEWER",
+                "CENTRAL_ADMIN",
+            }
+        ),
+    ),
     # SLA metrics - IL_OPERATOR KPI access (KR-083: PII-free KPI + capacity metrics)
     (
         "/api/v1/sla-metrics",

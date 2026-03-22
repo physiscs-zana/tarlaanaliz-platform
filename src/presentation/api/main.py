@@ -48,6 +48,7 @@ from src.presentation.api.v1.endpoints import (
     subscriptions_router,
     training_feedback_router,
     weather_block_reports_router,
+    cooperatives_router,
     weather_blocks_router,
 )
 
@@ -282,6 +283,7 @@ def create_app() -> FastAPI:
     app.include_router(weather_block_reports_router, prefix="/api/v1")
     app.include_router(weather_blocks_router, prefix="/api/v1")
     app.include_router(ingest_router, prefix="/api/v1")
+    app.include_router(cooperatives_router, prefix="/api/v1")
 
     _register_exception_handlers(app)
     return app
