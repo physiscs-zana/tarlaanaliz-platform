@@ -80,21 +80,6 @@ export default function HomePage() {
             Drone özel sensörlü kameralarla tarlanızı santimetresine kadar tarar.
             Hastalık, zararlı böcek, yabancı ot ve su eksikliğini insan gözünden en az bir hafta önce tespit eder.
           </p>
-          <div className="mt-5 flex flex-col items-center gap-2.5 sm:flex-row sm:justify-center">
-            <Link
-              href="/register"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700"
-            >
-              Ücretsiz Üye Ol
-              <IconArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="#nasil-calisir"
-              className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              Nasıl Çalışır?
-            </Link>
-          </div>
         </div>
       </section>
 
