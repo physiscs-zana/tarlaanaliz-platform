@@ -40,33 +40,33 @@ _RETRY_DECORATOR = retry(
 # -------------------------------------------------------------------------
 _WMO_CODE_TO_CONDITION: dict[int, str] = {
     0: "clear",
-    1: "clear",         # Mainly clear
-    2: "cloud",         # Partly cloudy
-    3: "overcast",      # Overcast
+    1: "clear",  # Mainly clear
+    2: "cloud",  # Partly cloudy
+    3: "overcast",  # Overcast
     45: "fog",
-    48: "fog",          # Depositing rime fog
-    51: "rain",         # Drizzle: light
-    53: "rain",         # Drizzle: moderate
-    55: "rain",         # Drizzle: dense
-    56: "rain",         # Freezing drizzle: light
-    57: "rain",         # Freezing drizzle: dense
-    61: "rain",         # Rain: slight
-    63: "rain",         # Rain: moderate
-    65: "heavy_rain",   # Rain: heavy
-    66: "rain",         # Freezing rain: light
-    67: "heavy_rain",   # Freezing rain: heavy
-    71: "snow",         # Snow: slight
-    73: "snow",         # Snow: moderate
-    75: "snow",         # Snow: heavy
-    77: "snow",         # Snow grains
-    80: "rain",         # Rain showers: slight
-    81: "rain",         # Rain showers: moderate
-    82: "heavy_rain",   # Rain showers: violent
-    85: "snow",         # Snow showers: slight
-    86: "snow",         # Snow showers: heavy
-    95: "storm",        # Thunderstorm
-    96: "hail",         # Thunderstorm with slight hail
-    99: "hail",         # Thunderstorm with heavy hail
+    48: "fog",  # Depositing rime fog
+    51: "rain",  # Drizzle: light
+    53: "rain",  # Drizzle: moderate
+    55: "rain",  # Drizzle: dense
+    56: "rain",  # Freezing drizzle: light
+    57: "rain",  # Freezing drizzle: dense
+    61: "rain",  # Rain: slight
+    63: "rain",  # Rain: moderate
+    65: "heavy_rain",  # Rain: heavy
+    66: "rain",  # Freezing rain: light
+    67: "heavy_rain",  # Freezing rain: heavy
+    71: "snow",  # Snow: slight
+    73: "snow",  # Snow: moderate
+    75: "snow",  # Snow: heavy
+    77: "snow",  # Snow grains
+    80: "rain",  # Rain showers: slight
+    81: "rain",  # Rain showers: moderate
+    82: "heavy_rain",  # Rain showers: violent
+    85: "snow",  # Snow showers: slight
+    86: "snow",  # Snow showers: heavy
+    95: "storm",  # Thunderstorm
+    96: "hail",  # Thunderstorm with slight hail
+    99: "hail",  # Thunderstorm with heavy hail
 }
 
 
@@ -126,8 +126,7 @@ class WeatherAPIAdapter:
 
     # Open-Meteo parametreleri
     _CURRENT_PARAMS = (
-        "temperature_2m,relative_humidity_2m,precipitation,rain,"
-        "weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m"
+        "temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m"
     )
     _HOURLY_PARAMS = (
         "temperature_2m,precipitation,rain,weather_code,cloud_cover,"
@@ -265,12 +264,8 @@ class WeatherAPIAdapter:
                     visibility_km=round(vis_m / 1000.0, 2) if vis_m else 10.0,
                     conditions=_wmo_code_to_condition(wmo_code),
                     raw_data={
-                        "soil_moisture_0_to_7cm": (
-                            hourly.get("soil_moisture_0_to_7cm", [None] * (i + 1))[i]
-                        ),
-                        "et0_fao_evapotranspiration": (
-                            hourly.get("et0_fao_evapotranspiration", [None] * (i + 1))[i]
-                        ),
+                        "soil_moisture_0_to_7cm": (hourly.get("soil_moisture_0_to_7cm", [None] * (i + 1))[i]),
+                        "et0_fao_evapotranspiration": (hourly.get("et0_fao_evapotranspiration", [None] * (i + 1))[i]),
                     },
                 )
             )
@@ -297,9 +292,7 @@ class WeatherAPIAdapter:
         Returns:
             06:00-18:00 arası saatlik WeatherData listesi.
         """
-        forecasts = await self.get_forecast(
-            latitude=latitude, longitude=longitude, hours_ahead=168
-        )
+        forecasts = await self.get_forecast(latitude=latitude, longitude=longitude, hours_ahead=168)
 
         # Hedef gün, 06:00-18:00 arası filtrele
         flight_hours: list[WeatherData] = []
