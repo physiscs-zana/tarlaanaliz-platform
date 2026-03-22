@@ -24,7 +24,8 @@ class RescheduleRequestModel(Base):
     __tablename__ = "subscription_reschedule_requests"
     __table_args__ = (
         UniqueConstraint(
-            "subscription_id", "occurrence_ref",
+            "subscription_id",
+            "occurrence_ref",
             name="uq_reschedule_subscription_occurrence",
         ),
     )
@@ -38,28 +39,16 @@ class RescheduleRequestModel(Base):
         nullable=False,
         index=True,
     )
-    mission_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True, index=True
-    )
+    mission_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
     occurrence_ref: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    requested_date: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    status: Mapped[str] = mapped_column(
-        String(32), nullable=False, server_default="REQUESTED"
-    )
+    requested_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, server_default="REQUESTED")
     requested_by: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.user_id", ondelete="SET NULL"),
         nullable=False,
     )
-    reviewed_by: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True
-    )
+    reviewed_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     reason: Mapped[str | None] = mapped_column(Text(), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=text("now()")
-    )
-    reviewed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

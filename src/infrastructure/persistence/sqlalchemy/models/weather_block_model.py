@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
+from typing import Any
 
 from sqlalchemy import Boolean, Date, DateTime, ForeignKey, String, Text, text
 from sqlalchemy.dialects.postgresql import ENUM, JSONB, UUID
@@ -29,9 +30,7 @@ class WeatherBlockModel(Base):
     mission_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("missions.mission_id"), nullable=False, index=True
     )
-    pilot_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("pilots.pilot_id"), nullable=False
-    )
+    pilot_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("pilots.pilot_id"), nullable=False)
     status: Mapped[str] = mapped_column(
         ENUM("PENDING", "VERIFIED", "REJECTED", name="weather_block_status", create_type=False),
         nullable=False,
@@ -44,15 +43,11 @@ class WeatherBlockModel(Base):
         UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=True
     )
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    auto_rescheduled: Mapped[bool] = mapped_column(
-        Boolean(), nullable=False, server_default=text("false")
-    )
+    auto_rescheduled: Mapped[bool] = mapped_column(Boolean(), nullable=False, server_default=text("false"))
     rescheduled_mission_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("missions.mission_id"), nullable=True
     )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=text("now()")
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
 
 
 class WeatherBlockReportModel(Base):
@@ -72,13 +67,11 @@ class WeatherBlockReportModel(Base):
     pilot_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("pilots.pilot_id", ondelete="SET NULL"), nullable=True
     )
-    reported_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=text("now()")
-    )
+    reported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
     status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="REPORTED")
     weather_condition: Mapped[str] = mapped_column(String(50), nullable=False)
     notes: Mapped[str | None] = mapped_column(Text(), nullable=True)
-    evidence_blob_ids: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    evidence_blob_ids: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     verified_by_admin_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="SET NULL"), nullable=True
     )
@@ -86,9 +79,5 @@ class WeatherBlockReportModel(Base):
     auto_rescheduled_mission_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("missions.mission_id", ondelete="SET NULL"), nullable=True
     )
-    reschedule_token_consumed: Mapped[bool] = mapped_column(
-        Boolean(), nullable=False, server_default=text("false")
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=text("now()")
-    )
+    reschedule_token_consumed: Mapped[bool] = mapped_column(Boolean(), nullable=False, server_default=text("false"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))

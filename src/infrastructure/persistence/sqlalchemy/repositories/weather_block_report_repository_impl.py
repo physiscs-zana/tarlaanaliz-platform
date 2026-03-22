@@ -52,9 +52,7 @@ class WeatherBlockReportRepositoryImpl(WeatherBlockReportRepository):
         self._session = session
 
     async def save(self, report: WeatherBlockReport) -> None:
-        existing = await self._session.get(
-            WeatherBlockReportModel, report.weather_block_id
-        )
+        existing = await self._session.get(WeatherBlockReportModel, report.weather_block_id)
         if existing is not None:
             existing.weather_condition = report.reason
             existing.notes = report.notes
@@ -70,9 +68,7 @@ class WeatherBlockReportRepositoryImpl(WeatherBlockReportRepository):
         return _model_to_entity(model)
 
     async def list_by_mission_id(self, mission_id: uuid.UUID) -> List[WeatherBlockReport]:
-        stmt = select(WeatherBlockReportModel).where(
-            WeatherBlockReportModel.mission_id == mission_id
-        )
+        stmt = select(WeatherBlockReportModel).where(WeatherBlockReportModel.mission_id == mission_id)
         result = await self._session.execute(stmt)
         return [_model_to_entity(m) for m in result.scalars().all()]
 

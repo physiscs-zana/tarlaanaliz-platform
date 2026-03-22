@@ -1,3 +1,4 @@
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # PATH: src/infrastructure/monitoring/health_checks.py
 # DESC: Uygulama sağlık kontrolü bileşeni.
 """
