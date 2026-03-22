@@ -22,6 +22,11 @@ from src.infrastructure.persistence.sqlalchemy.models.dataset_model import Datas
 from src.infrastructure.persistence.sqlalchemy.models.subscription_model import SubscriptionModel
 from src.infrastructure.persistence.sqlalchemy.models.feedback_record_model import FeedbackRecordModel
 from src.infrastructure.persistence.sqlalchemy.models.calibration_record_model import CalibrationRecordModel
+from src.infrastructure.persistence.sqlalchemy.models.cooperative_model import (
+    CooperativeModel,
+    CoopInviteModel,
+    CoopMembershipModel,
+)
 from src.infrastructure.persistence.sqlalchemy.models.qc_report_model import QCReportModel
 
 __all__ = [
@@ -44,4 +49,7 @@ __all__ = [
     "FeedbackRecordModel",
     "CalibrationRecordModel",
     "QCReportModel",
+    "CooperativeModel",
+    "CoopMembershipModel",
+    "CoopInviteModel",
 ]
