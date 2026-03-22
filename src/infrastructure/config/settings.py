@@ -102,11 +102,23 @@ class Settings(BaseSettings):
     rabbitmq_password: SecretStr = SecretStr("")
     rabbitmq_vhost: str = "/"
 
+    # SEC-FIX: Production'da TLS zorunlu (amqps://)
+    rabbitmq_tls: bool = False  # TARLA_RABBITMQ_TLS env ile aktifleştir
+
     @property
     def rabbitmq_url(self) -> str:
-        """AMQP bağlantı URL'i."""
+        """AMQP bağlantı URL'i. Production'da TLS zorunludur."""
+        import os
+
+        env = os.getenv("TARLA_ENVIRONMENT", os.getenv("APP_ENV", "development"))
+        scheme = "amqps" if self.rabbitmq_tls else "amqp"
+        if env == "production" and not self.rabbitmq_tls:
+            raise ValueError(
+                "CRITICAL: RabbitMQ TLS is required in production! "
+                "Set TARLA_RABBITMQ_TLS=true."
+            )
         password = self.rabbitmq_password.get_secret_value()
-        return f"amqp://{self.rabbitmq_user}:{password}@{self.rabbitmq_host}:{self.rabbitmq_port}/{self.rabbitmq_vhost}"
+        return f"{scheme}://{self.rabbitmq_user}:{password}@{self.rabbitmq_host}:{self.rabbitmq_port}/{self.rabbitmq_vhost}"
 
     # ------------------------------------------------------------------
     # JWT / Auth

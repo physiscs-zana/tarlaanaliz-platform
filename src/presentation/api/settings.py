@@ -67,7 +67,13 @@ class AppSettings:
 @dataclass(slots=True)
 class CorsSettings:
     enabled: bool = field(default_factory=lambda: _env_bool("API_CORS_ENABLED", True))
-    allow_origins: list[str] = field(default_factory=lambda: _env_list("API_CORS_ALLOW_ORIGINS", []))
+    # SEC-FIX: Boş default yerine production whitelist — CORS misconfiguration önlenir
+    allow_origins: list[str] = field(
+        default_factory=lambda: _env_list(
+            "API_CORS_ALLOW_ORIGINS",
+            ["https://tarlaanaliz.com", "https://www.tarlaanaliz.com"],
+        )
+    )
     allow_methods: list[str] = field(
         default_factory=lambda: _env_list(
             "API_CORS_ALLOW_METHODS", ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]

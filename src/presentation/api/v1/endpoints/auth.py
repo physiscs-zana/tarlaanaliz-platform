@@ -180,9 +180,9 @@ class _InMemoryPhonePinAuthService:
                     model = result.scalar_one_or_none()
                     if model and model.roles:
                         all_roles = [str(r.role) for r in model.roles]
-                    _AUTH_LOGGER.warning("AUTH.ROLES_LOADED phone=%s roles=%s", phone, all_roles)
+                    _AUTH_LOGGER.warning("AUTH.ROLES_LOADED user_found=true role_count=%d", len(all_roles))
         except Exception as exc:
-            _AUTH_LOGGER.error("AUTH.DB_FAILED phone=%s error=%s", phone, exc)
+            _AUTH_LOGGER.error("AUTH.DB_FAILED error=%s", type(exc).__name__)
 
         if user is not None:
             if not bcrypt.checkpw(pin.encode(), user.pin_hash.encode()):
