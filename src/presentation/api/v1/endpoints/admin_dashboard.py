@@ -291,4 +291,119 @@ async def admin_assign_pilot(request: Request) -> dict[str, str]:
     return {"status": "assigned", "message": "Pilot basariyla atandi."}
 
 
+@router.get("/province-stats")
+async def get_province_stats(request: Request) -> dict[str, Any]:
+    """KR-083: Il bazli istatistikler — tarla, abonelik, gorev, gelir, pilot."""
+    _require_admin(request)
+
+    import sqlalchemy as sa
+
+    from src.infrastructure.persistence.sqlalchemy.models.pilot_model import PilotModel
+    from src.infrastructure.persistence.sqlalchemy.models.subscription_model import SubscriptionModel
+
+    provinces_data: list[dict[str, Any]] = []
+
+    try:
+        async with get_async_session() as session:
+            # Il bazli tarla sayilari
+            field_rows = (
+                await session.execute(
+                    select(FieldModel.province, func.count().label("cnt")).group_by(FieldModel.province)
+                )
+            ).all()
+            field_map = {row[0]: row[1] for row in field_rows}
+
+            # Il bazli abonelik sayilari
+            sub_map: dict[str, int] = {}
+            try:
+                sub_rows = (
+                    await session.execute(
+                        sa.text(
+                            "SELECT f.province, count(s.subscription_id) "
+                            "FROM subscriptions s JOIN fields f ON s.field_id = f.field_id "
+                            "GROUP BY f.province"
+                        )
+                    )
+                ).all()
+                sub_map = {row[0]: row[1] for row in sub_rows}
+            except Exception:
+                pass
+
+            # Il bazli gorev sayilari (aktif + tamamlanan)
+            active_map: dict[str, int] = {}
+            completed_map: dict[str, int] = {}
+            try:
+                mission_rows = (
+                    await session.execute(
+                        sa.text(
+                            "SELECT f.province, m.status, count(*) "
+                            "FROM missions m JOIN fields f ON m.field_id = f.field_id "
+                            "GROUP BY f.province, m.status"
+                        )
+                    )
+                ).all()
+                for row in mission_rows:
+                    prov, st, cnt = row[0], row[1], row[2]
+                    if st in ("ASSIGNED", "ACKED", "FLOWN", "UPLOADED", "ANALYZING", "PLANNED"):
+                        active_map[prov] = active_map.get(prov, 0) + cnt
+                    elif st == "DONE":
+                        completed_map[prov] = completed_map.get(prov, 0) + cnt
+            except Exception:
+                pass
+
+            # Il bazli gelir (PAID odemeler)
+            revenue_map: dict[str, int] = {}
+            try:
+                rev_rows = (
+                    await session.execute(
+                        sa.text(
+                            "SELECT f.province, sum(p.amount_kurus) "
+                            "FROM payment_intents p "
+                            "JOIN missions m ON p.target_id = m.mission_id AND p.target_type = 'mission' "
+                            "JOIN fields f ON m.field_id = f.field_id "
+                            "WHERE p.status = 'PAID' "
+                            "GROUP BY f.province"
+                        )
+                    )
+                ).all()
+                revenue_map = {row[0]: int(row[1] or 0) for row in rev_rows}
+            except Exception:
+                pass
+
+            # Il bazli aktif pilot sayilari
+            pilot_map: dict[str, int] = {}
+            try:
+                pilot_rows = (
+                    await session.execute(
+                        select(PilotModel.province, func.count().label("cnt"))
+                        .where(PilotModel.is_active.is_(True))
+                        .group_by(PilotModel.province)
+                    )
+                ).all()
+                pilot_map = {row[0]: row[1] for row in pilot_rows}
+            except Exception:
+                pass
+
+            # Tum illeri birlestir
+            all_provinces = sorted(
+                set(field_map.keys()) | set(sub_map.keys()) | set(active_map.keys()) | set(pilot_map.keys())
+            )
+            for prov in all_provinces:
+                provinces_data.append(
+                    {
+                        "province": prov,
+                        "total_fields": field_map.get(prov, 0),
+                        "total_subscriptions": sub_map.get(prov, 0),
+                        "active_missions": active_map.get(prov, 0),
+                        "completed_missions": completed_map.get(prov, 0),
+                        "total_revenue_kurus": revenue_map.get(prov, 0),
+                        "active_pilots": pilot_map.get(prov, 0),
+                    }
+                )
+    except Exception:
+        pass
+
+    return {"provinces": provinces_data}
+
+
 __all__ = ["router"]
