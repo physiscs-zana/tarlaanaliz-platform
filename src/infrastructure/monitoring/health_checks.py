@@ -302,11 +302,23 @@ class HealthChecker:
             logger.warning("health_check_rabbitmq_failed", error=str(exc))
             return False
 
+    async def check_weather_api(self) -> bool:
+        """Open-Meteo API erişilebilirlik kontrolü (PII göndermez)."""
+        try:
+            from src.infrastructure.external.weather_api_adapter import WeatherAPIAdapter
+
+            adapter = WeatherAPIAdapter(self._settings)
+            return await adapter.health_check()
+        except Exception as exc:
+            logger.warning("health_check_weather_api_failed", error=str(exc))
+            return False
+
     def register_default_checks(self) -> None:
         """Varsayılan bağımlılık kontrollerini kaydet.
 
-        PostgreSQL, Redis ve RabbitMQ kontrolleri eklenir.
+        PostgreSQL, Redis, RabbitMQ ve Open-Meteo kontrolleri eklenir.
         """
         self.register("database", self.check_database)
         self.register("redis", self.check_redis)
         self.register("rabbitmq", self.check_rabbitmq)
+        self.register("weather_api", self.check_weather_api)

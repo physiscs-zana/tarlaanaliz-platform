@@ -173,10 +173,10 @@ class Settings(BaseSettings):
     tkgm_cache_ttl_seconds: int = 86400  # 24 saat
 
     # ------------------------------------------------------------------
-    # Weather API
+    # Weather API (Open-Meteo — API key gerektirmez, PII göndermez)
     # ------------------------------------------------------------------
-    weather_api_url: str = ""
-    weather_api_key: SecretStr = SecretStr("")
+    weather_api_url: str = "https://api.open-meteo.com"
+    weather_api_key: SecretStr = SecretStr("")  # Open-Meteo için gerekli değil; ileride ücretli provider için
     weather_timeout_seconds: int = 15
 
     # ------------------------------------------------------------------
