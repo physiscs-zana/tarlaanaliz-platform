@@ -25,6 +25,7 @@ class SubscriptionStatus(str, Enum):
     ACTIVE = "ACTIVE"
     PAUSED = "PAUSED"
     CANCELLED = "CANCELLED"
+    EXPIRED = "EXPIRED"
 
 
 class SubscriptionPlanType(str, Enum):
@@ -68,8 +69,11 @@ class Subscription:
             raise ValueError("crop_type is required")
         if not self.analysis_type:
             raise ValueError("analysis_type is required")
-        if self.interval_days <= 0:
-            raise ValueError("interval_days must be > 0 (KR-027)")
+        allowed_intervals = (7, 10, 14, 17, 21)
+        if self.interval_days not in allowed_intervals:
+            raise ValueError(
+                f"interval_days must be one of {allowed_intervals}, got {self.interval_days} (KR-027)"
+            )
         if self.end_date <= self.start_date:
             raise ValueError("end_date must be after start_date")
 
@@ -122,9 +126,16 @@ class Subscription:
 
     def cancel(self) -> None:
         """Aboneligi iptal et (herhangi aktif/paused -> CANCELLED)."""
-        if self.status == SubscriptionStatus.CANCELLED:
-            raise ValueError("Subscription is already cancelled")
+        if self.status in (SubscriptionStatus.CANCELLED, SubscriptionStatus.EXPIRED):
+            raise ValueError(f"Cannot cancel from {self.status.value} — terminal state")
         self.status = SubscriptionStatus.CANCELLED
+        self._touch()
+
+    def expire(self) -> None:
+        """Sezon bitisi nedeniyle aboneligi sonlandir (ACTIVE -> EXPIRED). KR-027."""
+        if self.status != SubscriptionStatus.ACTIVE:
+            raise ValueError(f"Can only expire from ACTIVE, current: {self.status.value}")
+        self.status = SubscriptionStatus.EXPIRED
         self._touch()
 
     def advance_due_date(self) -> None:

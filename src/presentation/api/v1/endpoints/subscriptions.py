@@ -14,7 +14,7 @@ from typing import Protocol, cast
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 
 from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel
@@ -31,12 +31,23 @@ router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
 class SubscriptionCreateRequest(BaseModel):
     """KR-027: Yeni abonelik oluşturma isteği."""
 
+    # KR-027: Sezonluk Paket tarama periyotları — sabit seçenekler
+    _ALLOWED_INTERVAL_DAYS: tuple[int, ...] = (7, 10, 14, 17, 21)
+
     field_id: str = Field(min_length=3, max_length=64)
     crop_type: str = Field(min_length=2, max_length=50)
     start_date: date
     end_date: date
-    interval_days: int = Field(ge=1, le=30)
+    interval_days: int = Field(ge=7, le=21)
     plan_code: str = Field(default="SEASONAL", min_length=2, max_length=32)
+
+    @field_validator("interval_days")
+    @classmethod
+    def validate_interval_days(cls, v: int) -> int:
+        """KR-027: Sadece 7, 10, 14, 17, 21 günlük periyotlar kabul edilir."""
+        if v not in cls._ALLOWED_INTERVAL_DAYS:
+            raise ValueError(f"interval_days {cls._ALLOWED_INTERVAL_DAYS} değerlerinden biri olmalıdır, gelen: {v}")
+        return v
 
 
 class SubscriptionResponse(BaseModel):
