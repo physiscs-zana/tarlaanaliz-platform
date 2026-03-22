@@ -39,9 +39,5 @@ class MissionSegmentModel(Base):
         ForeignKey("pilots.pilot_id", ondelete="SET NULL"),
         nullable=True,
     )
-    status: Mapped[str] = mapped_column(
-        String(32), nullable=False, server_default="PLANNED"
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=text("now()")
-    )
+    status: Mapped[str] = mapped_column(String(32), nullable=False, server_default="PLANNED")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
