@@ -68,6 +68,8 @@ async def create_service_container(
     from src.application.services.pricebook_service import PricebookService
     from src.application.services.subscription_scheduler import SubscriptionScheduler
     from src.application.services.training_feedback_service import TrainingFeedbackService
+    from src.infrastructure.config.settings import get_settings
+    from src.infrastructure.external.weather_api_adapter import WeatherAPIAdapter
 
     container.register("field_service", FieldService)
     container.register("mission_service", MissionService)
@@ -77,6 +79,10 @@ async def create_service_container(
     container.register("pricebook_service", PricebookService)
     container.register("subscription_scheduler", SubscriptionScheduler)
     container.register("training_feedback_service", TrainingFeedbackService)
+
+    # Weather API adapter (Open-Meteo — API key gerektirmez)
+    weather_adapter = WeatherAPIAdapter(get_settings())
+    container.register("weather_api_adapter", weather_adapter)
 
     # Store raw infrastructure dependencies for endpoint-level injection
     container.register("db_session_factory", db_session_factory)
