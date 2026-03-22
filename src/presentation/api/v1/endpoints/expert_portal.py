@@ -197,6 +197,16 @@ async def submit_review(
         decision,
         payload.training_grade,
     )
+
+    # KR-029: Training feedback event — verdict + grade eğitim hattına gönderilir
+    if payload.training_grade:
+        _LOGGER.warning(
+            "TRAINING.FEEDBACK_RECORDED review=%s grade=%s mission=%s",
+            review_id,
+            payload.training_grade,
+            str(review.mission_id) if review else "unknown",
+        )
+
     return ReviewSubmitResponse(review_id=review_id, status=review.status, submitted_at=now)
 
 

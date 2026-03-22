@@ -69,53 +69,7 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* ===== Hero ===== */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-emerald-50/60 to-white">
-        <div className="mx-auto max-w-6xl px-4 pb-8 pt-8 sm:pb-12 sm:pt-10">
-          <div className="grid items-center gap-6 lg:grid-cols-2 lg:gap-10">
-            <div>
-              <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-[2.75rem]">
-                Yeşil görünen tarlada
-                <span className="block text-emerald-600">görünmeyeni yakalıyoruz</span>
-              </h1>
-              <p className="mt-3 text-base leading-relaxed text-slate-600 sm:text-lg">
-                Tarlanızın <strong>&ldquo;check-up ve tahlilini&rdquo;</strong> drone ile yapıyoruz.
-                Hastalık, zararlı böcek, yabancı ot ve su eksikliğini
-                <strong> insan gözünden en az bir hafta önce</strong> tespit ediyoruz.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-500">
-                <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Erken Uyarı</span>
-                <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Hedefli İlaçlama</span>
-                <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Rapor + Harita</span>
-              </div>
-              <div className="mt-5 flex flex-col gap-2.5 sm:flex-row">
-                <Link
-                  href="/register"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700"
-                >
-                  Ücretsiz Üye Ol
-                  <IconArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="#nasil-calisir"
-                  className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                >
-                  Nasıl Çalışır?
-                </Link>
-              </div>
-            </div>
-            <Image
-              src="/images/hero-drone.png"
-              alt="Drone tarla tarama — ısı haritası"
-              width={800}
-              height={500}
-              className="w-full rounded-xl shadow-lg"
-              priority
-              unoptimized
-            />
-          </div>
-        </div>
-      </section>
+      {/* ===== Hero (removed) ===== */}
 
       {/* ===== Stats ===== */}
       <div className="border-y border-slate-100 bg-slate-50">
@@ -138,11 +92,13 @@ export default function HomePage() {
       <section className="py-10 sm:py-14">
         <div className="mx-auto max-w-6xl px-4">
           <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">
-            Tarlanın &ldquo;Röntgeni&rdquo; Nasıl Çekiliyor?
+            Tarlanızın &ldquo;check-up ve tahlilini&rdquo; yaptırın masrafınızı azaltın!
           </h2>
-          <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-slate-600 sm:text-base">
-            Drone özel kameralarla tarlanızı santimetresine kadar tarar. Görüntüler merkezdeki
-            bilgisayarlarda işlenerek 7 farklı katmanda analiz edilir.
+          <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-slate-600 sm:text-base leading-relaxed">
+            Drone özel sensörlü kameralarla tarlanızı santimetresine kadar tarar.
+            Görüntüler merkezdeki bilgisayarlarda yapay zeka ile işlenerek 7 farklı katmanda analiz edilir.
+            Hastalık, zararlı böcek, yabancı ot ve su eksikliğini insan gözünden en az bir hafta önce tespit eder.
+            Gerekli durumda akademisyen yüksek ziraat mühendisleri kontroller yapar.
           </p>
           <div className="mt-6 grid items-center gap-6 lg:grid-cols-2">
             <Image
@@ -177,30 +133,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== Önce / Sonra ===== */}
-      <section className="bg-slate-50 py-10 sm:py-14">
-        <div className="mx-auto max-w-6xl px-4">
-          <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">
-            Gözle Görünmeyeni Ortaya Çıkarır
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-slate-600 sm:text-base leading-relaxed">
-            Drone ile çekilen görüntüler 7 farklı katmanda işlenerek tarlanızın detaylı sağlık haritası çıkarılır.
-          </p>
-          <div className="mt-8 grid grid-cols-2 gap-4">
-            <div className="overflow-hidden rounded-xl border border-slate-200">
-              <Image src="/images/tarla-oncesi.png" alt="Tarla — normal havadan görüntü" width={600} height={350} className="h-52 w-full object-cover sm:h-64" unoptimized />
-              <div className="bg-white px-4 py-2 text-center text-sm font-medium text-slate-700">Normal Görüntü</div>
-            </div>
-            <div className="overflow-hidden rounded-xl border border-emerald-200">
-              <Image src="/images/analiz-katmanlari.png" alt="Analiz katmanları — 7 katmanlı tarla analizi" width={600} height={350} className="h-52 w-full object-cover sm:h-64" unoptimized />
-              <div className="bg-emerald-50 px-4 py-2 text-center text-sm font-medium text-emerald-700">Katmanlı Analiz</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ===== Tasarruf — Büyük Bölüm ===== */}
-      <section className="py-12 sm:py-16">
+      <section className="py-6 sm:py-8">
         <div className="mx-auto max-w-6xl px-4">
           <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 p-8 text-white sm:p-12">
             <h2 className="text-center text-3xl font-extrabold sm:text-4xl">
