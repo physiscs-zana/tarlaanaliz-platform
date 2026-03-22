@@ -279,9 +279,9 @@ async def mark_paid(
                                 session.add(assignment)
                                 break
 
-                    # Update mission status
-                    mission.status = "ASSIGNED"
+                    # KR-028: Mission status geçişi — pilot varsa ASSIGNED, yoksa PLANNED kalır
                     if assigned_pilot_id:
+                        mission.status = "ASSIGNED"
                         _RECEIPT_LOGGER.warning(
                             "MISSION.AUTO_DISPATCHED mission=%s pilot=%s payment=%s province=%s",
                             model.target_id,
@@ -290,8 +290,9 @@ async def mark_paid(
                             field_province,
                         )
                     else:
+                        # KR-028: Pilot bulunamadığında mission PLANNED kalır, admin manuel atayacak
                         _RECEIPT_LOGGER.warning(
-                            "MISSION.ASSIGNED_NO_PILOT mission=%s payment=%s province=%s — no eligible pilot found",
+                            "MISSION.PAID_NO_PILOT mission=%s payment=%s province=%s — pilot bulunamadi, PLANNED olarak kaliyor",
                             model.target_id,
                             payment_id,
                             field_province,
@@ -331,7 +332,7 @@ async def mark_paid(
                         payment_intent_id=model.payment_intent_id,
                         crop_type=subscription.crop_type,
                         analysis_type=subscription.analysis_type or "MULTISPECTRAL",
-                        status="ASSIGNED",
+                        status="PLANNED",
                         planned_at=planned_at,
                         created_at=datetime.now(timezone.utc),
                     )
@@ -374,13 +375,18 @@ async def mark_paid(
                                     session.add(assignment)
                                     break
 
+                    # KR-028: Pilot varsa mission ASSIGNED'a geçir
+                    if assigned_pilot_id:
+                        first_mission.status = "ASSIGNED"
+
                     _RECEIPT_LOGGER.warning(
-                        "SUBSCRIPTION.ACTIVATED sub=%s mission=%s pilot=%s payment=%s province=%s",
+                        "SUBSCRIPTION.ACTIVATED sub=%s mission=%s pilot=%s payment=%s province=%s status=%s",
                         model.target_id,
                         first_mission_id,
                         assigned_pilot_id,
                         payment_id,
                         field_province,
+                        first_mission.status,
                     )
 
             await session.commit()

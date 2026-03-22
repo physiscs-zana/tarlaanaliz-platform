@@ -102,7 +102,27 @@ async def create_mission(request: Request, payload: MissionCreateRequest) -> Mis
                     crop_code = payload.crop_type or (field_row.crop_type if field_row.crop_type else "PAMUK")
                     amount_kurus = calculate_single_price(field_id, crop_code, float(field_row.area_m2))
             except Exception as exc:
-                _LOGGER.warning("MISSION.PRICE_CALC_FAILED field=%s error=%s", field_id, exc)
+                _LOGGER.warning("MISSION.PRICE_CALC_FAILED field=%s error=%s — using fallback", field_id, exc)
+
+            # KR-022: Fiyat 0 ise fallback pricing config'den hesapla
+            if amount_kurus == 0:
+                try:
+                    from src.presentation.api.v1.endpoints.admin_pricing import _read_config
+
+                    cfg = _read_config()
+                    crops_cfg = cfg.get("crops", [])
+                    single_price: int | float = 15  # fallback: 15 TL/donum
+                    if isinstance(crops_cfg, list):
+                        for crop_cfg in crops_cfg:
+                            if isinstance(crop_cfg, dict) and crop_cfg.get("code") == payload.crop_type:
+                                single_price = float(crop_cfg.get("single_price", 15))
+                                break
+                    if field_row and field_row.area_m2:
+                        area_donum = float(field_row.area_m2) / 1000.0
+                        amount_kurus = max(100, int(float(single_price) * 100 * area_donum))
+                    _LOGGER.warning("MISSION.PRICE_FALLBACK field=%s amount_kurus=%d", field_id, amount_kurus)
+                except Exception as fallback_exc:
+                    _LOGGER.warning("MISSION.PRICE_FALLBACK_FAILED field=%s error=%s", field_id, fallback_exc)
 
             # Look up price_snapshot if exists (best-effort, nullable FK)
             ps_row = None

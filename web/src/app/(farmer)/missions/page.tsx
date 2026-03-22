@@ -20,7 +20,7 @@ interface Mission {
 }
 
 /* ------- Constants ------- */
-const PENDING_STATUSES = new Set(["PLANNED"]);
+const PENDING_STATUSES = new Set(["PLANNED", "PAYMENT_PENDING"]);
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   PLANNED: { label: "Odeme Bekleniyor", className: "bg-amber-100 text-amber-800" },
@@ -120,17 +120,17 @@ export default function FarmerMissionsPage() {
 
   useEffect(() => { fetchMissions(); }, [fetchMissions]);
 
-  const { paid, pending } = useMemo(() => {
-    const p: Mission[] = [];
-    const a: Mission[] = [];
+  const { approved, pending } = useMemo(() => {
+    const pend: Mission[] = [];
+    const appr: Mission[] = [];
     for (const m of missions) {
       if (PENDING_STATUSES.has(m.status)) {
-        p.push(m);
+        pend.push(m);
       } else {
-        a.push(m);
+        appr.push(m);
       }
     }
-    return { pending: p, paid: a };
+    return { pending: pend, approved: appr };
   }, [missions]);
 
   return (
@@ -149,22 +149,34 @@ export default function FarmerMissionsPage() {
           <p className="mt-2 text-sm text-slate-400">Tarlaniz icin analiz talebi olusturdugunuzda burada listelenecektir.</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Odenmiş / Aktif analizler */}
-          {paid.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-emerald-700">Aktif Analizler ({paid.length})</h2>
-              {paid.map((m) => <MissionCard key={m.mission_id} m={m} />)}
-            </div>
-          )}
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Sol Kolon: Onaylanan Analizler */}
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold text-emerald-700 border-b border-emerald-200 pb-2">
+              Onaylanan Analizler ({approved.length})
+            </h2>
+            {approved.length > 0 ? (
+              approved.map((m) => <MissionCard key={m.mission_id} m={m} />)
+            ) : (
+              <div className="rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 py-8 text-center">
+                <p className="text-sm text-slate-400">Henuz onaylanan analiz bulunmamaktadir.</p>
+              </div>
+            )}
+          </div>
 
-          {/* Odeme bekleyen talepler */}
-          {pending.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-amber-700">Odeme Bekleyen Talepler ({pending.length})</h2>
-              {pending.map((m) => <MissionCard key={m.mission_id} m={m} />)}
-            </div>
-          )}
+          {/* Sag Kolon: Bekleyen Analiz Talepleri */}
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold text-amber-700 border-b border-amber-200 pb-2">
+              Bekleyen Analiz Talepleri ({pending.length})
+            </h2>
+            {pending.length > 0 ? (
+              pending.map((m) => <MissionCard key={m.mission_id} m={m} />)
+            ) : (
+              <div className="rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 py-8 text-center">
+                <p className="text-sm text-slate-400">Bekleyen analiz talebi bulunmamaktadir.</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </section>

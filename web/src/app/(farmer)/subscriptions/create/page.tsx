@@ -9,16 +9,25 @@ import { FormEvent, useState, useMemo } from "react";
 
 import { apiRequest } from "@/lib/apiClient";
 
+/** KR-027: Sezonluk Paket tarama periyodu seçenekleri (gün). 7 günlük en başta. */
+const INTERVAL_OPTIONS = [
+  { value: 7, label: "7 Günlük" },
+  { value: 10, label: "10 Günlük" },
+  { value: 14, label: "14 Günlük" },
+  { value: 17, label: "17 Günlük" },
+  { value: 21, label: "21 Günlük" },
+] as const;
+
 /** KR-024: Bitki bazli onerilen tarama periyotlari (gun). */
 const CROP_TYPES = [
-  { code: "PAMUK", label: "Pamuk", interval: { min: 7, max: 10 } },
-  { code: "ANTEP_FISTIGI", label: "Antep Fistigi", interval: { min: 10, max: 15 } },
-  { code: "MISIR", label: "Misir", interval: { min: 15, max: 20 } },
-  { code: "BUGDAY", label: "Bugday", interval: { min: 10, max: 15 } },
-  { code: "AYCICEGI", label: "Aycicegi", interval: { min: 7, max: 10 } },
-  { code: "UZUM", label: "Uzum", interval: { min: 7, max: 10 } },
-  { code: "ZEYTIN", label: "Zeytin", interval: { min: 15, max: 20 } },
-  { code: "KIRMIZI_MERCIMEK", label: "Kirmizi Mercimek", interval: { min: 10, max: 15 } },
+  { code: "PAMUK", label: "Pamuk", recommended: 7 },
+  { code: "ANTEP_FISTIGI", label: "Antep Fistigi", recommended: 10 },
+  { code: "MISIR", label: "Misir", recommended: 14 },
+  { code: "BUGDAY", label: "Bugday", recommended: 10 },
+  { code: "AYCICEGI", label: "Aycicegi", recommended: 7 },
+  { code: "UZUM", label: "Uzum", recommended: 7 },
+  { code: "ZEYTIN", label: "Zeytin", recommended: 17 },
+  { code: "KIRMIZI_MERCIMEK", label: "Kirmizi Mercimek", recommended: 10 },
 ] as const;
 
 export default function CreateSubscriptionPage() {
@@ -31,8 +40,7 @@ export default function CreateSubscriptionPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedCrop = CROP_TYPES.find(c => c.code === cropType);
-  const suggestedInterval = selectedCrop?.interval;
-  const isIntervalOutOfRange = suggestedInterval && (intervalDays < suggestedInterval.min || intervalDays > suggestedInterval.max);
+  const isNotRecommended = selectedCrop && intervalDays !== selectedCrop.recommended;
 
   // KR-027: Toplam analiz sayisi hesaplama
   const totalAnalyses = useMemo(() => {
@@ -104,12 +112,16 @@ export default function CreateSubscriptionPage() {
         </div>
 
         <div>
-          <label htmlFor="cs-interval" className="mb-1 block text-sm font-medium">Tarama Periyodu (gün)</label>
-          <input id="cs-interval" type="number" min={1} max={30} required value={intervalDays} onChange={(e) => setIntervalDays(Number(e.target.value))} className="w-full rounded border border-slate-300 px-3 py-2" />
-          {suggestedInterval ? (
-            <p className={`mt-1 text-xs ${isIntervalOutOfRange ? 'text-amber-600' : 'text-slate-500'}`}>
-              {selectedCrop?.label} için önerilen periyot: {suggestedInterval.min}–{suggestedInterval.max} gün
-              {isIntervalOutOfRange ? ' (Önerilen aralık dışında!)' : ''}
+          <label htmlFor="cs-interval" className="mb-1 block text-sm font-medium">Tarama Periyodu</label>
+          <select id="cs-interval" required value={intervalDays} onChange={(e) => setIntervalDays(Number(e.target.value))} className="w-full rounded border border-slate-300 px-3 py-2">
+            {INTERVAL_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+          {selectedCrop ? (
+            <p className={`mt-1 text-xs ${isNotRecommended ? 'text-amber-600' : 'text-emerald-600'}`}>
+              {selectedCrop.label} icin onerilen periyot: {selectedCrop.recommended} gun
+              {isNotRecommended ? ' (Farkli bir periyot sectiniz)' : ' (Onerilen periyot secili)'}
             </p>
           ) : null}
         </div>
