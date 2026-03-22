@@ -241,7 +241,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
-        run: pip install alembic sqlalchemy
+        run: pip install alembic sqlalchemy psycopg2-binary
 
       - name: Validate migration chain
         run: |
@@ -255,6 +255,51 @@ jobs:
           print(f'Found {len(files)} migration files')
           for f in sorted(files):
               print(f'  - {f}')
+          "
+
+      - name: Check for multiple heads (branch fork detection)
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          HEADS=$(python -c "
+          from alembic.config import Config
+          from alembic.script import ScriptDirectory
+          cfg = Config('alembic.ini')
+          script = ScriptDirectory.from_config(cfg)
+          heads = script.get_heads()
+          print(len(heads))
+          for h in heads:
+              print(f'  HEAD: {h}')
+          " 2>/dev/null || echo "1")
+          HEAD_COUNT=$(echo "$HEADS" | head -1)
+          echo "$HEADS"
+          if [ "$HEAD_COUNT" != "1" ]; then
+            echo "ERROR: Multiple alembic heads detected ($HEAD_COUNT). Migration branch fork — merge migration required."
+            exit 1
+          fi
+          echo "Migration chain OK: single head"
+
+      - name: Validate revision chain integrity
+        run: |
+          python -c "
+          from alembic.config import Config
+          from alembic.script import ScriptDirectory
+          cfg = Config('alembic.ini')
+          script = ScriptDirectory.from_config(cfg)
+          revisions = list(script.walk_revisions())
+          print(f'Total revisions: {len(revisions)}')
+          # Check for orphan revisions (down_revision pointing to non-existent)
+          rev_ids = {r.revision for r in revisions}
+          for r in revisions:
+              if r.down_revision and r.down_revision not in rev_ids:
+                  if isinstance(r.down_revision, tuple):
+                      for dr in r.down_revision:
+                          if dr not in rev_ids:
+                              print(f'ERROR: Orphan down_revision {dr} in {r.revision}')
+                              exit(1)
+                  else:
+                      print(f'ERROR: Orphan down_revision {r.down_revision} in {r.revision}')
+                      exit(1)
+          print('Revision chain integrity OK')
           "
 
   status-check:

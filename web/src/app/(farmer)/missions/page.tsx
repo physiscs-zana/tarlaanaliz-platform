@@ -25,15 +25,22 @@ const PENDING_STATUSES = new Set(["PLANNED", "PAYMENT_PENDING"]);
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   PLANNED: { label: "Odeme Bekleniyor", className: "bg-amber-100 text-amber-800" },
   ASSIGNED: { label: "Pilot Atandi", className: "bg-indigo-100 text-indigo-800" },
+  ACCEPTED: { label: "Kabul Edildi", className: "bg-cyan-100 text-cyan-800" },
   ACKED: { label: "Kabul Edildi", className: "bg-cyan-100 text-cyan-800" },
-  IN_PROGRESS: { label: "Devam Ediyor", className: "bg-amber-100 text-amber-800" },
+  IN_PROGRESS: { label: "Ucus Devam Ediyor", className: "bg-amber-100 text-amber-800" },
   FLOWN: { label: "Ucus Tamamlandi", className: "bg-teal-100 text-teal-800" },
+  COMPLETED: { label: "Tamamlandi", className: "bg-teal-100 text-teal-800" },
   UPLOADED: { label: "Yuklendi", className: "bg-violet-100 text-violet-800" },
+  IN_ANALYSIS: { label: "Analiz Ediliyor", className: "bg-purple-100 text-purple-800" },
   ANALYZING: { label: "Analiz Ediliyor", className: "bg-purple-100 text-purple-800" },
+  ANALYSIS_COMPLETED: { label: "Analiz Tamamlandi", className: "bg-blue-100 text-blue-800" },
+  VERIFIED: { label: "Dogrulandi", className: "bg-emerald-100 text-emerald-800" },
+  DELIVERED: { label: "Teslim Edildi", className: "bg-emerald-100 text-emerald-800" },
   DONE: { label: "Tamamlandi", className: "bg-emerald-100 text-emerald-800" },
-  COMPLETED: { label: "Tamamlandi", className: "bg-emerald-100 text-emerald-800" },
   FAILED: { label: "Basarisiz", className: "bg-rose-100 text-rose-800" },
   CANCELLED: { label: "Iptal Edildi", className: "bg-slate-100 text-slate-600" },
+  ON_HOLD: { label: "Beklemede", className: "bg-orange-100 text-orange-800" },
+  REJECTED: { label: "Reddedildi", className: "bg-rose-100 text-rose-800" },
 };
 
 const CROP_LABELS: Record<string, string> = {
