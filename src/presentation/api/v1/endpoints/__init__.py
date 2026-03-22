@@ -28,6 +28,8 @@ from src.presentation.api.v1.endpoints.weather_block_reports import router as we
 from src.presentation.api.v1.endpoints.cooperatives import router as cooperatives_router
 from src.presentation.api.v1.endpoints.layer_registry import router as layer_registry_router
 from src.presentation.api.v1.endpoints.weather_blocks import router as weather_blocks_router
+from src.presentation.api.v1.endpoints.announcements import router as announcements_router
+from src.presentation.api.v1.endpoints.pilot_earnings import router as pilot_earnings_router
 
 __all__: list[str] = [
     "admin_dashboard_router",
@@ -56,4 +58,6 @@ __all__: list[str] = [
     "cooperatives_router",
     "layer_registry_router",
     "weather_blocks_router",
+    "announcements_router",
+    "pilot_earnings_router",
 ]
