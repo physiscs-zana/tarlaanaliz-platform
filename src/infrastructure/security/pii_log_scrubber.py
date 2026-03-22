@@ -1,6 +1,7 @@
-# SEC-FIX [H-07]: Merkezi PII log scrubbing altyapısı.
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
 # KR-066: KVKK PII filtreleme — log'lara PII sızmasını önler.
 # KR-083: İl operatörü PII göremez.
+# SEC-FIX [H-07]: Merkezi PII log scrubbing altyapısı.
 """Centralized PII scrubbing for all log output (stdlib logging + structlog).
 
 Bu modül iki katmanlı koruma sağlar:
@@ -52,11 +53,11 @@ _PII_KEYS: frozenset[str] = frozenset(
 
 # Türkiye telefon numarası pattern'i — log mesajı string'lerinde aranır
 _PHONE_RE = re.compile(
-    r"(?<!\d)"                     # rakamla başlamayan
-    r"(?:\+90|0)?"                 # ülke kodu veya 0 prefix (opsiyonel)
-    r"[5]\d{2}"                    # operatör kodu
+    r"(?<!\d)"  # rakamla başlamayan
+    r"(?:\+90|0)?"  # ülke kodu veya 0 prefix (opsiyonel)
+    r"[5]\d{2}"  # operatör kodu
     r"[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}"  # numara
-    r"(?!\d)"                      # rakamla bitmeyen
+    r"(?!\d)"  # rakamla bitmeyen
 )
 
 _REPLACEMENT = "***PII***"
@@ -65,6 +66,7 @@ _REPLACEMENT = "***PII***"
 # ---------------------------------------------------------------------------
 # Scrub fonksiyonları
 # ---------------------------------------------------------------------------
+
 
 def _mask_phone_in_text(text: str) -> str:
     """Log mesajı string'i içindeki telefon numaralarını maskeler."""
@@ -89,10 +91,7 @@ def _scrub_dict(data: dict[str, Any]) -> dict[str, Any]:
         elif isinstance(value, dict):
             result[key] = _scrub_dict(value)
         elif isinstance(value, list):
-            result[key] = [
-                _scrub_dict(item) if isinstance(item, dict) else item
-                for item in value
-            ]
+            result[key] = [_scrub_dict(item) if isinstance(item, dict) else item for item in value]
         elif isinstance(value, str):
             result[key] = _mask_phone_in_text(value)
         else:
@@ -118,6 +117,7 @@ def _scrub_message(msg: str) -> str:
 # stdlib logging.Filter — tüm handler'lara eklenir
 # ---------------------------------------------------------------------------
 
+
 class PIILogFilter(logging.Filter):
     """stdlib logging Filter: log record'larından PII temizler.
 
@@ -139,10 +139,7 @@ class PIILogFilter(logging.Filter):
             if isinstance(record.args, dict):
                 record.args = _scrub_dict(record.args)
             elif isinstance(record.args, tuple):
-                record.args = tuple(
-                    _mask_phone_in_text(str(a)) if isinstance(a, str) else a
-                    for a in record.args
-                )
+                record.args = tuple(_mask_phone_in_text(str(a)) if isinstance(a, str) else a for a in record.args)
 
         # 3. Extra dict içindeki PII key'leri temizle
         for attr in list(vars(record)):
@@ -160,9 +157,8 @@ class PIILogFilter(logging.Filter):
 # structlog processor — structlog.configure() pipeline'ına eklenir
 # ---------------------------------------------------------------------------
 
-def structlog_pii_scrubber(
-    logger: Any, method_name: str, event_dict: dict[str, Any]
-) -> dict[str, Any]:
+
+def structlog_pii_scrubber(logger: Any, method_name: str, event_dict: dict[str, Any]) -> dict[str, Any]:
     """structlog processor: event_dict'ten PII temizler.
 
     Kullanım:
@@ -202,6 +198,7 @@ def structlog_pii_scrubber(
 # ---------------------------------------------------------------------------
 # Kurulum yardımcıları
 # ---------------------------------------------------------------------------
+
 
 def install_on_all_handlers() -> None:
     """Mevcut tüm logging handler'larına PIILogFilter ekler.
