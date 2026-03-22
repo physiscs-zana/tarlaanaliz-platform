@@ -20,24 +20,31 @@ router = APIRouter(prefix="/ingest", tags=["ingest"])
 
 
 class FileHashEntry(BaseModel):
-    file_path: str = Field(min_length=1)
-    sha256: str = Field(min_length=64, max_length=64)
-    size_bytes: int = Field(gt=0)
+    # SEC-FIX: path traversal koruması — sadece güvenli karakterler
+    file_path: str = Field(min_length=1, max_length=512, pattern=r"^[a-zA-Z0-9_.\-/]+$")
+    sha256: str = Field(min_length=64, max_length=64, pattern=r"^[a-f0-9]{64}$")
+    size_bytes: int = Field(gt=0, le=10_737_418_240)  # max 10 GB per file
+
+
+# SEC-FIX: Geçerli bant değerleri whitelist'i
+_VALID_BANDS = {"GREEN", "RED", "RED_EDGE", "NIR", "BLUE", "LWIR"}
 
 
 class IntakeManifestRequest(BaseModel):
     """Intake manifest from edge kiosk (KR-072)."""
 
-    batch_id: str = Field(min_length=10, max_length=64)
+    # SEC-FIX: Tüm string alanlarına max_length eklendi (DoS koruması)
+    batch_id: str = Field(min_length=10, max_length=64, pattern=r"^BATCH_[0-9]{8}_[0-9]{6}_[A-Z0-9]{4}$")
     kiosk_id: str = Field(min_length=3, max_length=64)
     drone_serial: str = Field(min_length=3, max_length=64)
-    mission_id: str = Field(min_length=1)
-    field_id: str = Field(min_length=1)
-    files: list[FileHashEntry] = Field(min_length=1)
-    available_bands: list[str] = Field(min_length=4)
+    mission_id: str = Field(min_length=1, max_length=64)
+    field_id: str = Field(min_length=1, max_length=64)
+    files: list[FileHashEntry] = Field(min_length=1, max_length=10_000)
+    available_bands: list[str] = Field(min_length=4, max_length=10)
     av_scan_result: str = Field(pattern="^CLEAN$")
-    signature: str = Field(min_length=1)
-    captured_at: str = Field(min_length=1)
+    # SEC-FIX: signature hex-only, sabit uzunluk
+    signature: str = Field(min_length=64, max_length=256, pattern=r"^[a-f0-9]+$")
+    captured_at: str = Field(min_length=1, max_length=30)
 
 
 class DatasetResponse(BaseModel):

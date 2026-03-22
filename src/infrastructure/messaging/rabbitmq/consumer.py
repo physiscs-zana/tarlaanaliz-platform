@@ -281,11 +281,18 @@ class RabbitMQConsumer:
             try:
                 body = json.loads(message.body.decode("utf-8"))
 
+                # SEC-FIX: Temel message yapısı doğrulama — injection/malformed önleme
+                if not isinstance(body, dict):
+                    raise ValueError("Message body must be a JSON object")
+                event_type = body.get("event_type")
+                if not isinstance(event_type, str) or not event_type:
+                    raise ValueError("Missing or invalid event_type field")
+
                 logger.debug(
                     "rabbitmq_consumer_message_received",
                     message_id=message_id,
                     subscription_id=subscription_id,
-                    event_type=body.get("event_type", "unknown"),
+                    event_type=event_type,
                 )
 
                 await handler(body)

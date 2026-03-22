@@ -67,8 +67,12 @@ async def _lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
     from src.application.services.contract_validator_service import ContractValidatorService
     from src.infrastructure.contracts import ContractValidatorAdapter, SchemaRegistry
+    from src.infrastructure.security.pii_log_scrubber import install_on_all_handlers
 
     import structlog
+
+    # SEC-FIX [H-07]: PII log scrubbing — tüm handler'lara PII filtresi ekle
+    install_on_all_handlers()
 
     logger = structlog.get_logger("lifespan")
 
@@ -170,10 +174,14 @@ def _register_exception_handlers(app: FastAPI) -> None:
     async def handle_uncaught_exception(request: Request, exc: Exception) -> JSONResponse:
         import structlog as _sl
 
+        from src.infrastructure.security.pii_log_scrubber import _scrub_message
+
+        # SEC-FIX: Exception mesajlarından PII temizle
+        safe_msg = _scrub_message(str(exc))
         _sl.get_logger("unhandled_exception").error(
             "unhandled_exception",
             exc_type=type(exc).__name__,
-            exc_msg=str(exc),
+            exc_msg=safe_msg,
             path=request.url.path,
             method=request.method,
             corr_id=getattr(request.state, "corr_id", None),

@@ -180,7 +180,7 @@ async def create_expert(request: Request, payload: ExpertCreateRequest) -> Exper
             user_model.expertise_tags = payload.expertise_tags
         await session.commit()
 
-    LOGGER.info("EXPERT.CREATED user_id=%s phone=%s", user.user_id, payload.phone[-4:])
+    LOGGER.info("EXPERT.CREATED user_id=%s", user.user_id)
     return ExpertResponse(
         user_id=str(user.user_id),
         phone=payload.phone,
