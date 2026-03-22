@@ -1,9 +1,0 @@
-# Only the public landing page is crawlable.
-# All authenticated routes are behind auth — no need to enumerate them here.
-
-User-agent: *
-Allow: /
-Disallow: /api/
-Disallow: /admin/
-Disallow: /login
-Disallow: /register
