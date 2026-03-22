@@ -69,7 +69,34 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* ===== Hero (removed) ===== */}
+      {/* ===== Hero Slogan ===== */}
+      <section className="bg-gradient-to-b from-emerald-50/60 to-white py-8 sm:py-12">
+        <div className="mx-auto max-w-4xl px-4 text-center">
+          <h1 className="text-2xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
+            Tarlanızın &ldquo;check-up ve tahlilini&rdquo; yaptırın
+            <span className="block text-emerald-600">masrafınızı azaltın!</span>
+          </h1>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
+            Drone özel sensörlü kameralarla tarlanızı santimetresine kadar tarar.
+            Hastalık, zararlı böcek, yabancı ot ve su eksikliğini insan gözünden en az bir hafta önce tespit eder.
+          </p>
+          <div className="mt-5 flex flex-col items-center gap-2.5 sm:flex-row sm:justify-center">
+            <Link
+              href="/register"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700"
+            >
+              Ücretsiz Üye Ol
+              <IconArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="#nasil-calisir"
+              className="inline-flex items-center justify-center rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Nasıl Çalışır?
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* ===== Stats ===== */}
       <div className="border-y border-slate-100 bg-slate-50">

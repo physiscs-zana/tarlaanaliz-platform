@@ -39,6 +39,12 @@ export const metadata: Metadata = {
     locale: "tr_TR",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "TarlaAnaliz - Drone ile Tarla Analizi",
+    description:
+      "Tarlanizin check-up ve tahlilini drone ile yapiyoruz. Hastalik, zararli bocek, yabanci ot ve su eksikligini erken tespit.",
+  },
   robots: {
     index: true,
     follow: true,
