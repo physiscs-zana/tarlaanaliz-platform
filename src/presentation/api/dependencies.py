@@ -133,6 +133,11 @@ class PaymentIntentResponse(BaseModel):
     payment_ref: str | None = None
     sla_deadline: str | None = None
     sla_overdue: bool = False
+    # KR-033: Admin onay ekranında analiz detayları
+    target_type: str | None = None
+    crop_type: str | None = None
+    area_donum: float | None = None
+    field_name: str | None = None
 
 
 class CalibrationRecordCreateRequest(BaseModel):

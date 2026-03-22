@@ -73,8 +73,15 @@ def _observe(request: Request, metrics: MetricsCollector, started: float, status
     metrics.observe_status(route=route, status_code=status_code, corr_id=corr_id)
 
 
-def _model_to_response(m: PaymentIntentModel) -> PaymentIntentResponse:
-    """Convert ORM model to API response with T+1 SLA calculation."""
+def _model_to_response(
+    m: PaymentIntentModel,
+    *,
+    field_info: dict[str, dict[str, object]] | None = None,
+) -> PaymentIntentResponse:
+    """Convert ORM model to API response with T+1 SLA calculation.
+
+    field_info: {target_id_str: {"crop_type": ..., "area_donum": ..., "field_name": ...}}
+    """
     from datetime import datetime, timedelta, timezone
 
     payer_name = None
@@ -103,6 +110,18 @@ def _model_to_response(m: PaymentIntentModel) -> PaymentIntentResponse:
         payer_province = m.payer.province
         payer_district = m.payer.district
 
+    # KR-033: Analiz detayları — target_type, crop_type, area_donum, field_name
+    target_type = m.target_type
+    crop_type = None
+    area_donum = None
+    field_name = None
+    if field_info and str(m.target_id) in field_info:
+        fi = field_info[str(m.target_id)]
+        crop_type = str(fi.get("crop_type", "")) or None
+        raw_area = fi.get("area_donum")
+        area_donum = float(raw_area) if raw_area is not None else None
+        field_name = str(fi.get("field_name", "")) or None
+
     return PaymentIntentResponse(
         intent_id=m.payment_intent_id,
         status=PaymentStatus(m.status)
@@ -121,6 +140,10 @@ def _model_to_response(m: PaymentIntentModel) -> PaymentIntentResponse:
         payment_ref=m.payment_ref,
         sla_deadline=sla_deadline,
         sla_overdue=sla_overdue,
+        target_type=target_type,
+        crop_type=crop_type,
+        area_donum=area_donum,
+        field_name=field_name,
     )
 
 
@@ -158,7 +181,55 @@ async def list_payment_intents(
             result = await session.execute(stmt)
             models = result.scalars().unique().all()
 
-        records = [_model_to_response(m) for m in models]
+            # KR-033: Toplu field bilgisi lookup — analiz türü, bitki, tarla boyutu
+            field_info: dict[str, dict[str, object]] = {}
+            from src.infrastructure.persistence.sqlalchemy.models.field_model import FieldModel
+            from src.infrastructure.persistence.sqlalchemy.models.mission_model import MissionModel
+            from src.infrastructure.persistence.sqlalchemy.models.subscription_model import SubscriptionModel
+
+            mission_target_ids = [m.target_id for m in models if m.target_type == "MISSION"]
+            sub_target_ids = [m.target_id for m in models if m.target_type == "SUBSCRIPTION"]
+
+            # Mission → field bilgisi
+            if mission_target_ids:
+                m_result = await session.execute(
+                    select(
+                        MissionModel.mission_id,
+                        MissionModel.field_id,
+                        MissionModel.crop_type,
+                        FieldModel.area_donum,
+                        FieldModel.field_name,
+                    )
+                    .join(FieldModel, MissionModel.field_id == FieldModel.field_id)
+                    .where(MissionModel.mission_id.in_(mission_target_ids))
+                )
+                for row in m_result.all():
+                    field_info[str(row.mission_id)] = {
+                        "crop_type": row.crop_type,
+                        "area_donum": row.area_donum,
+                        "field_name": row.field_name,
+                    }
+
+            # Subscription → field bilgisi
+            if sub_target_ids:
+                s_result = await session.execute(
+                    select(
+                        SubscriptionModel.subscription_id,
+                        SubscriptionModel.crop_type,
+                        FieldModel.area_donum,
+                        FieldModel.field_name,
+                    )
+                    .join(FieldModel, SubscriptionModel.field_id == FieldModel.field_id)
+                    .where(SubscriptionModel.subscription_id.in_(sub_target_ids))
+                )
+                for row in s_result.all():
+                    field_info[str(row.subscription_id)] = {
+                        "crop_type": row.crop_type,
+                        "area_donum": row.area_donum,
+                        "field_name": row.field_name,
+                    }
+
+        records = [_model_to_response(m, field_info=field_info) for m in models]
         _observe(request, metrics, started, status.HTTP_200_OK)
         return records
     except HTTPException as exc:

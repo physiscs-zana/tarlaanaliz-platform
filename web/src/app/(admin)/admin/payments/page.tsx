@@ -22,6 +22,10 @@ interface PaymentItem {
   payment_ref: string | null;
   sla_deadline: string | null;
   sla_overdue: boolean;
+  target_type: string | null;
+  crop_type: string | null;
+  area_donum: number | null;
+  field_name: string | null;
 }
 
 interface ReceiptModalState {
@@ -45,9 +49,28 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   REFUNDED: { label: "Iade Edildi", className: "bg-sky-50 text-sky-700" },
 };
 
-function formatAmount(kurus: number): string {
-  return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(kurus / 100);
+function formatAmount(amount: number): string {
+  return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(amount);
 }
+
+const TARGET_TYPE_LABELS: Record<string, string> = {
+  MISSION: "Tek Seferlik",
+  SUBSCRIPTION: "Sezonluk Paket",
+};
+
+const CROP_LABELS: Record<string, string> = {
+  PAMUK: "Pamuk",
+  ANTEP_FISTIGI: "Antep Fistigi",
+  MISIR: "Misir",
+  BUGDAY: "Bugday",
+  AYCICEGI: "Aycicegi",
+  UZUM: "Uzum",
+  ZEYTIN: "Zeytin",
+  KIRMIZI_MERCIMEK: "Kirmizi Mercimek",
+  COTTON: "Pamuk",
+  WHEAT: "Bugday",
+  CORN: "Misir",
+};
 
 function formatPhone(phone: string | null): string {
   if (!phone) return "\u2014";
@@ -200,7 +223,9 @@ function PaymentTable({
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Ciftci</th>
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Telefon</th>
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Il / Ilce</th>
-            <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Tutar</th>
+            <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Analiz Turu</th>
+            <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Bitki / Tarla</th>
+            <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Beklenen Tutar</th>
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Dekont</th>
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">Durum</th>
             <th className="px-3 py-2 text-left text-xs font-medium text-slate-600">SLA</th>
@@ -218,7 +243,21 @@ function PaymentTable({
                 <td className="px-3 py-2 text-xs text-slate-700">{p.payer_display_name ?? "\u2014"}</td>
                 <td className="px-3 py-2 text-xs text-slate-600">{formatPhone(p.payer_phone)}</td>
                 <td className="px-3 py-2 text-xs text-slate-600">{location || "\u2014"}</td>
-                <td className="px-3 py-2 text-xs font-medium">{formatAmount(p.amount)}</td>
+                <td className="px-3 py-2">
+                  <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${p.target_type === "SUBSCRIPTION" ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-700"}`}>
+                    {p.target_type ? (TARGET_TYPE_LABELS[p.target_type] ?? p.target_type) : "\u2014"}
+                  </span>
+                </td>
+                <td className="px-3 py-2 text-xs text-slate-700">
+                  <div>{p.crop_type ? (CROP_LABELS[p.crop_type] ?? p.crop_type) : "\u2014"}</div>
+                  {p.area_donum != null && (
+                    <div className="text-slate-400">{p.area_donum.toFixed(1)} donum</div>
+                  )}
+                  {p.field_name && (
+                    <div className="text-slate-400 truncate max-w-[120px]" title={p.field_name}>{p.field_name}</div>
+                  )}
+                </td>
+                <td className="px-3 py-2 text-xs font-semibold text-slate-900">{formatAmount(p.amount)}</td>
                 <td className="px-3 py-2">
                   {p.receipt_blob_id ? (
                     <button
