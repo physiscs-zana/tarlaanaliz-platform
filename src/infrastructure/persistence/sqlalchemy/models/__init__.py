@@ -28,6 +28,12 @@ from src.infrastructure.persistence.sqlalchemy.models.cooperative_model import (
     CoopMembershipModel,
 )
 from src.infrastructure.persistence.sqlalchemy.models.qc_report_model import QCReportModel
+from src.infrastructure.persistence.sqlalchemy.models.weather_block_model import (
+    WeatherBlockModel,
+    WeatherBlockReportModel,
+)
+from src.infrastructure.persistence.sqlalchemy.models.mission_segment_model import MissionSegmentModel
+from src.infrastructure.persistence.sqlalchemy.models.reschedule_request_model import RescheduleRequestModel
 
 __all__ = [
     "UserModel",
@@ -52,4 +58,8 @@ __all__ = [
     "CooperativeModel",
     "CoopMembershipModel",
     "CoopInviteModel",
+    "WeatherBlockModel",
+    "WeatherBlockReportModel",
+    "MissionSegmentModel",
+    "RescheduleRequestModel",
 ]

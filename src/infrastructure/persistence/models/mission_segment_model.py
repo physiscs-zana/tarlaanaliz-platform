@@ -1,21 +1,8 @@
-"""KR-015 (optional) — mission_segment model scaffold."""
+# DEPRECATED: Bu scaffold dosyası artık kullanılmıyor.
+# Gerçek ORM modeli: src/infrastructure/persistence/sqlalchemy/models/mission_segment_model.py
+# Eski import'lar için re-export:
+from src.infrastructure.persistence.sqlalchemy.models.mission_segment_model import (
+    MissionSegmentModel,
+)
 
-from __future__ import annotations
-
-from sqlalchemy import Column, String, Integer, DateTime
-from sqlalchemy.orm import declarative_base
-
-Base = declarative_base()
-
-
-class MissionSegmentModel(Base):  # type: ignore[misc, valid-type]
-    __tablename__ = "mission_segments"
-
-    id = Column(String(36), primary_key=True)
-    mission_id = Column(String(36), nullable=False, index=True)
-    segment_no = Column(Integer, nullable=False)
-    area_donum = Column(Integer, nullable=False)
-    assigned_pilot_id = Column(String(36), nullable=True)
-
-    status = Column(String(32), nullable=False, default="PLANNED")
-    created_at = Column(DateTime(timezone=True), nullable=False)
+__all__ = ["MissionSegmentModel"]
