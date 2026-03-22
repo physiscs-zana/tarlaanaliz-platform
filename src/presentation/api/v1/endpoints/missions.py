@@ -13,6 +13,22 @@ from pydantic import BaseModel, Field
 
 _LOGGER = logging.getLogger("api.missions")
 
+# KR-028: Internal DB status → Contract enum mapping
+# DB/domain: ACKED, FLOWN, ANALYZING, DONE
+# Contract:  ACCEPTED, IN_PROGRESS, IN_ANALYSIS, DELIVERED
+_STATUS_TO_CONTRACT: dict[str, str] = {
+    "ACKED": "ACCEPTED",
+    "FLOWN": "IN_PROGRESS",
+    "ANALYZING": "IN_ANALYSIS",
+    "DONE": "DELIVERED",
+}
+
+
+def _map_status(internal_status: str) -> str:
+    """Map internal DB status to contract-canonical status."""
+    return _STATUS_TO_CONTRACT.get(internal_status, internal_status)
+
+
 router = APIRouter(prefix="/missions", tags=["missions"])
 
 
@@ -201,7 +217,7 @@ async def list_missions(request: Request) -> list[MissionResponse]:
             mission_id=str(m.mission_id),
             field_id=str(m.field_id),
             mission_date=(m.planned_at or m.created_at).date(),
-            status=m.status,
+            status=_map_status(m.status),
             crop_type=m.crop_type,
             analysis_type=m.analysis_type,
             subscription_id=str(m.subscription_id) if m.subscription_id else None,
