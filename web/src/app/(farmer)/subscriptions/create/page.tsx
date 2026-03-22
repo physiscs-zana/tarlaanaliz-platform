@@ -128,9 +128,26 @@ export default function CreateSubscriptionPage() {
 
         {/* KR-027: Toplam analiz sayisi ve fiyat onizleme */}
         {totalAnalyses > 0 ? (
-          <div className="rounded border border-blue-200 bg-blue-50 p-3 text-sm">
+          <div className="rounded border border-blue-200 bg-blue-50 p-3 text-sm space-y-2">
             <p>Toplam tarama sayısı: <strong>{totalAnalyses}</strong></p>
-            <p className="text-xs text-slate-500 mt-1">Fiyat bilgisi ödeme adımında gösterilecektir.</p>
+            <p className="text-xs text-slate-500">Fiyat bilgisi ödeme adımında gösterilecektir.</p>
+            {/* KR-015-5: Planlanan tarama gunleri onizlemesi */}
+            {startDate && endDate && (
+              <div className="mt-2 pt-2 border-t border-blue-200">
+                <p className="text-xs font-medium text-blue-800 mb-1">Planlanan Tarama Gunleri:</p>
+                <div className="flex flex-wrap gap-1">
+                  {Array.from({ length: totalAnalyses }, (_, i) => {
+                    const d = new Date(startDate);
+                    d.setDate(d.getDate() + i * intervalDays);
+                    return (
+                      <span key={i} className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-mono text-blue-700">
+                        {d.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit" })}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         ) : null}
 

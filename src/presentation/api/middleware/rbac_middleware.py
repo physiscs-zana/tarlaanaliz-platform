@@ -173,6 +173,7 @@ _BYPASS_PREFIXES = (
     "/openapi.json",
     "/api/v1/auth/",
     "/api/v1/pricing",  # public read-only
+    "/api/v1/layers",  # public read-only — KR-002 layer registry
     "/api/v1/payments/methods",  # public — payment methods info
 )
 
