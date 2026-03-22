@@ -5,7 +5,7 @@ test.describe("farmer journey smoke", () => {
   test("home page links to register page", async ({ page }) => {
     await page.goto("/");
     await expect(
-      page.getByRole("heading", { name: /check-up ve tahlilini/i }),
+      page.getByRole("heading", { name: /check-up ve tahlilini/i }).first(),
     ).toBeVisible();
     await page
       .getByRole("link", { name: /ücretsiz üye ol/i })
