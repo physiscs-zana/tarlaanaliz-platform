@@ -119,13 +119,14 @@ async def create_pilot(request: Request, payload: PilotCreateRequest) -> PilotRe
             user_model.display_name = payload.display_name
 
         # Create PilotModel + PilotServiceAreaModel for auto-dispatch
+        # Drone bilgileri bos birakilir — pilot profil sayfasindan girecek
         pilot_id = _uuid.uuid4()
-        drone_serial = f"DRONE-{_uuid.uuid4().hex[:8].upper()}"
         pilot = PilotModel(
             pilot_id=pilot_id,
             user_id=user.user_id,
             province=payload.province,
-            drone_serial_no=drone_serial,
+            drone_model="",
+            drone_serial_no=f"PENDING-{pilot_id.hex[:8].upper()}",
         )
         session.add(pilot)
         await session.flush()
@@ -299,7 +300,7 @@ async def get_my_drone(request: Request) -> dict[str, object]:
         pilot = result.scalar_one_or_none()
 
     base = {"display_name": display_name, "province": province}
-    if pilot and pilot.drone_model:
+    if pilot and pilot.drone_model and pilot.drone_model != "" and not pilot.drone_serial_no.startswith("PENDING-"):
         return {
             **base,
             "drone_model": pilot.drone_model,

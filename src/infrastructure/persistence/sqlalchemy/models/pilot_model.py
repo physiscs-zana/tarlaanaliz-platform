@@ -24,7 +24,7 @@ class PilotModel(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, unique=True
     )
-    drone_model: Mapped[str] = mapped_column(String(100), nullable=False, server_default=text("'DJI Mavic 3M'"))
+    drone_model: Mapped[str] = mapped_column(String(100), nullable=False, server_default=text("''"))
     drone_serial_no: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     province: Mapped[str] = mapped_column(String(100), nullable=False)
     district: Mapped[str | None] = mapped_column(String(100), nullable=True)
