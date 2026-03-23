@@ -53,8 +53,6 @@ PII_FIELDS: frozenset[str] = frozenset(
         "longitude",
         "pin",
         "pin_hash",
-        # SEC-FIX: field_id GPS lokasyon proxy'si — KR-071 uyumu
-        "field_id",
     }
 )
 
