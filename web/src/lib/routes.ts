@@ -50,6 +50,7 @@ export const routes = {
 
   // Admin routes
   adminHome: '/dashboard',
+  announcements: '/announcements',
   audit: '/audit',
   auditViewer: '/audit-viewer',
   pricing: '/pricing',
@@ -77,7 +78,7 @@ export const PUBLIC_PATHS = new Set<string>([routes.login, routes.register, '/',
  */
 export const ROLE_PREFIXES: Record<string, readonly string[]> = {
   admin: [
-    routes.dashboard, routes.audit, routes.auditViewer, routes.pricing,
+    routes.dashboard, routes.announcements, routes.audit, routes.auditViewer, routes.pricing,
     routes.priceManagement, routes.adminSla, routes.users, routes.adminPayments,
     routes.qc, routes.apiKeys, routes.experts,
     routes.expertManagement, routes.pilots,
