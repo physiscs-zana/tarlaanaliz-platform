@@ -153,19 +153,31 @@ def _require_subject(request: Request) -> str:
     return str(getattr(user, "subject", ""))
 
 
-def _require_user_id(request: Request) -> uuid.UUID:
-    """Extract user_id (UUID) from request.state.user. Raises 401 if missing."""
+async def _require_user_id(request: Request) -> uuid.UUID:
+    """Extract user_id (UUID) from JWT claims.
+
+    KR-050: JWT her zaman user_id claim icerir (login + register + refresh).
+    user_id yoksa token bozuk veya suresi dolmus demektir.
+    """
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    user_id = getattr(user, "user_id", None) or getattr(user, "subject", None)
-    if user_id is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized — user_id missing")
+    user_id_raw = getattr(user, "user_id", None)
+    if not user_id_raw:
+        subject = str(getattr(user, "subject", ""))
+        logger.error("SUBSCRIPTION.AUTH user_id claim missing in JWT for subject=%s", subject)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Oturum suresi dolmus — tekrar giris yapin",
+        )
     try:
-        return uuid.UUID(str(user_id))
-    except ValueError as exc:
-        logger.warning("INVALID_USER_ID: could not parse user_id=%s", user_id)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized — invalid user_id") from exc
+        return uuid.UUID(str(user_id_raw))
+    except ValueError:
+        logger.error("SUBSCRIPTION.AUTH invalid user_id=%s", user_id_raw)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Oturum suresi dolmus — tekrar giris yapin",
+        )
 
 
 def _calculate_price_inline(crop_type: str, area_m2: Decimal, total_scans: int) -> int:
@@ -200,7 +212,7 @@ async def create_subscription(
     """KR-027: Yeni Sezonluk Paket aboneliği oluştur. KR-033: PENDING_PAYMENT ile başlar."""
 
     # --- 1. Authenticate ---
-    user_id = _require_user_id(request)
+    user_id = await _require_user_id(request)
 
     # --- 2. Validate field_id as UUID ---
     try:

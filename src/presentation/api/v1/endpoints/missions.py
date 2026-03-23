@@ -50,31 +50,41 @@ class MissionResponse(BaseModel):
     subscription_id: str | None = None
 
 
-def _require_authenticated(request: Request) -> tuple[str, str]:
-    """Extract authenticated user_id. Raises 401 if missing."""
+def _require_authenticated(request: Request) -> tuple[str, _uuid.UUID]:
+    """Extract subject and user_id (UUID) from JWT claims.
+
+    KR-050: JWT her zaman user_id claim icerir (login + register + refresh).
+    user_id yoksa token bozuk veya suresi dolmus demektir.
+    """
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    # Try user_id first (set by JWT middleware), fall back to subject
-    user_id = getattr(user, "user_id", None) or getattr(user, "subject", None)
-    if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     subject = str(getattr(user, "subject", ""))
-    return subject, str(user_id)
+    if not subject:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    user_id_raw = getattr(user, "user_id", None)
+    if not user_id_raw:
+        _LOGGER.error("MISSION.AUTH user_id claim missing in JWT for subject=%s", subject)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Oturum suresi dolmus — tekrar giris yapin",
+        )
+    try:
+        return subject, _uuid.UUID(str(user_id_raw))
+    except ValueError:
+        _LOGGER.error("MISSION.AUTH invalid user_id=%s for subject=%s", user_id_raw, subject)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Oturum suresi dolmus — tekrar giris yapin",
+        )
 
 
 @router.post("", response_model=MissionResponse, status_code=status.HTTP_201_CREATED)
 async def create_mission(request: Request, payload: MissionCreateRequest) -> MissionResponse:
-    subject, user_id_str = _require_authenticated(request)
+    subject, user_id = _require_authenticated(request)
 
     from src.infrastructure.persistence.sqlalchemy.session import get_async_session
     from src.infrastructure.persistence.sqlalchemy.repositories.mission_repository_impl import MissionRepositoryImpl
-
-    try:
-        user_id = _uuid.UUID(user_id_str)
-    except (ValueError, AttributeError):
-        _LOGGER.error("MISSION.CREATE invalid user_id=%s", user_id_str)
-        raise HTTPException(status_code=401, detail="Gecersiz kullanici kimlik bilgisi")
 
     try:
         field_id = _uuid.UUID(payload.field_id)
@@ -198,15 +208,10 @@ async def create_mission(request: Request, payload: MissionCreateRequest) -> Mis
 
 @router.get("", response_model=list[MissionResponse])
 async def list_missions(request: Request) -> list[MissionResponse]:
-    subject, user_id_str = _require_authenticated(request)
+    subject, user_id = _require_authenticated(request)
 
     from src.infrastructure.persistence.sqlalchemy.session import get_async_session
     from src.infrastructure.persistence.sqlalchemy.repositories.mission_repository_impl import MissionRepositoryImpl
-
-    try:
-        user_id = _uuid.UUID(user_id_str)
-    except (ValueError, TypeError):
-        return []
 
     async with get_async_session() as session:
         repo = MissionRepositoryImpl(session)
