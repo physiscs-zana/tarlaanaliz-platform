@@ -28,11 +28,12 @@ logger = logging.getLogger("api.subscriptions")
 router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
 
 
+# KR-027: Sezonluk Paket tarama periyotları — sabit seçenekler
+ALLOWED_INTERVAL_DAYS: tuple[int, ...] = (7, 10, 14, 17, 21)
+
+
 class SubscriptionCreateRequest(BaseModel):
     """KR-027: Yeni abonelik oluşturma isteği."""
-
-    # KR-027: Sezonluk Paket tarama periyotları — sabit seçenekler
-    _ALLOWED_INTERVAL_DAYS: tuple[int, ...] = (7, 10, 14, 17, 21)
 
     field_id: str = Field(min_length=3, max_length=64)
     crop_type: str = Field(min_length=2, max_length=50)
@@ -45,8 +46,8 @@ class SubscriptionCreateRequest(BaseModel):
     @classmethod
     def validate_interval_days(cls, v: int) -> int:
         """KR-027: Sadece 7, 10, 14, 17, 21 günlük periyotlar kabul edilir."""
-        if v not in cls._ALLOWED_INTERVAL_DAYS:
-            raise ValueError(f"interval_days {cls._ALLOWED_INTERVAL_DAYS} değerlerinden biri olmalıdır, gelen: {v}")
+        if v not in ALLOWED_INTERVAL_DAYS:
+            raise ValueError(f"interval_days {ALLOWED_INTERVAL_DAYS} degerlerinden biri olmalidir, gelen: {v}")
         return v
 
 
