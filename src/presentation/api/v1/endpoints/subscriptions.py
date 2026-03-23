@@ -154,33 +154,30 @@ def _require_subject(request: Request) -> str:
 
 
 async def _require_user_id(request: Request) -> uuid.UUID:
-    """Extract user_id (UUID) from JWT claims, fallback to DB lookup by phone."""
+    """Extract user_id (UUID) from JWT claims.
+
+    KR-050: JWT her zaman user_id claim icerir (login + register + refresh).
+    user_id yoksa token bozuk veya suresi dolmus demektir.
+    """
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-
-    # Try user_id from JWT claim first
     user_id_raw = getattr(user, "user_id", None)
-    if user_id_raw:
-        try:
-            return uuid.UUID(str(user_id_raw))
-        except ValueError:
-            pass
-
-    # Fallback: look up user_id by phone (subject)
-    subject = str(getattr(user, "subject", ""))
-    if not subject:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized — user_id missing")
-
-    from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
-
-    async with get_async_session() as session:
-        result = await session.execute(select(UserModel.user_id).where(UserModel.phone == subject))
-        row = result.scalar_one_or_none()
-        if row is None:
-            logger.warning("USER_NOT_FOUND: phone=%s", subject)
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Kullanici bulunamadi")
-        return row
+    if not user_id_raw:
+        subject = str(getattr(user, "subject", ""))
+        logger.error("SUBSCRIPTION.AUTH user_id claim missing in JWT for subject=%s", subject)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Oturum suresi dolmus — tekrar giris yapin",
+        )
+    try:
+        return uuid.UUID(str(user_id_raw))
+    except ValueError:
+        logger.error("SUBSCRIPTION.AUTH invalid user_id=%s", user_id_raw)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Oturum suresi dolmus — tekrar giris yapin",
+        )
 
 
 def _calculate_price_inline(crop_type: str, area_m2: Decimal, total_scans: int) -> int:

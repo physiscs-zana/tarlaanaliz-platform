@@ -50,44 +50,38 @@ class MissionResponse(BaseModel):
     subscription_id: str | None = None
 
 
-def _require_authenticated(request: Request) -> tuple[str, str | None]:
-    """Extract subject and user_id from JWT. user_id may be None if not in claims."""
+def _require_authenticated(request: Request) -> tuple[str, _uuid.UUID]:
+    """Extract subject and user_id (UUID) from JWT claims.
+
+    KR-050: JWT her zaman user_id claim icerir (login + register + refresh).
+    user_id yoksa token bozuk veya suresi dolmus demektir.
+    """
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     subject = str(getattr(user, "subject", ""))
     if not subject:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    user_id = getattr(user, "user_id", None)
-    return subject, str(user_id) if user_id else None
-
-
-async def _resolve_user_id(subject: str, user_id_str: str | None) -> _uuid.UUID:
-    """Resolve user_id: try JWT claim first, fall back to DB lookup by phone."""
-    if user_id_str:
-        try:
-            return _uuid.UUID(user_id_str)
-        except ValueError:
-            pass
-
-    # Fallback: look up user_id by phone (subject)
-    from src.infrastructure.persistence.sqlalchemy.session import get_async_session
-    from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
-    from sqlalchemy import select
-
-    async with get_async_session() as session:
-        result = await session.execute(select(UserModel.user_id).where(UserModel.phone == subject))
-        row = result.scalar_one_or_none()
-        if row is None:
-            _LOGGER.error("MISSION.CREATE user not found for subject=%s", subject)
-            raise HTTPException(status_code=401, detail="Kullanici bulunamadi")
-        return row
+    user_id_raw = getattr(user, "user_id", None)
+    if not user_id_raw:
+        _LOGGER.error("MISSION.AUTH user_id claim missing in JWT for subject=%s", subject)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Oturum suresi dolmus — tekrar giris yapin",
+        )
+    try:
+        return subject, _uuid.UUID(str(user_id_raw))
+    except ValueError:
+        _LOGGER.error("MISSION.AUTH invalid user_id=%s for subject=%s", user_id_raw, subject)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Oturum suresi dolmus — tekrar giris yapin",
+        )
 
 
 @router.post("", response_model=MissionResponse, status_code=status.HTTP_201_CREATED)
 async def create_mission(request: Request, payload: MissionCreateRequest) -> MissionResponse:
-    subject, user_id_str = _require_authenticated(request)
-    user_id = await _resolve_user_id(subject, user_id_str)
+    subject, user_id = _require_authenticated(request)
 
     from src.infrastructure.persistence.sqlalchemy.session import get_async_session
     from src.infrastructure.persistence.sqlalchemy.repositories.mission_repository_impl import MissionRepositoryImpl
@@ -214,15 +208,10 @@ async def create_mission(request: Request, payload: MissionCreateRequest) -> Mis
 
 @router.get("", response_model=list[MissionResponse])
 async def list_missions(request: Request) -> list[MissionResponse]:
-    subject, user_id_str = _require_authenticated(request)
+    subject, user_id = _require_authenticated(request)
 
     from src.infrastructure.persistence.sqlalchemy.session import get_async_session
     from src.infrastructure.persistence.sqlalchemy.repositories.mission_repository_impl import MissionRepositoryImpl
-
-    try:
-        user_id = _uuid.UUID(user_id_str)
-    except (ValueError, TypeError):
-        return []
 
     async with get_async_session() as session:
         repo = MissionRepositoryImpl(session)

@@ -234,9 +234,17 @@ class _InMemoryPhonePinAuthService:
         except ValueError:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized") from None
         subject = str(payload.get("sub", ""))
+        # KR-050: Refresh token'dan yeni token üretirken tüm claim'leri aktar.
+        # Orijinal token'daki user_id, roles, permissions kaybolmamalı.
+        preserved_claims: dict[str, Any] = {
+            "phone_verified": payload.get("phone_verified", True),
+        }
+        for key in ("user_id", "roles", "permissions", "phone"):
+            if key in payload:
+                preserved_claims[key] = payload[key]
         access_token = self._jwt_handler.issue_access_token(
             subject=subject,
-            claims={"phone_verified": True},
+            claims=preserved_claims,
         )
         return AuthTokenResponse(access_token=access_token, subject=subject)
 
