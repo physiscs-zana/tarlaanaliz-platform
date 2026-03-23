@@ -153,19 +153,34 @@ def _require_subject(request: Request) -> str:
     return str(getattr(user, "subject", ""))
 
 
-def _require_user_id(request: Request) -> uuid.UUID:
-    """Extract user_id (UUID) from request.state.user. Raises 401 if missing."""
+async def _require_user_id(request: Request) -> uuid.UUID:
+    """Extract user_id (UUID) from JWT claims, fallback to DB lookup by phone."""
     user = getattr(request.state, "user", None)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    user_id = getattr(user, "user_id", None) or getattr(user, "subject", None)
-    if user_id is None:
+
+    # Try user_id from JWT claim first
+    user_id_raw = getattr(user, "user_id", None)
+    if user_id_raw:
+        try:
+            return uuid.UUID(str(user_id_raw))
+        except ValueError:
+            pass
+
+    # Fallback: look up user_id by phone (subject)
+    subject = str(getattr(user, "subject", ""))
+    if not subject:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized — user_id missing")
-    try:
-        return uuid.UUID(str(user_id))
-    except ValueError as exc:
-        logger.warning("INVALID_USER_ID: could not parse user_id=%s", user_id)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized — invalid user_id") from exc
+
+    from src.infrastructure.persistence.sqlalchemy.models.user_model import UserModel
+
+    async with get_async_session() as session:
+        result = await session.execute(select(UserModel.user_id).where(UserModel.phone == subject))
+        row = result.scalar_one_or_none()
+        if row is None:
+            logger.warning("USER_NOT_FOUND: phone=%s", subject)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Kullanici bulunamadi")
+        return row
 
 
 def _calculate_price_inline(crop_type: str, area_m2: Decimal, total_scans: int) -> int:
@@ -200,7 +215,7 @@ async def create_subscription(
     """KR-027: Yeni Sezonluk Paket aboneliği oluştur. KR-033: PENDING_PAYMENT ile başlar."""
 
     # --- 1. Authenticate ---
-    user_id = _require_user_id(request)
+    user_id = await _require_user_id(request)
 
     # --- 2. Validate field_id as UUID ---
     try:

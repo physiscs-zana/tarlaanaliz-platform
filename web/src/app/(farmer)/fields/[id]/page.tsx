@@ -237,9 +237,9 @@ export default function FieldDetailPage() {
                 <select value={scanInterval} onChange={(e) => setScanInterval(Number(e.target.value))} className="w-full rounded border border-slate-300 px-3 py-2 text-sm">
                   <option value={7}>Her 7 gunde bir (haftalik)</option>
                   <option value={10}>Her 10 gunde bir</option>
-                  <option value={14}>Her 14 gunde bir (iki haftada bir)</option>
-                  <option value={21}>Her 21 gunde bir (uc haftada bir)</option>
-                  <option value={30}>Her 30 gunde bir (aylik)</option>
+                  <option value={14}>Her 14 gunde bir (2 haftada bir)</option>
+                  <option value={17}>Her 17 gunde bir</option>
+                  <option value={21}>Her 21 gunde bir (3 haftada bir)</option>
                 </select>
               </div>
               <div>
